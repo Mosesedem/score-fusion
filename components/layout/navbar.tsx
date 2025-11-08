@@ -21,6 +21,8 @@ import {
   LogOut,
   Trophy,
   Crown,
+  LayoutDashboard,
+  Bell,
 } from "lucide-react";
 
 export function Navbar() {
@@ -30,8 +32,8 @@ export function Navbar() {
   const isActive = (path: string) => pathname === path;
 
   return (
-    <nav className="border-b bg-background">
-      <div className=" mx-auto px-4">
+    <nav className="border-b border-border bg-background">
+      <div className="mx-auto px-4">
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
           <Link href="/" className="flex items-center space-x-2">
@@ -41,6 +43,22 @@ export function Navbar() {
 
           {/* Navigation Links */}
           <div className="hidden md:flex items-center space-x-6">
+            {user && !user.guest && (
+              <Link
+                href="/dashboard"
+                className={`text-sm font-medium transition-colors hover:text-primary ${
+                  isActive("/dashboard")
+                    ? "text-primary"
+                    : "text-muted-foreground"
+                }`}
+              >
+                <div className="flex items-center space-x-1">
+                  <LayoutDashboard className="h-4 w-4" />
+                  <span>Dashboard</span>
+                </div>
+              </Link>
+            )}
+
             <Link
               href="/tips"
               className={`text-sm font-medium transition-colors hover:text-primary ${
@@ -68,14 +86,30 @@ export function Navbar() {
                 </Link>
 
                 <Link
-                  href="/bets"
+                  href="/history"
                   className={`text-sm font-medium transition-colors hover:text-primary ${
-                    isActive("/bets") ? "text-primary" : "text-muted-foreground"
+                    isActive("/history")
+                      ? "text-primary"
+                      : "text-muted-foreground"
                   }`}
                 >
                   <div className="flex items-center space-x-1">
                     <Trophy className="h-4 w-4" />
-                    <span>My Bets</span>
+                    <span>History</span>
+                  </div>
+                </Link>
+
+                <Link
+                  href="/notifications"
+                  className={`text-sm font-medium transition-colors hover:text-primary ${
+                    isActive("/notifications")
+                      ? "text-primary"
+                      : "text-muted-foreground"
+                  }`}
+                >
+                  <div className="flex items-center space-x-1">
+                    <Bell className="h-4 w-4" />
+                    <span>Notifications</span>
                   </div>
                 </Link>
 
@@ -140,7 +174,7 @@ export function Navbar() {
                         </p>
                       )}
                       {user.guest && (
-                        <p className="text-xs text-yellow-600">Guest Account</p>
+                        <p className="text-xs text-primary">Guest Account</p>
                       )}
                     </div>
                   </DropdownMenuLabel>
