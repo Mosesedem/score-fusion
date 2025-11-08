@@ -23,6 +23,7 @@ import {
   Crown,
   LayoutDashboard,
   Bell,
+  BarChart3,
 } from "lucide-react";
 
 export function Navbar() {
@@ -68,6 +69,20 @@ export function Navbar() {
               <div className="flex items-center space-x-1">
                 <TrendingUp className="h-4 w-4" />
                 <span>Tips</span>
+              </div>
+            </Link>
+
+            <Link
+              href="/analytics"
+              className={`text-sm font-medium transition-colors hover:text-primary ${
+                isActive("/analytics")
+                  ? "text-primary"
+                  : "text-muted-foreground"
+              }`}
+            >
+              <div className="flex items-center space-x-1">
+                <BarChart3 className="h-4 w-4" />
+                <span>Analytics</span>
               </div>
             </Link>
 

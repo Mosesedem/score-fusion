@@ -1,7 +1,6 @@
 "use client";
 
 import { useAuth } from "@/contexts/auth-context";
-import { Navbar } from "@/components/layout/navbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -69,7 +68,6 @@ export default function VIPAreaPage() {
   if (!hasVIPAccess) {
     return (
       <div className="min-h-screen bg-background">
-        <Navbar />
         <div className="container mx-auto px-4 py-12">
           <div className="max-w-4xl mx-auto">
             <Card className="border-2 border-primary">
@@ -204,7 +202,6 @@ export default function VIPAreaPage() {
   // VIP content (shown when user has access)
   return (
     <div className="min-h-screen bg-background">
-      <Navbar />
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
           <div className="flex items-center gap-2 mb-2">
