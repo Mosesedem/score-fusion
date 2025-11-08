@@ -15,7 +15,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Trophy } from "lucide-react";
+import { Icon } from "@/components/logo";
 
 export default function SignupPage() {
   const { signup } = useAuth();
@@ -81,7 +81,7 @@ export default function SignupPage() {
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
           <div className="flex items-center justify-center mb-2">
-            <Trophy className="h-10 w-10 text-primary" />
+            <Icon />
           </div>
           <CardTitle className="text-2xl text-center">
             Create an account

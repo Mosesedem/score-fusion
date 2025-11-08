@@ -31,6 +31,7 @@ import {
   HelpCircle,
   Mail,
 } from "lucide-react";
+import { Icon } from "@/components/logo";
 
 export function AppNavbar() {
   const { user, logout } = useAuth();
@@ -70,8 +71,10 @@ export function AppNavbar() {
             className="flex items-center space-x-2"
             onClick={closeMobileMenu}
           >
-            <Trophy className="h-8 w-8 text-primary" />
-            <span className="text-xl font-bold">ScoreFusion</span>
+            <div className="h-4 flex relative">
+              <Icon />
+              <span className="text-xl font-bold">ScoreFusion</span>
+            </div>
           </Link>
 
           {/* Desktop Navigation Links */}
