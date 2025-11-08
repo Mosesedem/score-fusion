@@ -1,0 +1,241 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { z } from 'zod'
+import { prisma } from '@/lib/db'
+import { getAuthenticatedUser } from '@/lib/auth'
+import { rateLimit } from '@/lib/redis'
+
+// Validation schema
+const redeemTokenSchema = z.object({
+  token: z.string().min(1, 'Token is required'),
+})
+
+export async function POST(request: NextRequest) {
+  try {
+    // Rate limiting
+    const ip = request.ip || 'unknown'
+    const rateLimitResult = await rateLimit.check(`redeem:ip:${ip}`, 5, 300000) // 5 per 5 min
+
+    if (!rateLimitResult.allowed) {
+      return NextResponse.json(
+        { success: false, error: 'Too many redemption attempts. Please try again later.' },
+        { status: 429 }
+      )
+    }
+
+    // Get authenticated user
+    const auth = await getAuthenticatedUser(request)
+
+    if (!auth.user || auth.user.guest) {
+      return NextResponse.json(
+        { success: false, error: 'Authentication required' },
+        { status: 401 }
+      )
+    }
+
+    const body = await request.json()
+
+    // Validate input
+    const validatedData = redeemTokenSchema.parse(body)
+
+    // Use transaction to prevent race conditions
+    const result = await prisma.$transaction(async (tx) => {
+      // Find the token
+      const vipToken = await tx.vIPToken.findUnique({
+        where: { token: validatedData.token },
+        include: { tip: true },
+      })
+
+      if (!vipToken) {
+        throw new Error('Invalid token')
+      }
+
+      // Check if token is expired
+      if (vipToken.expiresAt < new Date()) {
+        throw new Error('Token has expired')
+      }
+
+      // Check if token has been used up
+      if (vipToken.used >= vipToken.quantity) {
+        throw new Error('Token has already been fully used')
+      }
+
+      // Check if token is tied to a different user
+      if (vipToken.userId && vipToken.userId !== auth.user.id) {
+        throw new Error('Token is already assigned to another user')
+      }
+
+      // Check if token is for a specific tip that exists
+      if (vipToken.tipId && !vipToken.tip) {
+        throw new Error('Associated tip not found')
+      }
+
+      // Update token usage
+      const updatedToken = await tx.vIPToken.update({
+        where: { id: vipToken.id },
+        data: {
+          userId: auth.user.id, // Assign to user if not already assigned
+          used: vipToken.used + 1,
+          usedAt: new Date(),
+        },
+      })
+
+      return updatedToken
+    })
+
+    // Track redemption analytics
+    try {
+      await prisma.analyticsEvent.create({
+        data: {
+          userId: auth.user.id,
+          type: 'vip_token_redeemed',
+          payload: {
+            tokenId: result.id,
+            tokenType: result.type,
+            tipId: result.tipId,
+            timestamp: new Date().toISOString(),
+          },
+          ipAddress: ip,
+          userAgent: request.headers.get('user-agent') || undefined,
+        },
+      })
+    } catch (error) {
+      console.error('Failed to track token redemption analytics:', error)
+    }
+
+    // Clear user-specific caches
+    try {
+      const { cacheHelpers } = await import('@/lib/redis')
+      await cacheHelpers.clearPattern(`vip:entitlements:${auth.user.id}:*`)
+    } catch (error) {
+      console.error('Failed to clear cache:', error)
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: 'Token redeemed successfully',
+      data: {
+        tokenId: result.id,
+        type: result.type,
+        tipId: result.tipId,
+        remainingUses: result.quantity - result.used,
+        expiresAt: result.expiresAt,
+      },
+    })
+
+  } catch (error) {
+    console.error('VIP token redemption error:', error)
+
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { success: false, error: error.errors[0].message },
+        { status: 400 }
+      )
+    }
+
+    const errorMessage = error instanceof Error ? error.message : 'Failed to redeem token'
+
+    return NextResponse.json(
+      { success: false, error: errorMessage },
+      { status: 400 }
+    )
+  }
+}
+
+// GET endpoint to check user's VIP entitlements
+export async function GET(request: NextRequest) {
+  try {
+    // Get authenticated user
+    const auth = await getAuthenticatedUser(request)
+
+    if (!auth.user || auth.user.guest) {
+      return NextResponse.json(
+        { success: false, error: 'Authentication required' },
+        { status: 401 }
+      )
+    }
+
+    const userId = auth.user.id
+
+    // Check cache first
+    const { cacheHelpers } = await import('@/lib/redis')
+    const cacheKey = `vip:entitlements:${userId}`
+    const cached = await cacheHelpers.get(cacheKey)
+
+    if (cached) {
+      return NextResponse.json(cached)
+    }
+
+    // Get active subscriptions
+    const activeSubscriptions = await prisma.subscription.findMany({
+      where: {
+        userId,
+        status: 'active',
+        currentPeriodEnd: { gte: new Date() },
+      },
+      orderBy: { currentPeriodEnd: 'desc' },
+    })
+
+    // Get available VIP tokens
+    const availableTokens = await prisma.vIPToken.findMany({
+      where: {
+        userId,
+        expiresAt: { gte: new Date() },
+        OR: [
+          { used: 0 },
+          { used: { lt: prisma.vIPToken.fields.quantity } },
+        ],
+      },
+      include: {
+        tip: {
+          select: {
+            id: true,
+            title: true,
+            sport: true,
+            summary: true,
+          },
+        },
+      },
+      orderBy: { expiresAt: 'asc' },
+    })
+
+    const hasActiveSubscription = activeSubscriptions.length > 0
+    const hasAvailableTokens = availableTokens.length > 0
+
+    const entitlements = {
+      success: true,
+      data: {
+        hasActiveSubscription,
+        hasVipAccess: hasActiveSubscription || hasAvailableTokens,
+        subscriptions: activeSubscriptions.map(sub => ({
+          id: sub.id,
+          plan: sub.plan,
+          status: sub.status,
+          currentPeriodEnd: sub.currentPeriodEnd,
+          cancelAtPeriodEnd: sub.cancelAtPeriodEnd,
+        })),
+        availableTokens: availableTokens.map(token => ({
+          id: token.id,
+          type: token.type,
+          quantity: token.quantity,
+          used: token.used,
+          remainingUses: token.quantity - token.used,
+          expiresAt: token.expiresAt,
+          tipId: token.tipId,
+          tip: token.tip,
+        })),
+      },
+    }
+
+    // Cache for 1 minute
+    await cacheHelpers.set(cacheKey, entitlements, 60)
+
+    return NextResponse.json(entitlements)
+
+  } catch (error) {
+    console.error('VIP entitlements check error:', error)
+    return NextResponse.json(
+      { success: false, error: 'Internal server error' },
+      { status: 500 }
+    )
+  }
+}
