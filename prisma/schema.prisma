@@ -1,0 +1,190 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             String   @id @default(uuid())
+  email          String?  @unique
+  passwordHash   String?
+  displayName    String?
+  isAdmin        Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  subscriptions  Subscription[]
+  vipTokens      VIPToken[]
+  bets           Bet[]
+  profile        Profile?
+  deletedAt      DateTime?
+  guest          Boolean  @default(false)
+  deviceTokens   String[] // FCM tokens for push notifications
+  lastLoginAt    DateTime?
+  loginAttempts  Int      @default(0)
+  lockedUntil    DateTime?
+  auditLogs      AdminAuditLog[]
+  analyticsEvents AnalyticsEvent[]
+
+  @@map("users")
+}
+
+model Profile {
+  id                    String @id @default(uuid())
+  userId                String @unique
+  user                  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  country               String?
+  dob                   DateTime?
+  phone                 String?
+  preferences           Json?  // notification settings, theme, etc.
+  consents              Json?  // GDPR consent tracking
+  selfExclusionUntil    DateTime?
+  depositLimits         Json?  // daily/weekly/monthly limits
+  timeLimits            Json?  // session time limits
+  realityCheckInterval  Int?   // minutes
+  marketingConsent      Boolean @default(false)
+  analyticsConsent      Boolean @default(true)
+
+  @@map("profiles")
+}
+
+model Tip {
+  id           String   @id @default(uuid())
+  title        String
+  content      String   // markdown content
+  summary      String?  // short description for previews
+  odds         Decimal?
+  sport        String
+  league       String?
+  matchId      String?  // external match identifier
+  matchDate    DateTime?
+  publishAt    DateTime
+  isVIP        Boolean  @default(false)
+  featured     Boolean  @default(false)
+  authorId     String?
+  authorName   String?
+  status       String   @default("draft") // draft, scheduled, published, archived
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  attachments  String[] // URLs to images/files
+  tags         String[]
+  viewCount    Int      @default(0)
+  successRate  Decimal? // calculated from actual results
+  result       String?  // won, lost, void, pending
+  bets         Bet[]
+  vipTokens    VIPToken[]
+
+  @@map("tips")
+}
+
+model Bet {
+  id          String  @id @default(uuid())
+  userId      String
+  user        User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tipId       String?
+  tip         Tip?    @relation(fields: [tipId], references: [id], onDelete: SetNull)
+  amount      Decimal
+  stakeType   String
+  odds        Decimal? // odds at time of placement
+  placedAt    DateTime @default(now())
+  status      String   @default("pending") // pending, won, lost, void
+  payout      Decimal?
+  settledAt   DateTime?
+
+  @@map("bets")
+}
+
+model Subscription {
+  id                   String   @id @default(uuid())
+  userId               String
+  stripeSubscriptionId String   @unique
+  stripeCustomerId     String
+  plan                 String   // monthly, yearly, trial
+  status               String   // active, past_due, canceled, incomplete
+  currentPeriodStart   DateTime
+  currentPeriodEnd     DateTime
+  trialEnd             DateTime?
+  cancelAtPeriodEnd    Boolean  @default(false)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+  canceledAt           DateTime?
+  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("subscriptions")
+}
+
+model VIPToken {
+  id         String    @id @default(uuid())
+  token      String    @unique @default(cuid()) // cryptographically random
+  userId     String?
+  tipId      String?   // null = general access, specific tip ID = single tip access
+  type       String    @default("general") // general, single, bundle
+  quantity   Int       @default(1) // number of accesses allowed
+  used       Int       @default(0) // current usage count
+  expiresAt  DateTime
+  createdAt  DateTime  @default(now())
+  usedAt     DateTime?
+  batchId    String?   // for tracking bulk generation
+  metadata   Json?     // additional data like source campaign
+  user       User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+  tip        Tip?      @relation(fields: [tipId], references: [id], onDelete: SetNull)
+
+  @@map("vip_tokens")
+}
+
+model AnalyticsEvent {
+  id        String   @id @default(uuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  type      String   // tip_view, signup, subscription, etc.
+  payload   Json     // event data
+  sessionId String?  // for guest session tracking
+  createdAt DateTime @default(now())
+
+  @@map("analytics_events")
+}
+
+model AdminAuditLog {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  action    String   // create_tip, ban_user, etc.
+  resource  String?  // tip_id, user_id, etc.
+  details   Json?    // changes made, old values, etc.
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  @@map("admin_audit_logs")
+}
+
+model Consent {
+  id        String   @id @default(uuid())
+  userId    String?
+  type      String   // analytics, marketing, essential
+  granted   Boolean
+  ipAddress String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("consents")
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String?
+  title     String
+  body      String
+  type      String   // push, in_app, email
+  status    String   @default("pending") // pending, sent, failed
+  data      Json?    // additional notification data
+  sentAt    DateTime?
+  createdAt DateTime @default(now())
+
+  @@map("notifications")
+}
