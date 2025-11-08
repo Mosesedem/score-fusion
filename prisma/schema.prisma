@@ -204,7 +204,7 @@ model Referral {
   id          String   @id @default(uuid())
   referrerId  String
   referrer    User     @relation("ReferredUsers", fields: [referrerId], references: [id], onDelete: Cascade)
-  referredId  String   @unique
+  referredId  String
   referred    User     @relation("ReferredBy", fields: [referredId], references: [id], onDelete: Cascade)
   referralCode String
   status      String   @default("pending") // pending, confirmed, completed, expired
@@ -212,7 +212,9 @@ model Referral {
   rewardAmount Decimal? @default(0) // Reward amount for referrer
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  earnings    ReferralEarning[]
 
+  @@unique([referrerId, referredId])
   @@map("referrals")
 }
 
