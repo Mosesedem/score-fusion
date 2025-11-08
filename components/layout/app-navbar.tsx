@@ -28,6 +28,8 @@ import {
   Menu,
   X,
   Home,
+  HelpCircle,
+  Mail,
 } from "lucide-react";
 
 export function AppNavbar() {
@@ -45,6 +47,8 @@ export function AppNavbar() {
     { href: "/", label: "Home", icon: Home },
     { href: "/tips", label: "Tips", icon: TrendingUp },
     { href: "/analytics", label: "Analytics", icon: BarChart3 },
+    { href: "/help", label: "Help", icon: HelpCircle },
+    { href: "/contact", label: "Contact", icon: Mail },
   ];
 
   const authenticatedNavItems = [

@@ -1,10 +1,47 @@
+"use client";
+
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Mail, MessageSquare, HelpCircle } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
 
 export default function ContactPage() {
+  const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    subject: "",
+    message: "",
+  });
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    // Simulate form submission
+    setTimeout(() => {
+      toast({
+        title: "Message sent!",
+        description: "We'll get back to you as soon as possible.",
+      });
+      setFormData({ name: "", email: "", subject: "", message: "" });
+      setIsSubmitting(false);
+    }, 1000);
+  };
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    setFormData({
+      ...formData,
+      [e.target.id]: e.target.value,
+    });
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-12">
@@ -74,10 +111,16 @@ export default function ContactPage() {
                   <CardTitle>Send us a message</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <form className="space-y-6">
+                  <form onSubmit={handleSubmit} className="space-y-6">
                     <div className="space-y-2">
                       <Label htmlFor="name">Name</Label>
-                      <Input id="name" placeholder="Your name" />
+                      <Input
+                        id="name"
+                        placeholder="Your name"
+                        value={formData.name}
+                        onChange={handleChange}
+                        required
+                      />
                     </div>
 
                     <div className="space-y-2">
@@ -86,25 +129,41 @@ export default function ContactPage() {
                         id="email"
                         type="email"
                         placeholder="your@email.com"
+                        value={formData.email}
+                        onChange={handleChange}
+                        required
                       />
                     </div>
 
                     <div className="space-y-2">
                       <Label htmlFor="subject">Subject</Label>
-                      <Input id="subject" placeholder="What is this about?" />
+                      <Input
+                        id="subject"
+                        placeholder="What is this about?"
+                        value={formData.subject}
+                        onChange={handleChange}
+                        required
+                      />
                     </div>
 
                     <div className="space-y-2">
                       <Label htmlFor="message">Message</Label>
                       <textarea
                         id="message"
-                        className="flex min-h-[150px] w-full border-2 border-border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        className="flex min-h-[150px] w-full border-2 border-border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 rounded-md"
                         placeholder="Tell us more..."
+                        value={formData.message}
+                        onChange={handleChange}
+                        required
                       />
                     </div>
 
-                    <Button type="submit" className="w-full">
-                      Send Message
+                    <Button
+                      type="submit"
+                      className="w-full"
+                      disabled={isSubmitting}
+                    >
+                      {isSubmitting ? "Sending..." : "Send Message"}
                     </Button>
                   </form>
                 </CardContent>

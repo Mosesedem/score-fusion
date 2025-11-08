@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { LandingHeader } from "@/components/layout/landing-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -104,8 +103,6 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-background">
-      <LandingHeader />
-
       {/* Hero Section */}
       <section className="border-b border-border">
         <div className="container mx-auto px-4 py-16">
@@ -537,6 +534,11 @@ export default function Home() {
                 <li>
                   <Link href="/about" className="hover:text-primary">
                     About
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/help" className="hover:text-primary">
+                    Help Center
                   </Link>
                 </li>
                 <li>
