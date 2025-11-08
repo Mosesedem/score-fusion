@@ -50,7 +50,7 @@ export default function ResetPasswordPage() {
         } else {
           setErrorMessage(result.error?.message || "Invalid or expired code");
         }
-      } catch (e) {
+      } catch {
         // Silent fail, user can try manual verify
       } finally {
         setIsSubmitting(false);
@@ -149,7 +149,7 @@ export default function ResetPasswordPage() {
       setConfirmPassword("");
 
       setTimeout(() => {
-        router.push("/auth/signin");
+        router.push("/login");
       }, 2500);
     } catch (error) {
       console.error("Reset password error", error);

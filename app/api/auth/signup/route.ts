@@ -1,58 +1,77 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { z } from 'zod'
-import { AuthService } from '@/lib/auth'
-import { prisma } from '@/lib/db'
-import { rateLimit } from '@/lib/redis'
+import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
+import { AuthService } from "@/lib/auth";
+import { prisma } from "@/lib/db";
+import { rateLimit } from "@/lib/redis";
+import { EmailService } from "@/lib/email";
+import { getClientIp } from "@/lib/utils";
 
 // Validation schema
 const signupSchema = z.object({
-  email: z.string().email('Invalid email address'),
-  password: z.string().min(8, 'Password must be at least 8 characters long'),
-  displayName: z.string().min(2, 'Display name must be at least 2 characters long'),
+  email: z.string().email("Invalid email address"),
+  password: z.string().min(8, "Password must be at least 8 characters long"),
+  displayName: z
+    .string()
+    .min(2, "Display name must be at least 2 characters long"),
   country: z.string().optional(),
-  dob: z.string().optional().transform((val) => {
-    if (!val) return undefined
-    const date = new Date(val)
-    if (isNaN(date.getTime())) {
-      throw new Error('Invalid date of birth')
-    }
-    return date
-  }),
+  dob: z
+    .string()
+    .optional()
+    .transform((val) => {
+      if (!val) return undefined;
+      const date = new Date(val);
+      if (isNaN(date.getTime())) {
+        throw new Error("Invalid date of birth");
+      }
+      return date;
+    }),
   referralCode: z.string().optional(),
-  consents: z.object({
-    analytics: z.boolean().default(true),
-    marketing: z.boolean().default(false),
-    essential: z.boolean().default(true),
-  }).optional(),
-})
+  consents: z
+    .object({
+      analytics: z.boolean().default(true),
+      marketing: z.boolean().default(false),
+      essential: z.boolean().default(true),
+    })
+    .optional(),
+});
 
 export async function POST(request: NextRequest) {
   try {
     // Rate limiting by IP
-    const ip = request.ip || 'unknown'
-    const rateLimitResult = await rateLimit.check(`signup:ip:${ip}`, 10, 900000) // 10 per 15 min
+    const ip = getClientIp(request);
+    const rateLimitResult = await rateLimit.check(
+      `signup:ip:${ip}`,
+      10,
+      900000
+    ); // 10 per 15 min
 
     if (!rateLimitResult.allowed) {
       return NextResponse.json(
-        { success: false, error: 'Too many signup attempts. Please try again later.' },
+        {
+          success: false,
+          error: "Too many signup attempts. Please try again later.",
+        },
         { status: 429 }
-      )
+      );
     }
 
-    const body = await request.json()
+    const body = await request.json();
 
     // Validate input
-    const validatedData = signupSchema.parse(body)
+    const validatedData = signupSchema.parse(body);
 
     // Age verification
     if (validatedData.dob) {
-      const ageMs = Date.now() - validatedData.dob.getTime()
-      const ageYears = ageMs / (1000 * 60 * 60 * 24 * 365.25)
+      const ageMs = Date.now() - validatedData.dob.getTime();
+      const ageYears = ageMs / (1000 * 60 * 60 * 24 * 365.25);
       if (ageYears < 18) {
         return NextResponse.json(
-          { success: false, error: 'You must be at least 18 years old to register' },
+          {
+            success: false,
+            error: "You must be at least 18 years old to register",
+          },
           { status: 400 }
-        )
+        );
       }
     }
 
@@ -64,32 +83,33 @@ export async function POST(request: NextRequest) {
       country: validatedData.country,
       dob: validatedData.dob,
       consents: validatedData.consents,
-    })
+    });
 
     if (!result.success) {
       return NextResponse.json(
         { success: false, error: result.error },
-        { status: result.error?.includes('already') ? 400 : 500 }
-      )
+        { status: result.error?.includes("already") ? 400 : 500 }
+      );
     }
 
-    let referralApplied = null
+    let referralApplied = null;
 
     // Handle referral code if provided
     if (validatedData.referralCode && result.user?.id) {
       try {
         const referrer = await prisma.user.findUnique({
           where: { referralCode: validatedData.referralCode },
-        })
+        });
 
         if (referrer && referrer.id !== result.user.id) {
           // Create referral record and award bonus
-          await prisma.$transaction(async (tx) => {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          await prisma.$transaction(async (tx: any) => {
             // Update user with referrer
             await tx.user.update({
               where: { id: result.user!.id },
               data: { referredBy: referrer.id },
-            })
+            });
 
             // Create referral record
             const referral = await tx.referral.create({
@@ -97,11 +117,11 @@ export async function POST(request: NextRequest) {
                 referrerId: referrer.id,
                 referredId: result.user!.id,
                 referralCode: validatedData.referralCode!,
-                status: 'confirmed',
+                status: "confirmed",
                 completedAt: new Date(),
-                rewardAmount: 5.00,
+                rewardAmount: 5.0,
               },
-            })
+            });
 
             // Create wallet for new user with welcome bonus
             await tx.wallet.create({
@@ -111,48 +131,50 @@ export async function POST(request: NextRequest) {
                 tokens: 10, // Welcome bonus tokens
                 bonusTokens: 5, // Extra bonus for using referral
               },
-            })
+            });
 
             // Award signup bonus to referrer
             await tx.wallet.upsert({
               where: { userId: referrer.id },
               update: {
-                balance: { increment: 5.00 },
+                balance: { increment: 5.0 },
                 tokens: { increment: 50 },
-                totalEarned: { increment: 5.00 },
+                totalEarned: { increment: 5.0 },
               },
               create: {
                 userId: referrer.id,
-                balance: 5.00,
+                balance: 5.0,
                 tokens: 50,
-                totalEarned: 5.00,
+                totalEarned: 5.0,
               },
-            })
+            });
 
             // Create referral earning record for referrer
             await tx.referralEarning.create({
               data: {
                 userId: referrer.id,
                 referralId: referral.id,
-                type: 'signup',
-                amount: 5.00,
-                currency: 'USD',
+                type: "signup",
+                amount: 5.0,
+                currency: "USD",
                 tokens: 50,
-                status: 'confirmed',
-                description: `Referral signup bonus for ${result.user!.displayName}`,
+                status: "confirmed",
+                description: `Referral signup bonus for ${
+                  result.user!.displayName
+                }`,
                 confirmedAt: new Date(),
               },
-            })
+            });
 
             referralApplied = {
               referrerName: referrer.displayName,
               welcomeBonus: 15, // Total tokens (10 + 5)
-              referrerBonus: '$5.00',
-            }
-          })
+              referrerBonus: "$5.00",
+            };
+          });
         }
       } catch (error) {
-        console.error('Referral processing error:', error)
+        console.error("Referral processing error:", error);
         // Don't fail signup if referral processing fails
       }
     } else if (result.user?.id) {
@@ -164,9 +186,9 @@ export async function POST(request: NextRequest) {
             balance: 0,
             tokens: 5, // Basic welcome bonus
           },
-        })
+        });
       } catch (error) {
-        console.error('Wallet creation error:', error)
+        console.error("Wallet creation error:", error);
         // Don't fail signup if wallet creation fails
       }
     }
@@ -176,7 +198,7 @@ export async function POST(request: NextRequest) {
       await prisma.analyticsEvent.create({
         data: {
           userId: result.user?.id,
-          type: 'signup',
+          type: "signup",
           payload: {
             email: validatedData.email,
             country: validatedData.country,
@@ -186,11 +208,24 @@ export async function POST(request: NextRequest) {
             timestamp: new Date().toISOString(),
           },
           ipAddress: ip,
-          userAgent: request.headers.get('user-agent') || undefined,
+          userAgent: request.headers.get("user-agent") || undefined,
         },
-      })
+      });
     } catch (error) {
-      console.error('Failed to track signup analytics:', error)
+      console.error("Failed to track signup analytics:", error);
+    }
+
+    // Send welcome email
+    if (result.user?.email && result.user?.displayName) {
+      try {
+        await EmailService.sendWelcomeEmail(
+          result.user.email,
+          result.user.displayName
+        );
+      } catch (emailError) {
+        console.error("Failed to send welcome email:", emailError);
+        // Don't fail signup if email fails
+      }
     }
 
     // Set HTTP-only cookie with the token
@@ -199,33 +234,32 @@ export async function POST(request: NextRequest) {
       user: result.user,
       sessionId: result.sessionId,
       referralApplied,
-    })
+    });
 
     if (result.token) {
-      response.cookies.set('auth-token', result.token, {
+      response.cookies.set("auth-token", result.token, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
         maxAge: 7 * 24 * 60 * 60, // 7 days
-        path: '/',
-      })
+        path: "/",
+      });
     }
 
-    return response
-
+    return response;
   } catch (error) {
-    console.error('Signup error:', error)
+    console.error("Signup error:", error);
 
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { success: false, error: error.errors[0].message },
         { status: 400 }
-      )
+      );
     }
 
     return NextResponse.json(
-      { success: false, error: 'Internal server error' },
+      { success: false, error: "Internal server error" },
       { status: 500 }
-    )
+    );
   }
 }

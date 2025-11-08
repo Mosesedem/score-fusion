@@ -44,6 +44,7 @@ model User {
   withdrawals      Withdrawal[]
   userAchievements UserAchievement[]
   payments         Payment[]
+  passwordResets   PasswordReset[]
 
   @@map("users")
 }
@@ -512,4 +513,18 @@ model Payment {
   updatedAt DateTime @updatedAt
 
   @@map("payments")
+}
+
+model PasswordReset {
+  id        String    @id @default(uuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String    @unique // 6-digit code
+  expiresAt DateTime
+  usedAt    DateTime?
+  ipAddress String?
+  createdAt DateTime  @default(now())
+
+  @@index([token, expiresAt])
+  @@map("password_resets")
 }
