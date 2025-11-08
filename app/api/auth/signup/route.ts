@@ -73,6 +73,104 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    let referralApplied = null
+
+    // Handle referral code if provided
+    if (validatedData.referralCode && result.user?.id) {
+      try {
+        const referrer = await prisma.user.findUnique({
+          where: { referralCode: validatedData.referralCode },
+        })
+
+        if (referrer && referrer.id !== result.user.id) {
+          // Create referral record and award bonus
+          await prisma.$transaction(async (tx) => {
+            // Update user with referrer
+            await tx.user.update({
+              where: { id: result.user!.id },
+              data: { referredBy: referrer.id },
+            })
+
+            // Create referral record
+            const referral = await tx.referral.create({
+              data: {
+                referrerId: referrer.id,
+                referredId: result.user!.id,
+                referralCode: validatedData.referralCode!,
+                status: 'confirmed',
+                completedAt: new Date(),
+                rewardAmount: 5.00,
+              },
+            })
+
+            // Create wallet for new user with welcome bonus
+            await tx.wallet.create({
+              data: {
+                userId: result.user!.id,
+                balance: 0,
+                tokens: 10, // Welcome bonus tokens
+                bonusTokens: 5, // Extra bonus for using referral
+              },
+            })
+
+            // Award signup bonus to referrer
+            await tx.wallet.upsert({
+              where: { userId: referrer.id },
+              update: {
+                balance: { increment: 5.00 },
+                tokens: { increment: 50 },
+                totalEarned: { increment: 5.00 },
+              },
+              create: {
+                userId: referrer.id,
+                balance: 5.00,
+                tokens: 50,
+                totalEarned: 5.00,
+              },
+            })
+
+            // Create referral earning record for referrer
+            await tx.referralEarning.create({
+              data: {
+                userId: referrer.id,
+                referralId: referral.id,
+                type: 'signup',
+                amount: 5.00,
+                currency: 'USD',
+                tokens: 50,
+                status: 'confirmed',
+                description: `Referral signup bonus for ${result.user!.displayName}`,
+                confirmedAt: new Date(),
+              },
+            })
+
+            referralApplied = {
+              referrerName: referrer.displayName,
+              welcomeBonus: 15, // Total tokens (10 + 5)
+              referrerBonus: '$5.00',
+            }
+          })
+        }
+      } catch (error) {
+        console.error('Referral processing error:', error)
+        // Don't fail signup if referral processing fails
+      }
+    } else if (result.user?.id) {
+      // Create wallet for user without referral
+      try {
+        await prisma.wallet.create({
+          data: {
+            userId: result.user.id,
+            balance: 0,
+            tokens: 5, // Basic welcome bonus
+          },
+        })
+      } catch (error) {
+        console.error('Wallet creation error:', error)
+        // Don't fail signup if wallet creation fails
+      }
+    }
+
     // Track signup analytics
     try {
       await prisma.analyticsEvent.create({
@@ -83,6 +181,8 @@ export async function POST(request: NextRequest) {
             email: validatedData.email,
             country: validatedData.country,
             consents: validatedData.consents,
+            referralCode: validatedData.referralCode,
+            referralApplied: !!referralApplied,
             timestamp: new Date().toISOString(),
           },
           ipAddress: ip,
