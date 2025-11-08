@@ -198,3 +198,157 @@ model Notification {
 
   @@map("notifications")
 }
+
+// Referral system models
+model Referral {
+  id          String   @id @default(uuid())
+  referrerId  String
+  referrer    User     @relation("ReferredUsers", fields: [referrerId], references: [id], onDelete: Cascade)
+  referredId  String   @unique
+  referred    User     @relation("ReferredBy", fields: [referredId], references: [id], onDelete: Cascade)
+  referralCode String
+  status      String   @default("pending") // pending, confirmed, completed, expired
+  completedAt DateTime?
+  rewardAmount Decimal? @default(0) // Reward amount for referrer
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("referrals")
+}
+
+model ReferralEarning {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  referralId  String
+  referral    Referral  @relation(fields: [referralId], references: [id], onDelete: Cascade)
+  type        String   // signup, subscription, bet, conversion
+  amount      Decimal
+  currency    String   @default("USD")
+  status      String   @default("pending") // pending, confirmed, paid
+  tokens      Int      @default(0) // Tokens awarded
+  description String?
+  createdAt   DateTime @default(now())
+  confirmedAt DateTime?
+
+  @@map("referral_earnings")
+}
+
+model Wallet {
+  id            String   @id @default(uuid())
+  userId        String   @unique
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  balance       Decimal  @default(0)
+  currency      String   @default("USD")
+  tokens        Int      @default(0) // Earning tokens
+  bonusTokens   Int      @default(0) // Bonus tokens from promotions
+  totalEarned   Decimal  @default(0)
+  totalWithdrawn Decimal @default(0)
+  lastUpdated   DateTime @updatedAt
+  createdAt     DateTime @default(now())
+
+  @@map("wallets")
+}
+
+model Earning {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type        String   // daily_login, tip_view, bet_placed, bet_won, referral_bonus, achievement
+  source      String?  // Source of earning (tip_id, bet_id, etc.)
+  amount      Decimal
+  currency    String   @default("USD")
+  tokens      Int      @default(0)
+  status      String   @default("pending") // pending, confirmed, expired
+  description String?
+  metadata    Json?    // Additional earning data
+  expiresAt   DateTime?
+  createdAt   DateTime @default(now())
+  confirmedAt DateTime?
+
+  @@map("earnings")
+}
+
+model TokenConversion {
+  id              String   @id @default(uuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokensConverted Int      // Number of tokens converted
+  tokenRate       Decimal  // Conversion rate (tokens to currency)
+  amountEarned    Decimal  // Amount earned from conversion
+  currency        String   @default("USD")
+  status          String   @default("pending") // pending, processing, completed, failed
+  conversionId    String?  // External transaction ID
+  processedAt     DateTime?
+  createdAt       DateTime @default(now())
+
+  @@map("token_conversions")
+}
+
+model Withdrawal {
+  id              String   @id @default(uuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  amount          Decimal
+  currency        String   @default("USD")
+  method          String   // bank_transfer, crypto, etc.
+  destination     Json?    // Withdrawal destination details
+  status          String   @default("pending") // pending, processing, completed, failed, cancelled
+  fee             Decimal  @default(0)
+  netAmount       Decimal  // Amount after fees
+  transactionId   String?  // External transaction ID
+  processedAt     DateTime?
+  failureReason   String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("withdrawals")
+}
+
+model EarningRule {
+  id            String   @id @default(uuid())
+  name          String   @unique
+  type          String   // daily_login, tip_view, bet_placed, bet_won, referral_signup, etc.
+  description   String?
+  tokenReward   Int      @default(0)
+  cashReward    Decimal  @default(0)
+  currency      String   @default("USD")
+  conditions    Json?    // Rules and conditions
+  isActive      Boolean  @default(true)
+  maxOccurrences Int?    // Maximum times this can be earned
+  cooldownHours Int?     // Cooldown period in hours
+  validFrom     DateTime?
+  validUntil    DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("earning_rules")
+}
+
+model Achievement {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String?
+  icon        String?  // Achievement icon URL
+  tokenReward Int      @default(0)
+  cashReward  Decimal  @default(0)
+  currency    String   @default("USD")
+  conditions  Json?    // Achievement conditions
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  @@map("achievements")
+}
+
+model UserAchievement {
+  id            String   @id @default(uuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievementId String
+  achievement   Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+  earnedAt      DateTime @default(now())
+  rewardClaimed Boolean  @default(false)
+
+  @@unique([userId, achievementId])
+  @@map("user_achievements")
+}
