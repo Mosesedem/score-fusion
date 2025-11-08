@@ -185,6 +185,8 @@ model AnalyticsEvent {
   type      String // tip_view, signup, subscription, etc.
   payload   Json // event data
   sessionId String? // for guest session tracking
+  ipAddress String?
+  userAgent String?
   createdAt DateTime @default(now())
 
   @@map("analytics_events")

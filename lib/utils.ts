@@ -8,9 +8,8 @@ export function cn(...inputs: ClassValue[]) {
 
 // Get client IP address from request
 export function getClientIp(request: NextRequest): string {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const ip =
-    (request as any).ip ||
+    (request as { ip?: string }).ip ||
     request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
     request.headers.get("x-real-ip") ||
     "unknown";
