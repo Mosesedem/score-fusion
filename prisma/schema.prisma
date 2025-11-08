@@ -36,10 +36,12 @@ model User {
   referralLink   String?  // Generated referral link
   wallet         Wallet?
   referredUsers  Referral[] @relation("ReferredUsers")
+  referredByUser Referral? @relation("ReferredBy", fields: [referredBy], references: [id])
   referralEarnings ReferralEarning[]
   earnings       Earning[]
   conversions    TokenConversion[]
   withdrawals    Withdrawal[]
+  userAchievements UserAchievement[]
 
   @@map("users")
 }
