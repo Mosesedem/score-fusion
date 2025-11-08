@@ -33,21 +33,11 @@ if (process.env.NODE_ENV !== "production") {
   globalThis.__redis = redis;
 }
 
-// Auto-connect to Redis
-if (!redis.isOpen) {
-  redis.connect().catch((error) => {
-    console.error("Failed to connect to Redis:", error);
-  });
-}
-
 // Cache helpers
 export const cacheHelpers = {
   // Get cached value
   async get<T>(key: string): Promise<T | null> {
     try {
-      if (!redis.isOpen) {
-        await redis.connect();
-      }
       const value = await redis.get(key);
       return value ? JSON.parse(value) : null;
     } catch (error) {
@@ -57,12 +47,8 @@ export const cacheHelpers = {
   },
 
   // Set cache value with optional TTL (seconds)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async set(key: string, value: any, ttl?: number): Promise<void> {
     try {
-      if (!redis.isOpen) {
-        await redis.connect();
-      }
       const serialized = JSON.stringify(value);
       if (ttl) {
         await redis.setEx(key, ttl, serialized);
@@ -77,9 +63,6 @@ export const cacheHelpers = {
   // Delete cache value
   async del(key: string): Promise<void> {
     try {
-      if (!redis.isOpen) {
-        await redis.connect();
-      }
       await redis.del(key);
     } catch (error) {
       console.error("Cache delete error:", error);
@@ -89,9 +72,6 @@ export const cacheHelpers = {
   // Clear all cache with matching pattern
   async clearPattern(pattern: string): Promise<void> {
     try {
-      if (!redis.isOpen) {
-        await redis.connect();
-      }
       const keys = await redis.keys(pattern);
       if (keys.length > 0) {
         await redis.del(keys);
@@ -113,11 +93,10 @@ export const rateLimit = {
     const windowSec = Math.ceil(windowMs / 1000);
 
     try {
-      // Ensure Redis is connected
+      // Ensure Redis connection is open before operating
       if (!redis.isOpen) {
         await redis.connect();
       }
-
       const current = await redis.incr(key);
 
       if (current === 1) {
@@ -144,12 +123,14 @@ export const rateLimit = {
 
 // Session storage helper
 export const sessionStore = {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async getSession(sessionId: string): Promise<any | null> {
     return cacheHelpers.get(`session:${sessionId}`);
   },
 
   async setSession(
     sessionId: string,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     sessionData: any,
     ttl: number = 86400
   ): Promise<void> {

@@ -16,6 +16,19 @@ export function getClientIp(request: NextRequest): string {
   return ip;
 }
 
+// Safely parse JSON body from a Request. Returns null for empty or invalid JSON.
+export async function safeParseRequestJson<T = unknown>(
+  request: Request
+): Promise<T | null> {
+  try {
+    const text = await request.text();
+    if (!text || !text.trim()) return null;
+    return JSON.parse(text) as T;
+  } catch {
+    return null;
+  }
+}
+
 export function formatDate(date: string | Date): string {
   return new Date(date).toLocaleDateString("en-US", {
     month: "short",
