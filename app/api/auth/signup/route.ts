@@ -198,6 +198,7 @@ export async function POST(request: NextRequest) {
       success: true,
       user: result.user,
       sessionId: result.sessionId,
+      referralApplied,
     })
 
     if (result.token) {
