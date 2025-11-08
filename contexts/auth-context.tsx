@@ -1,22 +1,17 @@
 "use client";
 
-import React, {
-  createContext,
-  useContext,
-  useState,
-  useEffect,
-  useCallback,
-} from "react";
+import React, { useCallback, useMemo } from "react";
+import { SessionProvider, useSession, signIn, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { toast } from "@/components/ui/use-toast";
 
 export interface User {
   id: string;
   email?: string;
-  displayName?: string;
+  displayName?: string | null;
   isAdmin: boolean;
   guest: boolean;
-  createdAt: string;
+  createdAt?: string;
 }
 
 interface AuthContextType {
@@ -47,188 +42,126 @@ interface SignupData {
   };
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  return <SessionProvider>{children}</SessionProvider>;
+}
+
+export function useAuth() {
+  const { data: session, status, update } = useSession();
   const router = useRouter();
-
-  // Check auth status on mount
-  useEffect(() => {
-    checkAuth();
-  }, []);
-
-  const checkAuth = async () => {
-    try {
-      const response = await fetch("/api/auth/me", {
-        credentials: "include",
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setUser(data.user);
-      }
-    } catch (error) {
-      console.error("Auth check failed:", error);
-    } finally {
-      setIsLoading(false);
-    }
+  type SessionUser = {
+    id: string;
+    email?: string | null;
+    name?: string | null;
+    displayName?: string | null;
+    isAdmin?: boolean;
+    guest?: boolean;
   };
 
+  const user: User | null = useMemo(() => {
+    if (status !== "authenticated" || !session?.user) return null;
+    const u = session.user as unknown as SessionUser;
+    return {
+      id: u.id,
+      email: u.email || undefined,
+      displayName: u.displayName || u.name || null,
+      isAdmin: u.isAdmin ?? false,
+      guest: u.guest ?? false,
+    };
+  }, [session, status]);
+
   const login = useCallback(
-    async (email: string, password: string, rememberMe = false) => {
-      try {
-        const response = await fetch("/api/auth/login", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify({ email, password, rememberMe }),
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-          throw new Error(data.error || "Login failed");
-        }
-
-        setUser(data.user);
-        toast({
-          title: "Welcome back!",
-          description: `Logged in as ${
-            data.user.displayName || data.user.email
-          }`,
-        });
-        router.push("/tips");
-      } catch (error) {
-        const message = error instanceof Error ? error.message : "Login failed";
+    async (email: string, password: string) => {
+      const res = await signIn("credentials", {
+        redirect: false,
+        email,
+        password,
+      });
+      if (!res || res.error) {
+        const message = res?.error || "Login failed";
         toast({
           variant: "destructive",
           title: "Login failed",
           description: message,
         });
-        throw error;
+        throw new Error(message);
       }
+      toast({
+        title: "Welcome back!",
+        description: `Logged in as ${email}`,
+      });
+      router.push("/tips");
     },
     [router]
   );
 
   const signup = useCallback(
     async (data: SignupData) => {
-      try {
-        const response = await fetch("/api/auth/signup", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify(data),
-        });
-
-        const result = await response.json();
-
-        if (!response.ok) {
-          throw new Error(result.error || "Signup failed");
-        }
-
-        setUser(result.user);
-
-        let welcomeMessage = `Welcome, ${result.user.displayName}!`;
-        if (result.referralApplied) {
-          welcomeMessage += ` You received ${result.referralApplied.welcomeBonus} bonus tokens!`;
-        }
-
-        toast({
-          title: "Account created!",
-          description: welcomeMessage,
-        });
-        router.push("/tips");
-      } catch (error) {
-        const message =
-          error instanceof Error ? error.message : "Signup failed";
+      const response = await fetch("/api/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      const result = await response.json();
+      if (!response.ok) {
+        const message = result?.error || "Signup failed";
         toast({
           variant: "destructive",
           title: "Signup failed",
           description: message,
         });
-        throw error;
+        throw new Error(message);
       }
+      await signIn("credentials", {
+        redirect: false,
+        email: data.email,
+        password: data.password,
+      });
+      toast({
+        title: "Account created!",
+        description: `Welcome, ${data.displayName}!`,
+      });
+      router.push("/tips");
     },
     [router]
   );
 
   const guestLogin = useCallback(async () => {
-    try {
-      const response = await fetch("/api/auth/guest", {
-        method: "POST",
-        credentials: "include",
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Guest login failed");
-      }
-
-      setUser(data.user);
-      toast({
-        title: "Guest access enabled",
-        description: "You have limited access. Sign up for more features!",
-      });
-      router.push("/tips");
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "Guest login failed";
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: message,
-      });
-      throw error;
+    const res = await signIn("credentials", { redirect: false, mode: "guest" });
+    if (!res || res.error) {
+      const message = res?.error || "Guest login failed";
+      toast({ variant: "destructive", title: "Error", description: message });
+      throw new Error(message);
     }
+    toast({
+      title: "Guest access enabled",
+      description: "Limited access session.",
+    });
+    router.push("/tips");
   }, [router]);
 
   const logout = useCallback(async () => {
-    try {
-      await fetch("/api/auth/logout", {
-        method: "POST",
-        credentials: "include",
-      });
-
-      setUser(null);
-      toast({
-        title: "Logged out",
-        description: "You have been logged out successfully",
-      });
-      router.push("/");
-    } catch (error) {
-      console.error("Logout failed:", error);
-    }
+    await signOut({ redirect: false });
+    toast({
+      title: "Logged out",
+      description: "You have been logged out successfully",
+    });
+    router.push("/");
   }, [router]);
 
   const refreshUser = useCallback(async () => {
-    await checkAuth();
-  }, []);
+    await update();
+  }, [update]);
 
-  return (
-    <AuthContext.Provider
-      value={{
-        user,
-        isLoading,
-        login,
-        signup,
-        logout,
-        guestLogin,
-        refreshUser,
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
-  );
-}
+  const ctx: AuthContextType = {
+    user,
+    isLoading: status === "loading",
+    login,
+    signup,
+    logout,
+    guestLogin,
+    refreshUser,
+  };
 
-export function useAuth() {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error("useAuth must be used within an AuthProvider");
-  }
-  return context;
+  return ctx;
 }

@@ -16,14 +16,14 @@ import {
 import {
   User,
   TrendingUp,
-  Gift,
-  Wallet,
   Settings,
   LogOut,
-  Trophy,
-  Crown,
   LayoutDashboard,
+  Crown,
+  Trophy,
   Bell,
+  Gift,
+  Wallet,
   BarChart3,
   Menu,
   X,
@@ -62,7 +62,7 @@ export function AppNavbar() {
   ];
 
   return (
-    <nav className="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
+    <nav className="fixed top-0 left-0 right-0 z-50 border-b border-border bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
@@ -77,7 +77,7 @@ export function AppNavbar() {
             </div>
           </Link>
 
-          {/* Desktop Navigation Links */}
+          {/* Desktop Navigation Links (public only; authenticated moved to sidebar) */}
           <div className="hidden lg:flex items-center space-x-1">
             {publicNavItems.map((item) => (
               <Link key={item.href} href={item.href}>
@@ -91,24 +91,6 @@ export function AppNavbar() {
                 </Button>
               </Link>
             ))}
-
-            {user && !user.guest && (
-              <>
-                <div className="mx-2 h-6 w-px bg-border" />
-                {authenticatedNavItems.map((item) => (
-                  <Link key={item.href} href={item.href}>
-                    <Button
-                      variant={isActive(item.href) ? "default" : "ghost"}
-                      size="sm"
-                      className="gap-2"
-                    >
-                      <item.icon className="h-4 w-4" />
-                      {item.label}
-                    </Button>
-                  </Link>
-                ))}
-              </>
-            )}
           </div>
 
           {/* Right side - Auth & Mobile Menu */}
@@ -231,7 +213,6 @@ export function AppNavbar() {
                 </Link>
               ))}
 
-              {/* Authenticated Nav Items */}
               {user && !user.guest && (
                 <>
                   <div className="my-2 border-t border-border" />
