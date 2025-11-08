@@ -357,3 +357,99 @@ model UserAchievement {
   @@map("user_achievements")
 }
 
+// Live Score System Models
+model Sport {
+  id          String @id @default(uuid())
+  name        String @unique
+  displayName String
+  isActive    Boolean @default(true)
+  sortOrder   Int      @default(0)
+  icon        String? // Sport icon URL
+  createdAt   DateTime @default(now())
+
+  @@map("sports")
+}
+
+model League {
+  id          String @id @default(uuid())
+  name        String
+  sportId     String
+  sport       Sport  @relation(fields: [sportId], references: [id], onDelete: Cascade)
+  country     String
+  season      String?
+  isActive    Boolean @default(true)
+  logo        String? // League logo URL
+  createdAt   DateTime @default(now())
+
+  @@map("leagues")
+}
+
+model Match {
+  id              String   @id @default(uuid())
+  externalId      String?  // API provider match ID
+  sportId         String
+  sport           Sport    @relation(fields: [sportId], references: [id])
+  leagueId        String
+  league          League   @relation(fields: [leagueId], references: [id])
+  homeTeam        String
+  awayTeam        String
+  homeTeamLogo    String?
+  awayTeamLogo    String?
+  homeTeamScore   Int      @default(0)
+  awayTeamScore   Int      @default(0)
+  venue           String?
+  scheduledAt     DateTime
+  status          String   @default("scheduled") // scheduled, live, finished, postponed, cancelled
+  period          String?  // 1st, 2nd, half-time, etc.
+  minute          Int?     // Current minute for live matches
+  odds            Json?    // Current odds from various bookmakers
+  statistics      Json?    // Match statistics
+  lastUpdatedAt   DateTime @default(now())
+  createdAt       DateTime @default(now())
+
+  // Relations
+  tips            Tip[]
+
+  @@map("matches")
+}
+
+model LiveScoreProvider {
+  id          String @id @default(uuid())
+  name        String @unique
+  displayName String
+  apiKey      String? // API key for external service
+  apiUrl      String? // Base URL for API
+  isActive    Boolean @default(true)
+  rateLimitMs Int     @default(1000) // Rate limit in milliseconds
+  config      Json?   // Additional configuration
+  createdAt   DateTime @default(now())
+
+  @@map("live_score_providers")
+}
+
+model MatchEvent {
+  id          String @id @default(uuid())
+  matchId     String
+  match       Match  @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  type        String // goal, yellow_card, red_card, substitution, etc.
+  team        String // home, away
+  minute      Int?
+  player      String?
+  description String?
+  createdAt   DateTime @default(now())
+
+  @@map("match_events")
+}
+
+model AdminConfig {
+  id          String @id @default(uuid())
+  key         String @unique
+  value       Json
+  description String?
+  category    String @default("general")
+  updatedAt   DateTime @updatedAt
+  updatedBy   String // Admin user ID
+
+  @@map("admin_configs")
+}
+
