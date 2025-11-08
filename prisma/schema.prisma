@@ -30,6 +30,16 @@ model User {
   lockedUntil    DateTime?
   auditLogs      AdminAuditLog[]
   analyticsEvents AnalyticsEvent[]
+  // Referral system fields
+  referralCode    String?  @unique
+  referredBy     String?  // User ID of referrer
+  referralLink   String?  // Generated referral link
+  wallet         Wallet?
+  referredUsers  Referral[] @relation("ReferredUsers")
+  referralEarnings ReferralEarning[]
+  earnings       Earning[]
+  conversions    TokenConversion[]
+  withdrawals    Withdrawal[]
 
   @@map("users")
 }
