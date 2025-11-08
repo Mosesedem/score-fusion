@@ -356,38 +356,3 @@ model UserAchievement {
 }
 
 // Add missing relationships for User
-model User {
-  id             String   @id @default(uuid())
-  email          String?  @unique
-  passwordHash   String?
-  displayName    String?
-  isAdmin        Boolean  @default(false)
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-  subscriptions  Subscription[]
-  vipTokens      VIPToken[]
-  bets           Bet[]
-  profile        Profile?
-  deletedAt      DateTime?
-  guest          Boolean  @default(false)
-  deviceTokens   String[] // FCM tokens for push notifications
-  lastLoginAt    DateTime?
-  loginAttempts  Int      @default(0)
-  lockedUntil    DateTime?
-  auditLogs      AdminAuditLog[]
-  analyticsEvents AnalyticsEvent[]
-  // Referral system fields
-  referralCode    String?  @unique
-  referredBy     String?  // User ID of referrer
-  referralLink   String?  // Generated referral link
-  wallet         Wallet?
-  referredUsers  Referral[] @relation("ReferredUsers")
-  referredByUser Referral? @relation("ReferredBy", fields: [referredBy], references: [id])
-  referralEarnings ReferralEarning[]
-  earnings       Earning[]
-  conversions    TokenConversion[]
-  withdrawals    Withdrawal[]
-  userAchievements UserAchievement[]
-
-  @@map("users")
-}
