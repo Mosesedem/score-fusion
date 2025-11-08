@@ -16,6 +16,10 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  icons: {
+    icon: "/images/2.png",
+  },
+
   title: "ScoreFusion - Premium Betting Tips & Predictions",
   description:
     "Get exclusive betting tips, VIP predictions, and earn rewards with ScoreFusion. Join thousands of winners today!",
