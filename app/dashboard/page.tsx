@@ -11,30 +11,11 @@ import {
   Activity,
   Crown,
 } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useEffect } from "react";
 
 export default function DashboardPage() {
-  const { user, isLoading } = useAuth();
-  const router = useRouter();
+  const { user } = useAuth();
 
-  useEffect(() => {
-    if (!isLoading && (!user || user.guest)) {
-      router.push("/login");
-    }
-  }, [user, isLoading, router]);
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-primary text-xl">Loading...</div>
-      </div>
-    );
-  }
-
-  if (!user || user.guest) {
-    return null;
-  }
+  // Dashboard is now public - no auth required
 
   return (
     <div className="min-h-screen bg-background">
@@ -42,7 +23,7 @@ export default function DashboardPage() {
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2">
-            Welcome back, {user.displayName || "User"}!
+            Welcome back, {user?.displayName || "Visitor"}!
           </h1>
           <p className="text-muted-foreground">
             Here&apos;s your personalized betting dashboard

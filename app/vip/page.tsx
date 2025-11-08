@@ -4,34 +4,67 @@ import { useAuth } from "@/contexts/auth-context";
 import { Navbar } from "@/components/layout/navbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Crown, Lock, Star, TrendingUp } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { Input } from "@/components/ui/input";
+import { Crown, Lock, Star, TrendingUp, CheckCircle } from "lucide-react";
+import { useEffect, useState } from "react";
 
 export default function VIPAreaPage() {
-  const { user, isLoading } = useAuth();
-  const router = useRouter();
+  const { user } = useAuth();
+  const [hasVIPAccess, setHasVIPAccess] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [tokenCode, setTokenCode] = useState("");
+  const [tokenError, setTokenError] = useState("");
 
   useEffect(() => {
-    if (!isLoading && (!user || user.guest)) {
-      router.push("/login");
-    }
-  }, [user, isLoading, router]);
+    checkVIPAccess();
+  }, [user]);
 
-  if (isLoading) {
+  const checkVIPAccess = async () => {
+    try {
+      // Check if user has active subscription or valid token
+      const res = await fetch("/api/vip/status");
+      if (res.ok) {
+        const data = await res.json();
+        setHasVIPAccess(data.hasAccess);
+      }
+    } catch (error) {
+      console.error("Failed to check VIP access:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleTokenRedeem = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setTokenError("");
+
+    try {
+      const res = await fetch("/api/vip/tokens/redeem", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: tokenCode }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        setHasVIPAccess(true);
+        setTokenCode("");
+      } else {
+        setTokenError(data.error || "Invalid token code");
+      }
+    } catch (error) {
+      setTokenError("Failed to redeem token. Please try again.");
+    }
+  };
+
+  if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-primary text-xl">Loading...</div>
       </div>
     );
   }
-
-  if (!user || user.guest) {
-    return null;
-  }
-
-  // Check VIP access (placeholder - would normally fetch from /api/vip/status)
-  const hasVIPAccess = false;
 
   if (!hasVIPAccess) {
     return (
@@ -76,47 +109,89 @@ export default function VIPAreaPage() {
                   </div>
                 </div>
 
-                <div className="bg-secondary p-6 space-y-4">
-                  <h3 className="font-bold text-lg">Subscription Plans</h3>
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <div className="border-2 border-border p-4 space-y-2">
-                      <h4 className="font-bold">Monthly</h4>
-                      <p className="text-2xl font-bold text-primary">
-                        $29.99/mo
-                      </p>
-                      <ul className="text-sm space-y-1">
-                        <li>✓ All VIP tips</li>
-                        <li>✓ Priority support</li>
-                        <li>✓ Cancel anytime</li>
-                      </ul>
-                      <Button className="w-full mt-4">Subscribe Monthly</Button>
-                    </div>
-                    <div className="border-2 border-primary p-4 space-y-2">
-                      <div className="inline-block bg-primary text-primary-foreground text-xs px-2 py-1 mb-2">
-                        BEST VALUE
+                {user && (
+                  <div className="bg-secondary p-6 space-y-4">
+                    <h3 className="font-bold text-lg">Subscription Plans</h3>
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div className="border-2 border-border p-4 space-y-2">
+                        <h4 className="font-bold">Monthly</h4>
+                        <p className="text-2xl font-bold text-primary">
+                          $29.99/mo
+                        </p>
+                        <ul className="text-sm space-y-1">
+                          <li>✓ All VIP tips</li>
+                          <li>✓ Priority support</li>
+                          <li>✓ Cancel anytime</li>
+                        </ul>
+                        <Button className="w-full mt-4">
+                          Subscribe Monthly
+                        </Button>
                       </div>
-                      <h4 className="font-bold">Yearly</h4>
-                      <p className="text-2xl font-bold text-primary">
-                        $249.99/yr
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        Save $110 per year
-                      </p>
-                      <ul className="text-sm space-y-1">
-                        <li>✓ All VIP tips</li>
-                        <li>✓ Priority support</li>
-                        <li>✓ 2 months free</li>
-                      </ul>
-                      <Button className="w-full mt-4">Subscribe Yearly</Button>
+                      <div className="border-2 border-primary p-4 space-y-2">
+                        <div className="inline-block bg-primary text-primary-foreground text-xs px-2 py-1 mb-2">
+                          BEST VALUE
+                        </div>
+                        <h4 className="font-bold">Yearly</h4>
+                        <p className="text-2xl font-bold text-primary">
+                          $249.99/yr
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          Save $110 per year
+                        </p>
+                        <ul className="text-sm space-y-1">
+                          <li>✓ All VIP tips</li>
+                          <li>✓ Priority support</li>
+                          <li>✓ 2 months free</li>
+                        </ul>
+                        <Button className="w-full mt-4">
+                          Subscribe Yearly
+                        </Button>
+                      </div>
                     </div>
                   </div>
-                </div>
+                )}
 
-                <div className="text-center">
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Have a VIP token? Redeem it for instant access
+                {!user && (
+                  <Card className="border-2 border-primary">
+                    <CardContent className="p-6 text-center">
+                      <h3 className="font-bold text-lg mb-2">
+                        Sign up or log in to subscribe
+                      </h3>
+                      <p className="text-muted-foreground mb-4">
+                        Create an account to access VIP features
+                      </p>
+                      <Button>Get Started</Button>
+                    </CardContent>
+                  </Card>
+                )}
+
+                <div className="border-2 border-border p-6">
+                  <h3 className="font-bold text-lg mb-4 text-center">
+                    Have a VIP Token?
+                  </h3>
+                  <form onSubmit={handleTokenRedeem} className="space-y-4">
+                    <div>
+                      <Input
+                        placeholder="Enter your VIP token code"
+                        value={tokenCode}
+                        onChange={(e) => setTokenCode(e.target.value)}
+                        className="text-center font-mono"
+                        required
+                      />
+                      {tokenError && (
+                        <p className="text-sm text-destructive mt-2">
+                          {tokenError}
+                        </p>
+                      )}
+                    </div>
+                    <Button type="submit" className="w-full">
+                      <CheckCircle className="h-4 w-4 mr-2" />
+                      Redeem Token
+                    </Button>
+                  </form>
+                  <p className="text-xs text-muted-foreground text-center mt-4">
+                    Tokens provide instant VIP access without subscription
                   </p>
-                  <Button variant="outline">Redeem Token</Button>
                 </div>
               </CardContent>
             </Card>
