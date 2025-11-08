@@ -18,6 +18,7 @@ const signupSchema = z.object({
     }
     return date
   }),
+  referralCode: z.string().optional(),
   consents: z.object({
     analytics: z.boolean().default(true),
     marketing: z.boolean().default(false),
