@@ -72,7 +72,7 @@ export async function GET(request: NextRequest) {
     const validatedQuery = tipsQuerySchema.parse(query);
 
     // Build where clause
-    const where: any = {};
+    const where: Record<string, unknown> = {};
 
     if (validatedQuery.search) {
       where.OR = [
@@ -107,7 +107,7 @@ export async function GET(request: NextRequest) {
     const take = Math.min(validatedQuery.limit, 100);
 
     // Build order by
-    const orderBy: any = {};
+    const orderBy: Record<string, "asc" | "desc"> = {};
     orderBy[validatedQuery.sortBy] = validatedQuery.sortOrder;
 
     // Query tips with detailed information
@@ -179,21 +179,121 @@ export async function GET(request: NextRequest) {
     const hasMore = skip + tips.length < total;
 
     // Calculate additional metrics for each tip
-    const tipsWithMetrics = tips.map((tip) => ({
-      ...tip,
-      totalBets: tip._count.bets,
-      betWinRate: calculateWinRate(tip.bets),
-      totalStaked: tip.bets.reduce((sum, bet) => sum + Number(bet.amount), 0),
-      matchInfo: tip.match
-        ? {
-            homeTeam: tip.match.homeTeam,
-            awayTeam: tip.match.awayTeam,
-            score: `${tip.match.homeTeamScore} - ${tip.match.awayTeam}`,
-            status: tip.match.status,
-            scheduledAt: tip.match.scheduledAt,
-          }
-        : null,
-    }));
+    interface BetSnapshot {
+      id: string;
+      amount: number;
+      odds: number;
+      status: string;
+      placedAt: Date;
+    }
+
+    interface TeamInfo {
+      id: string;
+      name: string;
+      shortName: string;
+      logoUrl: string | null;
+      sport: {
+        name: string;
+        displayName: string;
+      };
+    }
+
+    interface MatchInfo {
+      homeTeam: TeamInfo;
+      awayTeam: TeamInfo;
+      score: string;
+      status: string;
+      scheduledAt: Date;
+    }
+
+    interface Match {
+      id: string;
+      homeTeam: TeamInfo;
+      awayTeam: TeamInfo;
+      homeTeamScore: number | null;
+      awayTeamScore: number | null;
+      status: string;
+      scheduledAt: Date;
+    }
+
+    interface TipWithMetrics {
+      id: string;
+      title: string;
+      content: string | null;
+      summary: string | null;
+      odds: number | null;
+      oddsSource: string;
+      sport: string;
+      league: string | null;
+      matchId: string | null;
+      matchDate: Date | null;
+      homeTeamId: string | null;
+      awayTeamId: string | null;
+      predictionType: string | null;
+      predictedOutcome: string | null;
+      ticketSnapshots: string[];
+      publishAt: Date;
+      isVIP: boolean;
+      featured: boolean;
+      authorId: string;
+      authorName: string | null;
+      tags: string[];
+      attachments: string[];
+      status: string;
+      result: string | null;
+      totalBets: number;
+      betWinRate: number;
+      totalStaked: number;
+      matchInfo: MatchInfo | null;
+      _count: {
+        bets: number;
+      };
+      bets: BetSnapshot[];
+      match: Match | null;
+      homeTeam: TeamInfo | null;
+      awayTeam: TeamInfo | null;
+    }
+
+    interface BetMetrics {
+      totalBets: number;
+      betWinRate: number;
+      totalStaked: number;
+    }
+
+    // Helper function
+    function calculateWinRate(bets: BetSnapshot[]): number {
+      if (!bets || bets.length === 0) return 0;
+
+      const wonBets = bets.filter((bet) => bet.status === "won").length;
+      return (wonBets / bets.length) * 100;
+    }
+
+    const tipsWithMetrics: TipWithMetrics[] = tips.map(
+      (tip: (typeof tips)[number]): TipWithMetrics => {
+        const metrics: BetMetrics = {
+          totalBets: tip._count.bets,
+          betWinRate: calculateWinRate(tip.bets),
+          totalStaked: tip.bets.reduce(
+            (sum: number, bet: BetSnapshot): number => sum + Number(bet.amount),
+            0
+          ),
+        };
+
+        return {
+          ...tip,
+          ...metrics,
+          matchInfo: tip.match
+            ? {
+                homeTeam: tip.match.homeTeam,
+                awayTeam: tip.match.awayTeam,
+                score: `${tip.match.homeTeamScore} - ${tip.match.awayTeamScore}`,
+                status: tip.match.status,
+                scheduledAt: tip.match.scheduledAt,
+              }
+            : null,
+        };
+      }
+    );
 
     return NextResponse.json({
       success: true,
@@ -461,12 +561,4 @@ export async function DELETE(request: NextRequest) {
       { status: 500 }
     );
   }
-}
-
-// Helper function
-function calculateWinRate(bets: any[]): number {
-  if (!bets || bets.length === 0) return 0;
-
-  const wonBets = bets.filter((bet) => bet.status === "won").length;
-  return (wonBets / bets.length) * 100;
 }

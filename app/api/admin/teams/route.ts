@@ -55,7 +55,14 @@ export async function GET(request: NextRequest) {
     const validatedQuery = teamQuerySchema.parse(query);
     console.log("Validated query:", validatedQuery);
 
-    const where: any = {};
+    const where: {
+      sportId?: string;
+      league?: { mode: "insensitive"; contains: string };
+      OR?: Array<{
+        name?: { mode: "insensitive"; contains: string };
+        shortName?: { mode: "insensitive"; contains: string };
+      }>;
+    } = {};
 
     if (validatedQuery.sportId) {
       where.sportId = validatedQuery.sportId;
