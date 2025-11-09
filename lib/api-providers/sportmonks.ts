@@ -115,6 +115,19 @@ interface SMResponse {
   };
 }
 
+interface SMLeaguesResponse {
+  data: SMLeague[];
+  meta?: {
+    pagination?: {
+      count: number;
+      per_page: number;
+      current_page: number;
+      total: number;
+      total_pages: number;
+    };
+  };
+}
+
 export class SportMonksProvider extends BaseAPIProvider {
   private readonly baseUrl: string;
 
@@ -135,7 +148,8 @@ export class SportMonksProvider extends BaseAPIProvider {
 
   private buildUrl(
     path: string,
-    query: Record<string, string | number | undefined> = {}
+    query: Record<string, string | number | undefined> = {},
+    skipDefaultIncludes = false
   ): string {
     const params = new URLSearchParams();
     params.set("api_token", this.config.apiKey);
@@ -143,7 +157,8 @@ export class SportMonksProvider extends BaseAPIProvider {
     // According to Sportmonks API v3 documentation, the correct includes are:
     // For fixtures: state, league, participants, venue, etc.
     // Use semicolons to separate includes
-    if (!("include" in query)) {
+    // Skip default includes for non-fixture endpoints (like /leagues)
+    if (!skipDefaultIncludes && !("include" in query)) {
       params.set("include", "state;league.country;participants;venue;scores");
     }
 
@@ -372,7 +387,9 @@ export class SportMonksProvider extends BaseAPIProvider {
     pagination?: PaginationParams
   ): Promise<PaginatedResponse<Match>> {
     console.log("[SportMonks] getLiveMatches called", { filters, pagination });
-    const url = this.buildUrl("/livescores");
+
+    // Try the inplay endpoint first, then fall back to today's fixtures filtered by live state
+    let url = this.buildUrl("/livescores/inplay");
     console.time("[SportMonks] getLiveMatches API call");
 
     try {
@@ -385,6 +402,34 @@ export class SportMonksProvider extends BaseAPIProvider {
       });
 
       let matches = (json.data || []).map((f) => this.transformFixture(f));
+
+      // If no results from inplay, try fetching today's matches and filter by live status
+      if (matches.length === 0) {
+        console.log(
+          "[SportMonks] No matches from /inplay, trying today's fixtures filtered by live state"
+        );
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+
+        url = this.buildUrl(
+          `/fixtures/between/${today.toISOString().slice(0, 10)}/${tomorrow
+            .toISOString()
+            .slice(0, 10)}`
+        );
+        const todayJson = await this.fetchWithRateLimit<SMResponse>(url);
+
+        const allTodayMatches = (todayJson.data || []).map((f) =>
+          this.transformFixture(f)
+        );
+        matches = allTodayMatches.filter((m) => m.status === "live");
+
+        console.log("[SportMonks] Filtered today's fixtures for live matches", {
+          totalToday: allTodayMatches.length,
+          liveMatches: matches.length,
+        });
+      }
 
       // optional filters
       if (filters?.league) {
@@ -409,7 +454,6 @@ export class SportMonksProvider extends BaseAPIProvider {
       throw error;
     }
   }
-
   async getScheduledMatches(
     filters?: SearchFilters,
     pagination?: PaginationParams
@@ -571,7 +615,59 @@ export class SportMonksProvider extends BaseAPIProvider {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     _sport: string
   ): Promise<Array<{ id: string; name: string; country?: string }>> {
-    // Optional enhancement: call /leagues endpoint with includes
-    return [];
+    // Fetch leagues directly from SportMonks v3 with pagination
+    // Use country include for leagues endpoint (not fixture includes)
+    const perPage = 100;
+    let page = 1;
+    const maxPages = 10; // safety cap
+    const leagues: Array<{ id: string; name: string; country?: string }> = [];
+
+    console.log("[SportMonks] getLeagues called");
+
+    while (page <= maxPages) {
+      // Use skipDefaultIncludes and explicitly set league-specific includes
+      const url = this.buildUrl(
+        "/leagues",
+        { page, per_page: perPage, include: "country" },
+        true
+      );
+      const json = await this.fetchWithRateLimit<SMLeaguesResponse>(url);
+
+      for (const l of json.data || []) {
+        leagues.push({
+          id: String(l.id),
+          name: l.name,
+          country: l.country?.name,
+        });
+      }
+
+      const totalPages = json.meta?.pagination?.total_pages || 1;
+      console.log(
+        `[SportMonks] getLeagues page ${page}/${totalPages}, fetched ${
+          json.data?.length || 0
+        } leagues`
+      );
+
+      if (page >= totalPages) break;
+      page += 1;
+    }
+
+    // Deduplicate by id just in case
+    const unique = new Map<
+      string,
+      { id: string; name: string; country?: string }
+    >();
+    for (const l of leagues) {
+      if (!unique.has(l.id)) unique.set(l.id, l);
+    }
+
+    const result = Array.from(unique.values()).sort((a, b) =>
+      a.name.localeCompare(b.name)
+    );
+
+    console.log(
+      `[SportMonks] getLeagues returning ${result.length} unique leagues`
+    );
+    return result;
   }
 }

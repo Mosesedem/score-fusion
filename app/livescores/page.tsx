@@ -89,6 +89,7 @@ export default function LiveScoresPage() {
   const [isSearching, setIsSearching] = useState(false);
   const [selectedLeague, setSelectedLeague] = useState<string>("all");
   const [availableLeagues, setAvailableLeagues] = useState<string[]>([]);
+  const [fetchedLeagues, setFetchedLeagues] = useState<string[]>([]);
   const [expandedMatchId, setExpandedMatchId] = useState<string | null>(null);
   const [favoriteTeams, setFavoriteTeams] = useState<string[]>([]);
   const [showAllLeagues, setShowAllLeagues] = useState(false);
@@ -98,7 +99,8 @@ export default function LiveScoresPage() {
       try {
         let statusParam = "";
         let searchParam = "";
-        const pageParam = `&page=${page}&limit=20`;
+        // Increase limit to fetch more matches and show more leagues
+        const pageParam = `&page=${page}&limit=100`;
 
         // Always use API source for fetching
         const sourceParam = "&source=api&sport=football";
@@ -111,15 +113,39 @@ export default function LiveScoresPage() {
           searchParam = `&search=${encodeURIComponent(search)}`;
         }
 
-        // For 'all' status or no status, fetch fixtures from today to next 7 days
+        // For 'all' status or no status, fetch fixtures from wider range to show more leagues
         let dateParams = "";
         if (!status || status === "all") {
           const today = new Date();
           today.setHours(0, 0, 0, 0);
-          const nextWeek = new Date(today);
-          nextWeek.setDate(nextWeek.getDate() + 7);
-          nextWeek.setHours(23, 59, 59, 999);
-          dateParams = `&dateFrom=${today.toISOString()}&dateTo=${nextWeek.toISOString()}`;
+          const startDate = new Date(today);
+          startDate.setDate(startDate.getDate() - 3); // Last 3 days
+          const endDate = new Date(today);
+          endDate.setDate(endDate.getDate() + 14); // Next 14 days
+          endDate.setHours(23, 59, 59, 999);
+          dateParams = `&dateFrom=${startDate.toISOString()}&dateTo=${endDate.toISOString()}`;
+        } else if (status === "live") {
+          // For live matches, check today only
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          const tomorrow = new Date(today);
+          tomorrow.setDate(tomorrow.getDate() + 1);
+          dateParams = `&dateFrom=${today.toISOString()}&dateTo=${tomorrow.toISOString()}`;
+        } else if (status === "scheduled") {
+          // For scheduled, show next 14 days
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          const twoWeeks = new Date(today);
+          twoWeeks.setDate(twoWeeks.getDate() + 14);
+          dateParams = `&dateFrom=${today.toISOString()}&dateTo=${twoWeeks.toISOString()}`;
+        } else if (status === "finished") {
+          // For finished, show last 7 days
+          const today = new Date();
+          today.setHours(23, 59, 59, 999);
+          const lastWeek = new Date(today);
+          lastWeek.setDate(lastWeek.getDate() - 7);
+          lastWeek.setHours(0, 0, 0, 0);
+          dateParams = `&dateFrom=${lastWeek.toISOString()}&dateTo=${today.toISOString()}`;
         }
 
         const url = `/api/livescores/matches?${sourceParam}${statusParam}${searchParam}${pageParam}${dateParams}`;
@@ -193,11 +219,50 @@ export default function LiveScoresPage() {
 
   // Extract unique leagues from matches
   useEffect(() => {
-    const leagues = Array.from(
+    const leaguesFromMatches = Array.from(
       new Set(matches.map((m) => m.league?.name).filter(Boolean))
     ) as string[];
-    setAvailableLeagues(leagues.sort());
-  }, [matches]);
+    // Merge with fetched leagues from broader window
+    const merged = Array.from(
+      new Set([...(leaguesFromMatches || []), ...(fetchedLeagues || [])])
+    ).sort();
+    setAvailableLeagues(merged);
+  }, [matches, fetchedLeagues]);
+
+  // Fetch broader league list to show more leagues in the dropdown
+  useEffect(() => {
+    // Build a wider default window: last 14 days to next 60 days
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const from = new Date(today);
+    from.setDate(from.getDate() - 14);
+    const to = new Date(today);
+    to.setDate(to.getDate() + 60);
+
+    // Use both provider and fixtures sources for maximum coverage
+    const url = `/api/livescores/leagues?dateFrom=${from.toISOString()}&dateTo=${to.toISOString()}&maxPages=8&source=both`;
+
+    let aborted = false;
+    console.log("[LiveScores] Fetching leagues from:", url);
+    fetch(url)
+      .then((res) => res.json())
+      .then((json) => {
+        if (!aborted && json?.success && json?.data?.leagues) {
+          const names: string[] = json.data.leagues
+            .map((l: { name?: string }) => l?.name)
+            .filter(Boolean);
+          console.log(`[LiveScores] Received ${names.length} leagues from API`);
+          setFetchedLeagues(Array.from(new Set(names)).sort());
+        }
+      })
+      .catch((err) =>
+        console.error("[LiveScores] Failed to fetch leagues", err)
+      );
+
+    return () => {
+      aborted = true;
+    };
+  }, []);
 
   // Load favorite teams from localStorage
   useEffect(() => {
@@ -612,11 +677,42 @@ export default function LiveScoresPage() {
             <CardContent className="py-12 text-center">
               <Activity className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
               <h3 className="text-lg font-semibold mb-2">No matches found</h3>
-              <p className="text-sm text-muted-foreground">
-                {filterStatus === "all"
-                  ? "No matches available at the moment"
+              <p className="text-sm text-muted-foreground mb-4">
+                {filterStatus === "live"
+                  ? "No live matches at this moment. Check back soon!"
+                  : filterStatus === "all"
+                  ? "No matches available. Try adjusting your filters or search."
                   : `No ${filterStatus} matches at the moment`}
               </p>
+              {filterStatus === "live" && (
+                <div className="flex flex-col items-center gap-2 mt-4">
+                  <p className="text-xs text-muted-foreground">
+                    Matches are typically live during these times:
+                  </p>
+                  <div className="flex gap-2 flex-wrap justify-center">
+                    <Badge variant="outline">12:00 - 17:00 UTC</Badge>
+                    <Badge variant="outline">19:00 - 23:00 UTC</Badge>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setFilterStatus("scheduled")}
+                    className="mt-4"
+                  >
+                    View Upcoming Matches
+                  </Button>
+                </div>
+              )}
+              {searchQuery && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleClearSearch}
+                  className="mt-4"
+                >
+                  Clear Search
+                </Button>
+              )}
             </CardContent>
           </Card>
         ) : (
