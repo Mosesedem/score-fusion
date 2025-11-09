@@ -17,6 +17,7 @@ import {
   PlayCircle,
 } from "lucide-react";
 import Footer from "@/components/footer";
+import Image from "next/image";
 interface Match {
   id: string;
   homeTeam: string;
@@ -386,24 +387,144 @@ export default function Home() {
               <div className="space-y-6">
                 <div>
                   <h3 className="text-xl font-bold mb-4">Available On</h3>
+                  <div className="flex items-center gap-4">
+                    {/* iOS Download */}
+                    <Button className="h-20 w-50 mb-4" variant="outline">
+                      <svg
+                        fill="#ffffff"
+                        viewBox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg"
+                        stroke="#ffffff"
+                        className="h-10"
+                      >
+                        <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+                        <g
+                          id="SVGRepo_tracerCarrier"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                        ></g>
+                        <g id="SVGRepo_iconCarrier">
+                          {" "}
+                          <path d="M18.71 19.5C17.88 20.74 17 21.95 15.66 21.97C14.32 22 13.89 21.18 12.37 21.18C10.84 21.18 10.37 21.95 9.09997 22C7.78997 22.05 6.79997 20.68 5.95997 19.47C4.24997 17 2.93997 12.45 4.69997 9.39C5.56997 7.87 7.12997 6.91 8.81997 6.88C10.1 6.86 11.32 7.75 12.11 7.75C12.89 7.75 14.37 6.68 15.92 6.84C16.57 6.87 18.39 7.1 19.56 8.82C19.47 8.88 17.39 10.1 17.41 12.63C17.44 15.65 20.06 16.66 20.09 16.67C20.06 16.74 19.67 18.11 18.71 19.5ZM13 3.5C13.73 2.67 14.94 2.04 15.94 2C16.07 3.17 15.6 4.35 14.9 5.19C14.21 6.04 13.07 6.7 11.95 6.61C11.8 5.46 12.36 4.26 13 3.5Z"></path>{" "}
+                        </g>
+                      </svg>
+                      <div className="text-left">
+                        <div className="text-xs opacity-80">
+                          Download on the
+                        </div>
+                        <div className="text-lg font-semibold">App Store</div>
+                      </div>
+                    </Button>
 
-                  {/* iOS Download */}
-                  <button className="w-full bg-black hover:bg-black/90 text-white rounded-lg p-4 mb-3 flex items-center gap-4 transition-colors">
-                    <Apple className="h-10 w-10" />
-                    <div className="text-left">
-                      <div className="text-xs opacity-80">Download on the</div>
-                      <div className="text-lg font-semibold">App Store</div>
-                    </div>
-                  </button>
-
-                  {/* Android Download */}
-                  <button className="w-full bg-black hover:bg-black/90 text-white rounded-lg p-4 flex items-center gap-4 transition-colors">
-                    <PlayCircle className="h-10 w-10" />
-                    <div className="text-left">
-                      <div className="text-xs opacity-80">GET IT ON</div>
-                      <div className="text-lg font-semibold">Google Play</div>
-                    </div>
-                  </button>
+                    {/* Android Download */}
+                    <Button variant="outline" className="h-20 w-50">
+                      <svg
+                        viewBox="0 0 32 32"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-20"
+                      >
+                        <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+                        <g
+                          id="SVGRepo_tracerCarrier"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                        ></g>
+                        <g id="SVGRepo_iconCarrier">
+                          {" "}
+                          <mask
+                            id="mask0_87_8320"
+                            // maskType="alpha"
+                            maskUnits="userSpaceOnUse"
+                            x="7"
+                            y="3"
+                            width="24"
+                            height="26"
+                          >
+                            {" "}
+                            <path
+                              d="M30.0484 14.4004C31.3172 15.0986 31.3172 16.9014 30.0484 17.5996L9.75627 28.7659C8.52052 29.4459 7 28.5634 7 27.1663L7 4.83374C7 3.43657 8.52052 2.55415 9.75627 3.23415L30.0484 14.4004Z"
+                              fill="#C4C4C4"
+                            ></path>{" "}
+                          </mask>{" "}
+                          <g mask="url(#mask0_87_8320)">
+                            {" "}
+                            <path
+                              d="M7.63473 28.5466L20.2923 15.8179L7.84319 3.29883C7.34653 3.61721 7 4.1669 7 4.8339V27.1664C7 27.7355 7.25223 28.2191 7.63473 28.5466Z"
+                              fill="url(#paint0_linear_87_8320)"
+                            ></path>{" "}
+                            <path
+                              d="M30.048 14.4003C31.3169 15.0985 31.3169 16.9012 30.048 17.5994L24.9287 20.4165L20.292 15.8175L24.6923 11.4531L30.048 14.4003Z"
+                              fill="url(#paint1_linear_87_8320)"
+                            ></path>{" "}
+                            <path
+                              d="M24.9292 20.4168L20.2924 15.8179L7.63477 28.5466C8.19139 29.0232 9.02389 29.1691 9.75635 28.766L24.9292 20.4168Z"
+                              fill="url(#paint2_linear_87_8320)"
+                            ></path>{" "}
+                            <path
+                              d="M7.84277 3.29865L20.2919 15.8177L24.6922 11.4533L9.75583 3.23415C9.11003 2.87878 8.38646 2.95013 7.84277 3.29865Z"
+                              fill="url(#paint3_linear_87_8320)"
+                            ></path>{" "}
+                          </g>{" "}
+                          <defs>
+                            {" "}
+                            <linearGradient
+                              id="paint0_linear_87_8320"
+                              x1="15.6769"
+                              y1="10.874"
+                              x2="7.07106"
+                              y2="19.5506"
+                              gradientUnits="userSpaceOnUse"
+                            >
+                              {" "}
+                              <stop stop-color="#00C3FF"></stop>{" "}
+                              <stop offset="1" stop-color="#1BE2FA"></stop>{" "}
+                            </linearGradient>{" "}
+                            <linearGradient
+                              id="paint1_linear_87_8320"
+                              x1="20.292"
+                              y1="15.8176"
+                              x2="31.7381"
+                              y2="15.8176"
+                              gradientUnits="userSpaceOnUse"
+                            >
+                              {" "}
+                              <stop stop-color="#FFCE00"></stop>{" "}
+                              <stop offset="1" stop-color="#FFEA00"></stop>{" "}
+                            </linearGradient>{" "}
+                            <linearGradient
+                              id="paint2_linear_87_8320"
+                              x1="7.36932"
+                              y1="30.1004"
+                              x2="22.595"
+                              y2="17.8937"
+                              gradientUnits="userSpaceOnUse"
+                            >
+                              {" "}
+                              <stop stop-color="#DE2453"></stop>{" "}
+                              <stop offset="1" stop-color="#FE3944"></stop>{" "}
+                            </linearGradient>{" "}
+                            <linearGradient
+                              id="paint3_linear_87_8320"
+                              x1="8.10725"
+                              y1="1.90137"
+                              x2="22.5971"
+                              y2="13.7365"
+                              gradientUnits="userSpaceOnUse"
+                            >
+                              {" "}
+                              <stop stop-color="#11D574"></stop>{" "}
+                              <stop offset="1" stop-color="#01F176"></stop>{" "}
+                            </linearGradient>{" "}
+                          </defs>{" "}
+                        </g>
+                      </svg>
+                      <div className="text-left">
+                        <div className="text-xs opacity-80">GET IT ON</div>
+                        <div className="text-lg font-semibold">Google Play</div>
+                      </div>
+                    </Button>
+                  </div>
                 </div>
 
                 <div className="border-t border-border pt-6">

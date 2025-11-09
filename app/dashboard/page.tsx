@@ -9,22 +9,22 @@ import {
   Target,
   Activity,
   Crown,
+  BarChart3,
 } from "lucide-react";
+import Link from "next/link";
 
 export default function DashboardPage() {
   const { user } = useAuth();
-
-  // Dashboard is now public - no auth required
 
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2">
-            Welcome back, {user?.displayName || "Visitor"}!
+            Welcome back, {user?.displayName || "Punter"}!
           </h1>
           <p className="text-muted-foreground">
-            Here&apos;s your personalized betting dashboard
+            Your personalized sports prediction dashboard
           </p>
         </div>
 
@@ -33,29 +33,14 @@ export default function DashboardPage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
-                Total Bets
-              </CardTitle>
-              <Trophy className="h-4 w-4 text-primary" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">0</div>
-              <p className="text-xs text-muted-foreground">
-                +0 from last month
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Win Rate
+                Predictions Tracked
               </CardTitle>
               <Target className="h-4 w-4 text-primary" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">0%</div>
+              <div className="text-2xl font-bold">0</div>
               <p className="text-xs text-muted-foreground">
-                Track your success
+                Track your predictions
               </p>
             </CardContent>
           </Card>
@@ -63,14 +48,29 @@ export default function DashboardPage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
-                Total Earnings
+                Success Rate
+              </CardTitle>
+              <Trophy className="h-4 w-4 text-primary" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">0%</div>
+              <p className="text-xs text-muted-foreground">
+                Your prediction accuracy
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Referral Earnings
               </CardTitle>
               <Wallet className="h-4 w-4 text-primary" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">$0.00</div>
               <p className="text-xs text-muted-foreground">
-                From tips & referrals
+                From referrals & achievements
               </p>
             </CardContent>
           </Card>
@@ -78,7 +78,7 @@ export default function DashboardPage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
-                Active Tips
+                Active Predictions
               </CardTitle>
               <TrendingUp className="h-4 w-4 text-primary" />
             </CardHeader>
@@ -116,16 +116,44 @@ export default function DashboardPage() {
 
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <TrendingUp className="h-5 w-5 text-primary" />
-                  Latest Free Tips
-                </CardTitle>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="flex items-center gap-2">
+                    <TrendingUp className="h-5 w-5 text-primary" />
+                    Latest Free Predictions
+                  </CardTitle>
+                  <Link
+                    href="/tips"
+                    className="text-sm text-primary hover:underline"
+                  >
+                    View All
+                  </Link>
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="text-center py-8 text-muted-foreground">
                   <TrendingUp className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>No tips available yet</p>
-                  <p className="text-sm mt-2">New tips will appear here</p>
+                  <p>No predictions available yet</p>
+                  <p className="text-sm mt-2">
+                    New predictions will appear here
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <BarChart3 className="h-5 w-5 text-primary" />
+                  Your Prediction Analytics
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center py-8 text-muted-foreground">
+                  <BarChart3 className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>Start tracking predictions to see analytics</p>
+                  <p className="text-sm mt-2">
+                    View your success rates, trends, and insights
+                  </p>
                 </div>
               </CardContent>
             </Card>
@@ -142,25 +170,32 @@ export default function DashboardPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <p className="text-sm text-muted-foreground">
-                  Upgrade to VIP for premium tips with higher success rates
+                  Upgrade to VIP for premium predictions with expert analysis
+                  and winning ticket snapshots
                 </p>
                 <ul className="space-y-2 text-sm">
                   <li className="flex items-center gap-2">
-                    <div className="h-1.5 w-1.5 bg-primary" />
-                    <span>Exclusive premium tips</span>
+                    <div className="h-1.5 w-1.5 bg-primary rounded-full" />
+                    <span>Exclusive premium predictions</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <div className="h-1.5 w-1.5 bg-primary" />
-                    <span>Advanced analytics</span>
+                    <div className="h-1.5 w-1.5 bg-primary rounded-full" />
+                    <span>Expert analysis & insights</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <div className="h-1.5 w-1.5 bg-primary" />
-                    <span>Priority support</span>
+                    <div className="h-1.5 w-1.5 bg-primary rounded-full" />
+                    <span>Ticket snapshots for proof</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <div className="h-1.5 w-1.5 bg-primary rounded-full" />
+                    <span>Higher success rates</span>
                   </li>
                 </ul>
-                <button className="w-full bg-primary text-primary-foreground font-bold py-2 px-4 hover:bg-[#a16207] transition-colors">
-                  Upgrade Now
-                </button>
+                <Link href="/vip">
+                  <button className="w-full bg-primary text-primary-foreground font-bold py-2 px-4 rounded-md hover:opacity-90 transition-opacity">
+                    Get VIP Access
+                  </button>
+                </Link>
               </CardContent>
             </Card>
 
@@ -169,15 +204,38 @@ export default function DashboardPage() {
                 <CardTitle>Quick Actions</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                <button className="w-full border-2 border-border py-2 px-4 hover:bg-accent transition-colors text-sm">
-                  View All Tips
-                </button>
-                <button className="w-full border-2 border-border py-2 px-4 hover:bg-accent transition-colors text-sm">
-                  Betting History
-                </button>
-                <button className="w-full border-2 border-border py-2 px-4 hover:bg-accent transition-colors text-sm">
-                  Refer & Earn
-                </button>
+                <Link href="/tips">
+                  <button className="w-full border-2 border-border py-2 px-4 rounded-md hover:bg-accent transition-colors text-sm text-left">
+                    📊 View All Predictions
+                  </button>
+                </Link>
+                <Link href="/history">
+                  <button className="w-full border-2 border-border py-2 px-4 rounded-md hover:bg-accent transition-colors text-sm text-left">
+                    📈 Prediction History
+                  </button>
+                </Link>
+                <Link href="/referral">
+                  <button className="w-full border-2 border-border py-2 px-4 rounded-md hover:bg-accent transition-colors text-sm text-left">
+                    💰 Refer & Earn
+                  </button>
+                </Link>
+                <Link href="/analytics">
+                  <button className="w-full border-2 border-border py-2 px-4 rounded-md hover:bg-accent transition-colors text-sm text-left">
+                    📉 View Analytics
+                  </button>
+                </Link>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-secondary">
+              <CardHeader>
+                <CardTitle className="text-sm">💡 Punter Tip</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">
+                  Track predictions consistently to improve your analysis skills
+                  and make better-informed decisions!
+                </p>
               </CardContent>
             </Card>
           </div>

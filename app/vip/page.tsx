@@ -206,27 +206,63 @@ export default function VIPAreaPage() {
         <div className="mb-8">
           <div className="flex items-center gap-2 mb-2">
             <Crown className="h-8 w-8 text-primary" />
-            <h1 className="text-3xl font-bold">VIP Area</h1>
+            <h1 className="text-3xl font-bold">VIP Predictions Area</h1>
           </div>
           <p className="text-muted-foreground">
-            Premium tips and exclusive content
+            Premium predictions with exclusive analysis and ticket snapshots
           </p>
         </div>
 
         <Card>
           <CardHeader>
-            <CardTitle>Premium Tips</CardTitle>
+            <CardTitle>Premium Predictions</CardTitle>
+            <p className="text-sm text-muted-foreground mt-2">
+              Access our exclusive VIP predictions with detailed analysis, team
+              insights, and winning ticket snapshots
+            </p>
           </CardHeader>
           <CardContent>
             <div className="text-center py-12 text-muted-foreground">
               <Crown className="h-16 w-16 mx-auto mb-4 opacity-50" />
-              <p className="text-lg">No VIP tips available yet</p>
+              <p className="text-lg">No VIP predictions available yet</p>
               <p className="text-sm mt-2">
-                Check back soon for premium predictions
+                Check back soon for premium sports predictions
               </p>
             </div>
           </CardContent>
         </Card>
+
+        <div className="mt-8 grid md:grid-cols-3 gap-6">
+          <Card>
+            <CardContent className="p-6 text-center">
+              <Star className="h-12 w-12 text-primary mx-auto mb-4" />
+              <h3 className="font-bold mb-2">Expert Analysis</h3>
+              <p className="text-sm text-muted-foreground">
+                In-depth analysis from professional sports analysts with years
+                of experience
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-6 text-center">
+              <TrendingUp className="h-12 w-12 text-primary mx-auto mb-4" />
+              <h3 className="font-bold mb-2">Ticket Snapshots</h3>
+              <p className="text-sm text-muted-foreground">
+                View real betting tickets to track our success and build
+                confidence
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-6 text-center">
+              <CheckCircle className="h-12 w-12 text-primary mx-auto mb-4" />
+              <h3 className="font-bold mb-2">Higher Success Rate</h3>
+              <p className="text-sm text-muted-foreground">
+                Premium predictions with proven track record and transparency
+              </p>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );
