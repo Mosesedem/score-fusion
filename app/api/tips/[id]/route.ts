@@ -1,41 +1,45 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { z } from 'zod'
-import { prisma } from '@/lib/db'
-import { getAuthenticatedUser } from '@/lib/auth'
-import { cacheHelpers } from '@/lib/redis'
+import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
+import { prisma } from "@/lib/db";
+import { getAuthenticatedUser } from "@/lib/auth";
+import { cacheHelpers } from "@/lib/redis";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const tipId = params.id
+    const { id: tipId } = await params;
 
     // Validate UUID format
     try {
-      z.string().uuid().parse(tipId)
+      z.string().uuid().parse(tipId);
     } catch {
       return NextResponse.json(
-        { success: false, error: 'Invalid tip ID format' },
+        { success: false, error: "Invalid tip ID format" },
         { status: 400 }
-      )
+      );
     }
 
     // Check cache first
-    const cacheKey = `tip:${tipId}`
-    const cached = await cacheHelpers.get(cacheKey)
+    const cacheKey = `tip:${tipId}`;
+    const cached = await cacheHelpers.get(cacheKey);
     if (cached) {
       // Check if this is VIP content and user has access
       if (cached.data.tip.isVIP) {
-        const auth = await getAuthenticatedUser(request)
-        if (!auth.user || auth.user.guest || !(await checkVipAccess(auth.user.id))) {
+        const auth = await getAuthenticatedUser(request);
+        if (
+          !auth.user ||
+          auth.user.guest ||
+          !(await checkVipAccess(auth.user.id))
+        ) {
           return NextResponse.json(
-            { success: false, error: 'VIP subscription required' },
+            { success: false, error: "VIP subscription required" },
             { status: 403 }
-          )
+          );
         }
       }
-      return NextResponse.json(cached)
+      return NextResponse.json(cached);
     }
 
     // Get tip from database
@@ -44,7 +48,7 @@ export async function GET(
       include: {
         bets: {
           take: 5,
-          orderBy: { placedAt: 'desc' },
+          orderBy: { placedAt: "desc" },
           select: {
             id: true,
             amount: true,
@@ -55,46 +59,49 @@ export async function GET(
           },
         },
       },
-    })
+    });
 
     if (!tip) {
       return NextResponse.json(
-        { success: false, error: 'Tip not found' },
+        { success: false, error: "Tip not found" },
         { status: 404 }
-      )
+      );
     }
 
     // Check if tip is published
-    if (tip.status !== 'published' || tip.publishAt > new Date()) {
+    if (tip.status !== "published" || tip.publishAt > new Date()) {
       return NextResponse.json(
-        { success: false, error: 'Tip not available' },
+        { success: false, error: "Tip not available" },
         { status: 403 }
-      )
+      );
     }
 
     // Check VIP access
     if (tip.isVIP) {
-      const auth = await getAuthenticatedUser(request)
+      const auth = await getAuthenticatedUser(request);
       if (!auth.user) {
         return NextResponse.json(
-          { success: false, error: 'Authentication required for VIP content' },
+          { success: false, error: "Authentication required for VIP content" },
           { status: 401 }
-        )
+        );
       }
 
       if (auth.user.guest) {
         return NextResponse.json(
-          { success: false, error: 'VIP content not available for guest users' },
+          {
+            success: false,
+            error: "VIP content not available for guest users",
+          },
           { status: 403 }
-        )
+        );
       }
 
-      const hasVipAccess = await checkVipAccess(auth.user.id)
+      const hasVipAccess = await checkVipAccess(auth.user.id);
       if (!hasVipAccess) {
         return NextResponse.json(
-          { success: false, error: 'VIP subscription required' },
+          { success: false, error: "VIP subscription required" },
           { status: 403 }
-        )
+        );
       }
     }
 
@@ -103,15 +110,12 @@ export async function GET(
       where: {
         sport: tip.sport,
         isVIP: tip.isVIP,
-        status: 'published',
+        status: "published",
         publishAt: { lte: new Date() },
         id: { not: tipId },
       },
       take: 3,
-      orderBy: [
-        { featured: 'desc' },
-        { publishAt: 'desc' },
-      ],
+      orderBy: [{ featured: "desc" }, { publishAt: "desc" }],
       select: {
         id: true,
         title: true,
@@ -125,22 +129,22 @@ export async function GET(
         successRate: true,
         result: true,
       },
-    })
+    });
 
     // Increment view count
     await prisma.tip.update({
       where: { id: tipId },
       data: { viewCount: { increment: 1 } },
-    })
+    });
 
     // Track view analytics
-    const auth = await getAuthenticatedUser(request)
+    const auth = await getAuthenticatedUser(request);
     if (auth.user) {
       try {
         await prisma.analyticsEvent.create({
           data: {
             userId: auth.user.guest ? undefined : auth.user.id,
-            type: 'tip_view',
+            type: "tip_view",
             payload: {
               tipId,
               tipTitle: tip.title,
@@ -149,9 +153,9 @@ export async function GET(
               timestamp: new Date().toISOString(),
             },
           },
-        })
+        });
       } catch (error) {
-        console.error('Failed to track tip view analytics:', error)
+        console.error("Failed to track tip view analytics:", error);
       }
     }
 
@@ -161,20 +165,19 @@ export async function GET(
         tip,
         relatedTips,
       },
-    }
+    };
 
     // Cache for different durations based on VIP status
-    const cacheTTL = tip.isVIP ? 60 : 300 // 1 min for VIP, 5 min for public
-    await cacheHelpers.set(cacheKey, result, cacheTTL)
+    const cacheTTL = tip.isVIP ? 60 : 300; // 1 min for VIP, 5 min for public
+    await cacheHelpers.set(cacheKey, result, cacheTTL);
 
-    return NextResponse.json(result)
-
+    return NextResponse.json(result);
   } catch (error) {
-    console.error('Tip fetch error:', error)
+    console.error("Tip fetch error:", error);
     return NextResponse.json(
-      { success: false, error: 'Internal server error' },
+      { success: false, error: "Internal server error" },
       { status: 500 }
-    )
+    );
   }
 }
 
@@ -185,13 +188,13 @@ async function checkVipAccess(userId: string): Promise<boolean> {
     const activeSubscription = await prisma.subscription.findFirst({
       where: {
         userId,
-        status: 'active',
+        status: "active",
         currentPeriodEnd: { gte: new Date() },
       },
-    })
+    });
 
     if (activeSubscription) {
-      return true
+      return true;
     }
 
     // Check for valid VIP tokens
@@ -199,16 +202,13 @@ async function checkVipAccess(userId: string): Promise<boolean> {
       where: {
         userId,
         expiresAt: { gte: new Date() },
-        OR: [
-          { used: 0 },
-          { used: { lt: prisma.vIPToken.fields.quantity } },
-        ],
+        OR: [{ used: 0 }, { used: { lt: prisma.vIPToken.fields.quantity } }],
       },
-    })
+    });
 
-    return !!validToken
+    return !!validToken;
   } catch (error) {
-    console.error('Error checking VIP access:', error)
-    return false
+    console.error("Error checking VIP access:", error);
+    return false;
   }
 }
