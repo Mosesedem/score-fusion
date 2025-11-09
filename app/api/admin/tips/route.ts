@@ -34,6 +34,7 @@ const tipSchema = z.object({
   status: z
     .enum(["draft", "scheduled", "published", "archived"])
     .default("draft"),
+  result: z.enum(["won", "lost", "void", "pending"]).optional(),
 });
 
 // Query schema

@@ -102,8 +102,16 @@ export default function AdminPredictionsPage() {
     status: "published" as "draft" | "scheduled" | "published" | "archived",
     publishAt: "",
     tags: "",
-    confidenceLevel: "75",
+    confidenceLevel: "100",
+    result: "pending" as "won" | "lost" | "void" | "pending",
   });
+
+  // Search and pagination states
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [filterResult, setFilterResult] = useState<string>("all");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   useEffect(() => {
     if (!isLoading && (!user || user.role !== "ADMIN")) {
@@ -117,6 +125,39 @@ export default function AdminPredictionsPage() {
       fetchTeams();
     }
   }, [user]);
+
+  // Auto-update title when teams change
+  useEffect(() => {
+    if (!editingTip) {
+      let homeTeamName = "";
+      let awayTeamName = "";
+
+      if (manualMode) {
+        homeTeamName = manualHomeTeam.name;
+        awayTeamName = manualAwayTeam.name;
+      } else {
+        const homeTeam = teams.find((t) => t.id === formData.homeTeamId);
+        const awayTeam = teams.find((t) => t.id === formData.awayTeamId);
+        homeTeamName = homeTeam?.name || "";
+        awayTeamName = awayTeam?.name || "";
+      }
+
+      if (homeTeamName && awayTeamName) {
+        setFormData((prev) => ({
+          ...prev,
+          title: `${homeTeamName} vs ${awayTeamName}`,
+        }));
+      }
+    }
+  }, [
+    manualMode,
+    manualHomeTeam.name,
+    manualAwayTeam.name,
+    formData.homeTeamId,
+    formData.awayTeamId,
+    teams,
+    editingTip,
+  ]);
 
   const fetchTips = async () => {
     try {
@@ -413,6 +454,7 @@ export default function AdminPredictionsPage() {
           .split(",")
           .map((t) => t.trim())
           .filter(Boolean),
+        result: formData.result,
       };
 
       const res = await fetch(url, {
@@ -458,6 +500,7 @@ export default function AdminPredictionsPage() {
       publishAt: "",
       tags: "",
       confidenceLevel: "75",
+      result: "pending",
     });
     setManualHomeTeam({ name: "", logoUrl: "" });
     setManualAwayTeam({ name: "", logoUrl: "" });
@@ -487,6 +530,7 @@ export default function AdminPredictionsPage() {
       publishAt: tip.publishAt,
       tags: tip.tags.join(", "),
       confidenceLevel: tip.confidenceLevel?.toString() || "75",
+      result: (tip.result || "pending") as "won" | "lost" | "void" | "pending",
     });
     setShowForm(true);
   };
@@ -512,18 +556,54 @@ export default function AdminPredictionsPage() {
   };
 
   const handleSettle = async (id: string, result: string) => {
+    if (
+      !confirm(
+        `Are you sure you want to mark this prediction as ${result.toUpperCase()}?`
+      )
+    ) {
+      return;
+    }
+
     try {
+      // First fetch the current tip data
+      const currentTip = tips.find((tip) => tip.id === id);
+      if (!currentTip) return;
+
       const res = await fetch(`/api/admin/predictions?id=${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ result }),
+        body: JSON.stringify({
+          title: currentTip.title,
+          content: currentTip.content,
+          summary: currentTip.summary,
+          odds: currentTip.odds ? Number(currentTip.odds) : undefined,
+          oddsSource: currentTip.oddsSource,
+          sport: currentTip.sport,
+          league: currentTip.league,
+          matchDate: currentTip.matchDate,
+          homeTeamId: currentTip.homeTeam?.id,
+          awayTeamId: currentTip.awayTeam?.id,
+          predictionType: currentTip.predictionType,
+          predictedOutcome: currentTip.predictedOutcome,
+          ticketSnapshots: currentTip.ticketSnapshots,
+          isVIP: currentTip.isVIP,
+          featured: currentTip.featured,
+          status: currentTip.status,
+          publishAt: currentTip.publishAt,
+          tags: currentTip.tags,
+          result,
+        }),
       });
 
       if (res.ok) {
         fetchTips();
+      } else {
+        const error = await res.json();
+        alert(error.error || "Failed to update prediction result");
       }
     } catch (error) {
       console.error("Failed to settle prediction:", error);
+      alert("Failed to update prediction result");
     }
   };
 
@@ -539,23 +619,98 @@ export default function AdminPredictionsPage() {
 
   if (!user || user.role !== "ADMIN") return null;
 
+  // Filter and search logic
+  const filteredTips = tips.filter((tip) => {
+    const matchesSearch =
+      searchQuery === "" ||
+      tip.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      tip.summary?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      tip.league?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      tip.homeTeam?.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      tip.awayTeam?.name.toLowerCase().includes(searchQuery.toLowerCase());
+
+    const matchesStatus = filterStatus === "all" || tip.status === filterStatus;
+
+    const matchesResult = filterResult === "all" || tip.result === filterResult;
+
+    return matchesSearch && matchesStatus && matchesResult;
+  });
+
+  // Pagination logic
+  const totalPages = Math.ceil(filteredTips.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedTips = filteredTips.slice(startIndex, endIndex);
+
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold">
+            <h1 className="text-3xl font-bold flex justify-center items-center">
               Sports Predictions Management
             </h1>
             <p className="text-muted-foreground mt-1">
               Create and manage your sports prediction tips
             </p>
           </div>
+        </div>
+        <div className="flex justify-end p-4">
           <Button onClick={() => setShowForm(!showForm)}>
             <Plus className="h-4 w-4 mr-2" />
             New Prediction
           </Button>
         </div>
+        {/* Search and Filter Bar */}
+        <Card className="mb-6">
+          <CardContent className="p-4">
+            <div className="flex flex-col md:flex-row gap-4">
+              <div className="flex-1">
+                <Input
+                  placeholder="Search predictions..."
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    setCurrentPage(1);
+                  }}
+                  className="w-full"
+                />
+              </div>
+              <select
+                value={filterStatus}
+                onChange={(e) => {
+                  setFilterStatus(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="px-3 py-2 bg-background border-2 border-border text-foreground rounded-md"
+              >
+                <option value="all">All Status</option>
+                <option value="published">Published</option>
+                <option value="draft">Draft</option>
+                <option value="scheduled">Scheduled</option>
+                <option value="archived">Archived</option>
+              </select>
+              <select
+                value={filterResult}
+                onChange={(e) => {
+                  setFilterResult(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="px-3 py-2 bg-background border-2 border-border text-foreground rounded-md"
+              >
+                <option value="all">All Results</option>
+                <option value="pending">Pending</option>
+                <option value="won">Won</option>
+                <option value="lost">Lost</option>
+                <option value="void">Void</option>
+              </select>
+            </div>
+            <div className="mt-2 text-sm text-muted-foreground">
+              Showing {startIndex + 1}-{Math.min(endIndex, filteredTips.length)}{" "}
+              of {filteredTips.length} predictions
+            </div>
+          </CardContent>
+        </Card>
 
         {showForm && (
           <Card className="mb-8">
@@ -1096,7 +1251,7 @@ export default function AdminPredictionsPage() {
                 {/* Publishing Options */}
                 <div className="space-y-4">
                   <h3 className="font-bold text-lg">Publishing Options</h3>
-                  <div className="grid md:grid-cols-3 gap-4">
+                  <div className="grid md:grid-cols-4 gap-4">
                     <div>
                       <Label htmlFor="status">Status</Label>
                       <select
@@ -1118,6 +1273,30 @@ export default function AdminPredictionsPage() {
                         <option value="published">Published</option>
                         <option value="scheduled">Scheduled</option>
                         <option value="archived">Archived</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="result">Prediction Result</Label>
+                      <select
+                        id="result"
+                        className="w-full px-3 py-2 bg-background border-2 border-border text-foreground rounded-md"
+                        value={formData.result}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            result: e.target.value as
+                              | "won"
+                              | "lost"
+                              | "void"
+                              | "pending",
+                          })
+                        }
+                      >
+                        <option value="pending">Pending</option>
+                        <option value="won">Won</option>
+                        <option value="lost">Lost</option>
+                        <option value="void">Cancelled/Void</option>
                       </select>
                     </div>
 
@@ -1199,13 +1378,26 @@ export default function AdminPredictionsPage() {
 
         {/* Tips List */}
         <div className="space-y-4">
-          {tips.map((tip) => (
+          {paginatedTips.map((tip) => (
             <Card key={tip.id}>
-              <CardContent className="p-6">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      <h3 className="text-lg font-bold">{tip.title}</h3>
+              <CardContent className="p-4 md:p-6">
+                <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex flex-wrap items-center gap-2 mb-2">
+                      <h3 className="text-base md:text-lg font-bold">
+                        {tip.title}
+                      </h3>
+                      <Badge
+                        variant={
+                          tip.status === "published"
+                            ? "default"
+                            : tip.status === "draft"
+                            ? "secondary"
+                            : "outline"
+                        }
+                      >
+                        {tip.status}
+                      </Badge>
                       {tip.isVIP && (
                         <Badge className="bg-primary text-primary-foreground">
                           VIP
@@ -1214,47 +1406,68 @@ export default function AdminPredictionsPage() {
                       {tip.featured && (
                         <Badge variant="outline">Featured</Badge>
                       )}
-                      <Badge className="bg-secondary">{tip.status}</Badge>
                       {tip.result && (
                         <Badge
                           className={
                             tip.result === "won"
-                              ? "bg-green-500"
+                              ? "bg-green-500 hover:bg-green-600"
                               : tip.result === "lost"
-                              ? "bg-red-500"
-                              : "bg-gray-500"
+                              ? "bg-red-500 hover:bg-red-600"
+                              : tip.result === "void"
+                              ? "bg-gray-500 hover:bg-gray-600"
+                              : "bg-yellow-500 hover:bg-yellow-600"
                           }
                         >
-                          {tip.result.toUpperCase()}
+                          {tip.result === "void"
+                            ? "CANCELLED"
+                            : tip.result.toUpperCase()}
                         </Badge>
                       )}
                     </div>
 
                     {(tip.homeTeam || tip.awayTeam) && (
-                      <div className="flex items-center gap-2 mb-2">
+                      <div className="flex flex-wrap items-center gap-2 md:gap-3 mb-3">
                         {tip.homeTeam && (
-                          <span className="text-sm font-medium">
-                            {tip.homeTeam.name}
-                          </span>
+                          <div className="flex items-center gap-1.5">
+                            {tip.homeTeam.logoUrl && (
+                              <img
+                                src={tip.homeTeam.logoUrl}
+                                alt={tip.homeTeam.name}
+                                className="w-5 h-5 md:w-6 md:h-6 object-contain"
+                              />
+                            )}
+                            <span className="text-xs md:text-sm font-medium">
+                              {tip.homeTeam.name}
+                            </span>
+                          </div>
                         )}
                         {tip.homeTeam && tip.awayTeam && (
-                          <span className="text-sm text-muted-foreground">
+                          <span className="text-xs md:text-sm text-muted-foreground">
                             vs
                           </span>
                         )}
                         {tip.awayTeam && (
-                          <span className="text-sm font-medium">
-                            {tip.awayTeam.name}
-                          </span>
+                          <div className="flex items-center gap-1.5">
+                            {tip.awayTeam.logoUrl && (
+                              <img
+                                src={tip.awayTeam.logoUrl}
+                                alt={tip.awayTeam.name}
+                                className="w-5 h-5 md:w-6 md:h-6 object-contain"
+                              />
+                            )}
+                            <span className="text-xs md:text-sm font-medium">
+                              {tip.awayTeam.name}
+                            </span>
+                          </div>
                         )}
                       </div>
                     )}
 
-                    <p className="text-muted-foreground mb-2 line-clamp-2">
+                    <p className="text-muted-foreground mb-2 line-clamp-2 text-sm md:text-base">
                       {tip.summary || tip.content}
                     </p>
 
-                    <div className="flex items-center gap-4 text-sm mb-2">
+                    <div className="flex flex-wrap items-center gap-2 md:gap-4 text-xs md:text-sm mb-2">
                       {tip.odds && (
                         <span className="text-primary font-bold">
                           Odds: {tip.odds}
@@ -1267,20 +1480,20 @@ export default function AdminPredictionsPage() {
                         </span>
                       )}
                       {tip.predictedOutcome && (
-                        <span className="text-muted-foreground">
-                          Prediction: {tip.predictedOutcome}
+                        <span className="text-muted-foreground break-all">
+                          {tip.predictedOutcome}
                         </span>
                       )}
                       {typeof tip.confidenceLevel === "number" && (
                         <span className="text-muted-foreground">
-                          Confidence: {tip.confidenceLevel}%
+                          {tip.confidenceLevel}%
                         </span>
                       )}
                     </div>
 
                     {tip.ticketSnapshots.length > 0 && (
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <ImageIcon className="h-4 w-4" />
+                      <div className="flex items-center gap-2 text-xs md:text-sm text-muted-foreground">
+                        <ImageIcon className="h-3 w-3 md:h-4 md:w-4" />
                         <span>
                           {tip.ticketSnapshots.length} ticket snapshot(s)
                         </span>
@@ -1288,57 +1501,141 @@ export default function AdminPredictionsPage() {
                     )}
                   </div>
 
-                  <div className="flex gap-2 ml-4">
-                    {!tip.result && tip.status === "published" && (
-                      <>
+                  <div className="flex flex-row md:flex-col gap-2 flex-wrap md:flex-nowrap">
+                    {tip.result === "pending" && tip.status === "published" && (
+                      <div className="flex gap-2 w-full md:w-auto">
                         <Button
                           size="sm"
-                          variant="outline"
+                          variant="default"
+                          className="flex-1 md:flex-none bg-green-500 hover:bg-green-600 text-white"
                           onClick={() => handleSettle(tip.id, "won")}
                         >
-                          <CheckCircle className="h-4 w-4 mr-1" />
-                          Won
+                          <CheckCircle className="h-4 w-4 md:mr-1" />
+                          <span className="hidden md:inline">Won</span>
                         </Button>
                         <Button
                           size="sm"
-                          variant="outline"
+                          variant="destructive"
+                          className="flex-1 md:flex-none"
                           onClick={() => handleSettle(tip.id, "lost")}
                         >
-                          <XCircle className="h-4 w-4 mr-1" />
-                          Lost
+                          <XCircle className="h-4 w-4 md:mr-1" />
+                          <span className="hidden md:inline">Lost</span>
                         </Button>
-                      </>
+                      </div>
                     )}
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleEdit(tip)}
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleDelete(tip.id)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    <div className="flex gap-2 w-full md:w-auto">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleEdit(tip)}
+                        className="flex-1 md:flex-none"
+                      >
+                        <Edit className="h-4 w-4" />
+                        <span className="md:hidden ml-1">Edit</span>
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleDelete(tip.id)}
+                        className="flex-1 md:flex-none"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                        <span className="md:hidden ml-1">Delete</span>
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </CardContent>
             </Card>
           ))}
 
+          {paginatedTips.length === 0 &&
+            filteredTips.length === 0 &&
+            tips.length > 0 && (
+              <Card>
+                <CardContent className="p-8 md:p-12 text-center text-muted-foreground">
+                  <ImageIcon className="h-12 w-12 md:h-16 md:w-16 mx-auto mb-4 opacity-50" />
+                  <p className="text-base md:text-lg mb-2">
+                    No predictions match your filters
+                  </p>
+                  <p className="text-xs md:text-sm">
+                    Try adjusting your search or filter criteria
+                  </p>
+                </CardContent>
+              </Card>
+            )}
+
           {tips.length === 0 && (
             <Card>
-              <CardContent className="p-12 text-center text-muted-foreground">
-                <ImageIcon className="h-16 w-16 mx-auto mb-4 opacity-50" />
-                <p className="text-lg mb-2">No predictions found</p>
-                <p className="text-sm">
+              <CardContent className="p-8 md:p-12 text-center text-muted-foreground">
+                <ImageIcon className="h-12 w-12 md:h-16 md:w-16 mx-auto mb-4 opacity-50" />
+                <p className="text-base md:text-lg mb-2">
+                  No predictions found
+                </p>
+                <p className="text-xs md:text-sm">
                   Create your first sports prediction to get started
                 </p>
               </CardContent>
             </Card>
+          )}
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6">
+              <div className="text-sm text-muted-foreground">
+                Page {currentPage} of {totalPages}
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.max(1, prev - 1))
+                  }
+                  disabled={currentPage === 1}
+                >
+                  Previous
+                </Button>
+                <div className="flex gap-1">
+                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                    let pageNum;
+                    if (totalPages <= 5) {
+                      pageNum = i + 1;
+                    } else if (currentPage <= 3) {
+                      pageNum = i + 1;
+                    } else if (currentPage >= totalPages - 2) {
+                      pageNum = totalPages - 4 + i;
+                    } else {
+                      pageNum = currentPage - 2 + i;
+                    }
+                    return (
+                      <Button
+                        key={pageNum}
+                        size="sm"
+                        variant={
+                          currentPage === pageNum ? "default" : "outline"
+                        }
+                        onClick={() => setCurrentPage(pageNum)}
+                        className="hidden sm:inline-flex"
+                      >
+                        {pageNum}
+                      </Button>
+                    );
+                  })}
+                </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.min(totalPages, prev + 1))
+                  }
+                  disabled={currentPage === totalPages}
+                >
+                  Next
+                </Button>
+              </div>
+            </div>
           )}
         </div>
       </div>
