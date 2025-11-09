@@ -24,9 +24,10 @@ export async function GET(
     // Check cache first
     const cacheKey = `tip:${tipId}`;
     const cached = await cacheHelpers.get(cacheKey);
-    if (cached) {
+    if (cached && typeof cached === "object" && "data" in cached) {
       // Check if this is VIP content and user has access
-      if (cached.data.tip.isVIP) {
+      const cachedData = cached as { data?: { tip?: { isVIP?: boolean } } };
+      if (cachedData.data?.tip?.isVIP) {
         const auth = await getAuthenticatedUser(request);
         if (
           !auth.user ||

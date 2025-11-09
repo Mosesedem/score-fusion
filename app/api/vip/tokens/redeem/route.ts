@@ -78,49 +78,51 @@ export async function POST(request: NextRequest) {
       usedAt: Date;
     }
 
-    const result: UpdatedToken = await prisma.$transaction(async (tx) => {
-      // Find the token
-      const vipToken: VIPTokenWithTip | null = await tx.vIPToken.findUnique({
-        where: { token: validatedData.token },
-        include: { tip: true },
-      });
+    const result: UpdatedToken = await prisma.$transaction(
+      async (tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0]) => {
+        // Find the token
+        const vipToken: VIPTokenWithTip | null = await tx.vIPToken.findUnique({
+          where: { token: validatedData.token },
+          include: { tip: true },
+        });
 
-      if (!vipToken) {
-        throw new Error("Invalid token");
+        if (!vipToken) {
+          throw new Error("Invalid token");
+        }
+
+        // Check if token is expired
+        if (vipToken.expiresAt < new Date()) {
+          throw new Error("Token has expired");
+        }
+
+        // Check if token has been used up
+        if (vipToken.used >= vipToken.quantity) {
+          throw new Error("Token has already been fully used");
+        }
+
+        // Check if token is tied to a different user
+        if (vipToken.userId && vipToken.userId !== auth.user.id) {
+          throw new Error("Token is already assigned to another user");
+        }
+
+        // Check if token is for a specific tip that exists
+        if (vipToken.tipId && !vipToken.tip) {
+          throw new Error("Associated tip not found");
+        }
+
+        // Update token usage
+        const updatedToken: UpdatedToken = await tx.vIPToken.update({
+          where: { id: vipToken.id },
+          data: {
+            userId: auth.user.id, // Assign to user if not already assigned
+            used: vipToken.used + 1,
+            usedAt: new Date(),
+          },
+        });
+
+        return updatedToken;
       }
-
-      // Check if token is expired
-      if (vipToken.expiresAt < new Date()) {
-        throw new Error("Token has expired");
-      }
-
-      // Check if token has been used up
-      if (vipToken.used >= vipToken.quantity) {
-        throw new Error("Token has already been fully used");
-      }
-
-      // Check if token is tied to a different user
-      if (vipToken.userId && vipToken.userId !== auth.user.id) {
-        throw new Error("Token is already assigned to another user");
-      }
-
-      // Check if token is for a specific tip that exists
-      if (vipToken.tipId && !vipToken.tip) {
-        throw new Error("Associated tip not found");
-      }
-
-      // Update token usage
-      const updatedToken: UpdatedToken = await tx.vIPToken.update({
-        where: { id: vipToken.id },
-        data: {
-          userId: auth.user.id, // Assign to user if not already assigned
-          used: vipToken.used + 1,
-          usedAt: new Date(),
-        },
-      });
-
-      return updatedToken;
-    });
+    );
 
     // Track redemption analytics
     try {
