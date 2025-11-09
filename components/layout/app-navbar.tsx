@@ -24,6 +24,7 @@ import {
   Home,
   HelpCircle,
   Mail,
+  Activity,
 } from "lucide-react";
 import { Icon } from "@/components/logo";
 
@@ -41,6 +42,7 @@ export function AppNavbar() {
   const publicNavItems = [
     { href: "/", label: "Home", icon: Home },
     { href: "/tips", label: "Tips", icon: TrendingUp },
+    { href: "/livescores", label: "Live Scores", icon: Activity },
     { href: "/analytics", label: "Analytics", icon: BarChart3 },
     { href: "/help", label: "Help", icon: HelpCircle },
     { href: "/contact", label: "Contact", icon: Mail },

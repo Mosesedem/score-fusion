@@ -255,6 +255,15 @@ export default function Home() {
                   ))
                 )}
               </div>
+
+              <Link href="/livescores">
+                <Button
+                  className="w-full mt-4 text-sm md:text-base"
+                  variant="outline"
+                >
+                  View All Live Scores
+                </Button>
+              </Link>
             </div>
 
             {/* Featured Tips */}

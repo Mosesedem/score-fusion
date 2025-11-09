@@ -23,11 +23,13 @@ import {
   X,
   LogOut,
   UserPlus,
+  Activity,
 } from "lucide-react";
 
 const items = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/tips", label: "Tips", icon: TrendingUp },
+  { href: "/livescores", label: "Live Scores", icon: Activity },
   { href: "/vip", label: "VIP", icon: Crown },
   { href: "/history", label: "History", icon: Trophy },
   { href: "/analytics", label: "Analytics", icon: BarChart3 },
@@ -42,6 +44,7 @@ const items = [
 const guestItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/tips", label: "Tips", icon: TrendingUp },
+  { href: "/livescores", label: "Live Scores", icon: Activity },
   { href: "/vip", label: "VIP", icon: Crown },
   { href: "/history", label: "History", icon: Trophy },
   { href: "/analytics", label: "Analytics", icon: BarChart3 },
