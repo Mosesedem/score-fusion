@@ -71,6 +71,20 @@ export default function EarningsPage() {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Coming Soon Banner */}
+      <section className="bg-primary text-primary-foreground">
+        <div className="container mx-auto px-4 py-3 md:py-4">
+          <div className="text-center">
+            <Badge className="bg-primary-foreground text-primary font-bold text-xs md:text-sm px-3 py-1">
+              COMING SOON
+            </Badge>
+            <p className="text-xs md:text-sm mt-1 md:mt-2 opacity-90">
+              This feature is currently under development and will be available
+              soon
+            </p>
+          </div>
+        </div>
+      </section>
 
       {/* Hero Section */}
       <section className="border-b border-border bg-secondary">
