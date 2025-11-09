@@ -86,21 +86,27 @@ export default function VIPAreaPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4 text-center">
                   <div className="p-3 md:p-4 border border-border">
                     <Crown className="h-6 w-6 md:h-8 md:w-8 text-primary mx-auto mb-2" />
-                    <h3 className="font-bold text-sm md:text-base mb-1">Exclusive Tips</h3>
+                    <h3 className="font-bold text-sm md:text-base mb-1">
+                      Exclusive Tips
+                    </h3>
                     <p className="text-xs md:text-sm text-muted-foreground">
                       Premium predictions from expert analysts
                     </p>
                   </div>
                   <div className="p-3 md:p-4 border border-border">
                     <Star className="h-6 w-6 md:h-8 md:w-8 text-primary mx-auto mb-2" />
-                    <h3 className="font-bold text-sm md:text-base mb-1">Higher Success</h3>
+                    <h3 className="font-bold text-sm md:text-base mb-1">
+                      Higher Success
+                    </h3>
                     <p className="text-xs md:text-sm text-muted-foreground">
                       Average 75%+ win rate on VIP tips
                     </p>
                   </div>
                   <div className="p-3 md:p-4 border border-border">
                     <TrendingUp className="h-6 w-6 md:h-8 md:w-8 text-primary mx-auto mb-2" />
-                    <h3 className="font-bold text-sm md:text-base mb-1">Advanced Analytics</h3>
+                    <h3 className="font-bold text-sm md:text-base mb-1">
+                      Advanced Analytics
+                    </h3>
                     <p className="text-xs md:text-sm text-muted-foreground">
                       Deep insights and trend analysis
                     </p>
@@ -109,10 +115,14 @@ export default function VIPAreaPage() {
 
                 {user && (
                   <div className="bg-secondary p-4 md:p-6 space-y-4">
-                    <h3 className="font-bold text-base md:text-lg">Subscription Plans</h3>
+                    <h3 className="font-bold text-base md:text-lg">
+                      Subscription Plans
+                    </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
                       <div className="border-2 border-border p-3 md:p-4 space-y-2">
-                        <h4 className="font-bold text-sm md:text-base">Monthly</h4>
+                        <h4 className="font-bold text-sm md:text-base">
+                          Monthly
+                        </h4>
                         <p className="text-xl md:text-2xl font-bold text-primary">
                           $29.99/mo
                         </p>
@@ -129,7 +139,9 @@ export default function VIPAreaPage() {
                         <div className="inline-block bg-primary text-primary-foreground text-xs px-2 py-1 mb-2">
                           BEST VALUE
                         </div>
-                        <h4 className="font-bold text-sm md:text-base">Yearly</h4>
+                        <h4 className="font-bold text-sm md:text-base">
+                          Yearly
+                        </h4>
                         <p className="text-xl md:text-2xl font-bold text-primary">
                           $249.99/yr
                         </p>
@@ -182,7 +194,10 @@ export default function VIPAreaPage() {
                         </p>
                       )}
                     </div>
-                    <Button type="submit" className="w-full h-10 text-sm md:text-base">
+                    <Button
+                      type="submit"
+                      className="w-full h-10 text-sm md:text-base"
+                    >
                       <CheckCircle className="h-4 w-4 mr-2" />
                       Redeem Token
                     </Button>

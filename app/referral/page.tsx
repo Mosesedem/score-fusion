@@ -68,12 +68,13 @@ export default function ReferralPage() {
 
   return (
     <div className="min-h-screen bg-background">
-
       {/* Hero Section */}
       <section className="border-b border-border bg-secondary">
         <div className="container mx-auto px-4 py-8 md:py-12">
           <div className="max-w-3xl">
-            <h1 className="text-3xl md:text-4xl font-bold mb-3 md:mb-4">Referral Program</h1>
+            <h1 className="text-3xl md:text-4xl font-bold mb-3 md:mb-4">
+              Referral Program
+            </h1>
             <p className="text-base md:text-xl text-muted-foreground">
               Earn 20% commission on every friend who subscribes to VIP
             </p>
@@ -96,7 +97,9 @@ export default function ReferralPage() {
                   earning
                 </p>
                 <Link href="/signup">
-                  <Button size="lg" className="h-11 md:h-auto">Create Account</Button>
+                  <Button size="lg" className="h-11 md:h-auto">
+                    Create Account
+                  </Button>
                 </Link>
               </CardContent>
             </Card>
@@ -158,7 +161,9 @@ export default function ReferralPage() {
               {/* Referral Code Card */}
               <Card className="mb-8 md:mb-12 border-2 border-primary">
                 <CardHeader className="p-4 md:p-6">
-                  <CardTitle className="text-base md:text-lg">Your Referral Code</CardTitle>
+                  <CardTitle className="text-base md:text-lg">
+                    Your Referral Code
+                  </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4 p-4 md:p-6 md:pt-0">
                   <div>
@@ -175,7 +180,10 @@ export default function ReferralPage() {
                         readOnly
                         className="font-mono text-xs md:text-sm h-11 md:h-10"
                       />
-                      <Button onClick={handleCopyCode} className="h-11 md:h-10 shrink-0 w-full sm:w-auto">
+                      <Button
+                        onClick={handleCopyCode}
+                        className="h-11 md:h-10 shrink-0 w-full sm:w-auto"
+                      >
                         {copied ? (
                           <>
                             <CheckCircle className="h-4 w-4 mr-2" />
@@ -201,7 +209,11 @@ export default function ReferralPage() {
                         readOnly
                         className="font-mono font-bold text-lg md:text-xl h-11 md:h-10"
                       />
-                      <Button onClick={handleCopyCodeOnly} variant="outline" className="h-11 md:h-10 shrink-0 w-full sm:w-auto">
+                      <Button
+                        onClick={handleCopyCodeOnly}
+                        variant="outline"
+                        className="h-11 md:h-10 shrink-0 w-full sm:w-auto"
+                      >
                         <Copy className="h-4 w-4 mr-2" />
                         Copy
                       </Button>
@@ -212,7 +224,9 @@ export default function ReferralPage() {
 
               {/* Referral List */}
               <div>
-                <h2 className="text-xl md:text-2xl font-bold mb-4 md:mb-6">Your Referrals</h2>
+                <h2 className="text-xl md:text-2xl font-bold mb-4 md:mb-6">
+                  Your Referrals
+                </h2>
 
                 {referralData.referrals.length > 0 ? (
                   <div className="space-y-3 md:space-y-4">
@@ -279,14 +293,18 @@ export default function ReferralPage() {
       {/* How It Works */}
       <section className="border-t border-border bg-secondary py-8 md:py-12">
         <div className="container mx-auto px-4">
-          <h2 className="text-2xl md:text-3xl font-bold text-center mb-8 md:mb-12">How It Works</h2>
+          <h2 className="text-2xl md:text-3xl font-bold text-center mb-8 md:mb-12">
+            How It Works
+          </h2>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6 max-w-4xl mx-auto">
             <Card>
               <CardHeader className="p-4 md:p-6">
                 <div className="h-10 w-10 md:h-12 md:w-12 bg-primary text-primary-foreground flex items-center justify-center font-bold text-lg md:text-xl mb-2">
                   1
                 </div>
-                <CardTitle className="text-base md:text-lg">Share Your Code</CardTitle>
+                <CardTitle className="text-base md:text-lg">
+                  Share Your Code
+                </CardTitle>
               </CardHeader>
               <CardContent className="text-muted-foreground text-xs md:text-sm p-4 md:p-6 md:pt-0">
                 Copy your unique referral link and share it with friends
@@ -298,7 +316,9 @@ export default function ReferralPage() {
                 <div className="h-10 w-10 md:h-12 md:w-12 bg-primary text-primary-foreground flex items-center justify-center font-bold text-lg md:text-xl mb-2">
                   2
                 </div>
-                <CardTitle className="text-base md:text-lg">They Sign Up</CardTitle>
+                <CardTitle className="text-base md:text-lg">
+                  They Sign Up
+                </CardTitle>
               </CardHeader>
               <CardContent className="text-muted-foreground text-xs md:text-sm p-4 md:p-6 md:pt-0">
                 Your friends create an account using your referral code

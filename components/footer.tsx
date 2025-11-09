@@ -11,7 +11,9 @@ function Footer() {
             <div className="col-span-2 md:col-span-2">
               <div className="flex items-center gap-2 mb-3 md:mb-4">
                 <Icon />
-                <span className="text-lg md:text-2xl font-bold">ScoreFusion</span>
+                <span className="text-lg md:text-2xl font-bold">
+                  ScoreFusion
+                </span>
               </div>
               <p className="text-sm md:text-base text-muted-foreground">
                 Your trusted platform for expert sports predictions and betting
@@ -19,7 +21,9 @@ function Footer() {
               </p>
             </div>
             <div>
-              <h3 className="font-bold mb-3 md:mb-4 text-sm md:text-base">Quick Links</h3>
+              <h3 className="font-bold mb-3 md:mb-4 text-sm md:text-base">
+                Quick Links
+              </h3>
               <ul className="space-y-1.5 md:space-y-2 text-muted-foreground text-xs md:text-sm">
                 <li>
                   <Link href="/tips" className="hover:text-primary">
@@ -44,7 +48,9 @@ function Footer() {
               </ul>
             </div>
             <div>
-              <h3 className="font-bold mb-3 md:mb-4 text-sm md:text-base">Support</h3>
+              <h3 className="font-bold mb-3 md:mb-4 text-sm md:text-base">
+                Support
+              </h3>
               <ul className="space-y-1.5 md:space-y-2 text-muted-foreground text-xs md:text-sm">
                 <li>
                   <Link href="/about" className="hover:text-primary">

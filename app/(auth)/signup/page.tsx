@@ -98,7 +98,9 @@ export default function SignupPage() {
         <CardContent className="p-4 md:p-6">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="displayName" className="text-sm md:text-base">Display Name</Label>
+              <Label htmlFor="displayName" className="text-sm md:text-base">
+                Display Name
+              </Label>
               <Input
                 id="displayName"
                 type="text"
@@ -111,7 +113,9 @@ export default function SignupPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-sm md:text-base">Email</Label>
+              <Label htmlFor="email" className="text-sm md:text-base">
+                Email
+              </Label>
               <Input
                 id="email"
                 type="email"
@@ -124,7 +128,9 @@ export default function SignupPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-sm md:text-base">Password</Label>
+              <Label htmlFor="password" className="text-sm md:text-base">
+                Password
+              </Label>
               <Input
                 id="password"
                 type="password"
@@ -137,7 +143,9 @@ export default function SignupPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="dob" className="text-sm md:text-base">Date of Birth (Optional)</Label>
+              <Label htmlFor="dob" className="text-sm md:text-base">
+                Date of Birth (Optional)
+              </Label>
               <Input
                 id="dob"
                 type="date"
@@ -148,7 +156,9 @@ export default function SignupPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="country" className="text-sm md:text-base">Country (Optional)</Label>
+              <Label htmlFor="country" className="text-sm md:text-base">
+                Country (Optional)
+              </Label>
               <Input
                 id="country"
                 type="text"
@@ -161,7 +171,9 @@ export default function SignupPage() {
             </div>
             {!referralCode && (
               <div className="space-y-2">
-                <Label htmlFor="referralCode" className="text-sm md:text-base">Referral Code (Optional)</Label>
+                <Label htmlFor="referralCode" className="text-sm md:text-base">
+                  Referral Code (Optional)
+                </Label>
                 <Input
                   id="referralCode"
                   type="text"
@@ -235,7 +247,11 @@ export default function SignupPage() {
               </div>
             )}
 
-            <Button type="submit" className="w-full h-11 md:h-10 text-base" disabled={isLoading}>
+            <Button
+              type="submit"
+              className="w-full h-11 md:h-10 text-base"
+              disabled={isLoading}
+            >
               {isLoading ? "Creating account..." : "Create Account"}
             </Button>
           </form>

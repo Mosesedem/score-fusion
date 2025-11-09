@@ -57,7 +57,9 @@ export default function LoginPage() {
           <div className="flex items-center justify-center mb-2">
             <Icon />
           </div>
-          <CardTitle className="text-xl md:text-2xl text-center">Welcome back</CardTitle>
+          <CardTitle className="text-xl md:text-2xl text-center">
+            Welcome back
+          </CardTitle>
           <CardDescription className="text-center text-sm md:text-base">
             Enter your credentials to access your account
           </CardDescription>
@@ -65,7 +67,9 @@ export default function LoginPage() {
         <CardContent className="p-4 md:p-6">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-sm md:text-base">Email</Label>
+              <Label htmlFor="email" className="text-sm md:text-base">
+                Email
+              </Label>
               <Input
                 id="email"
                 type="email"
@@ -78,7 +82,9 @@ export default function LoginPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-sm md:text-base">Password</Label>
+              <Label htmlFor="password" className="text-sm md:text-base">
+                Password
+              </Label>
               <Input
                 id="password"
                 type="password"
@@ -111,7 +117,11 @@ export default function LoginPage() {
                 {error}
               </div>
             )}
-            <Button type="submit" className="w-full h-11 md:h-10 text-base" disabled={isLoading}>
+            <Button
+              type="submit"
+              className="w-full h-11 md:h-10 text-base"
+              disabled={isLoading}
+            >
               {isLoading ? "Signing in..." : "Sign In"}
             </Button>
           </form>
