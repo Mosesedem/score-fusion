@@ -68,80 +68,80 @@ export default function VIPAreaPage() {
   if (!hasVIPAccess) {
     return (
       <div className="min-h-screen bg-background">
-        <div className="container mx-auto px-4 py-12">
+        <div className="container mx-auto px-4 py-8 md:py-12">
           <div className="max-w-4xl mx-auto">
             <Card className="border-2 border-primary">
-              <CardHeader className="text-center">
+              <CardHeader className="text-center p-4 md:p-6">
                 <div className="flex justify-center mb-4">
-                  <Lock className="h-16 w-16 text-primary" />
+                  <Lock className="h-12 w-12 md:h-16 md:w-16 text-primary" />
                 </div>
-                <CardTitle className="text-3xl mb-2">
+                <CardTitle className="text-2xl md:text-3xl mb-2">
                   VIP Access Required
                 </CardTitle>
-                <p className="text-muted-foreground">
+                <p className="text-sm md:text-base text-muted-foreground">
                   Unlock premium betting tips with proven success rates
                 </p>
               </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="grid md:grid-cols-3 gap-4 text-center">
-                  <div className="p-4 border border-border">
-                    <Crown className="h-8 w-8 text-primary mx-auto mb-2" />
-                    <h3 className="font-bold mb-1">Exclusive Tips</h3>
-                    <p className="text-sm text-muted-foreground">
+              <CardContent className="space-y-4 md:space-y-6 p-4 md:p-6">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4 text-center">
+                  <div className="p-3 md:p-4 border border-border">
+                    <Crown className="h-6 w-6 md:h-8 md:w-8 text-primary mx-auto mb-2" />
+                    <h3 className="font-bold text-sm md:text-base mb-1">Exclusive Tips</h3>
+                    <p className="text-xs md:text-sm text-muted-foreground">
                       Premium predictions from expert analysts
                     </p>
                   </div>
-                  <div className="p-4 border border-border">
-                    <Star className="h-8 w-8 text-primary mx-auto mb-2" />
-                    <h3 className="font-bold mb-1">Higher Success</h3>
-                    <p className="text-sm text-muted-foreground">
+                  <div className="p-3 md:p-4 border border-border">
+                    <Star className="h-6 w-6 md:h-8 md:w-8 text-primary mx-auto mb-2" />
+                    <h3 className="font-bold text-sm md:text-base mb-1">Higher Success</h3>
+                    <p className="text-xs md:text-sm text-muted-foreground">
                       Average 75%+ win rate on VIP tips
                     </p>
                   </div>
-                  <div className="p-4 border border-border">
-                    <TrendingUp className="h-8 w-8 text-primary mx-auto mb-2" />
-                    <h3 className="font-bold mb-1">Advanced Analytics</h3>
-                    <p className="text-sm text-muted-foreground">
+                  <div className="p-3 md:p-4 border border-border">
+                    <TrendingUp className="h-6 w-6 md:h-8 md:w-8 text-primary mx-auto mb-2" />
+                    <h3 className="font-bold text-sm md:text-base mb-1">Advanced Analytics</h3>
+                    <p className="text-xs md:text-sm text-muted-foreground">
                       Deep insights and trend analysis
                     </p>
                   </div>
                 </div>
 
                 {user && (
-                  <div className="bg-secondary p-6 space-y-4">
-                    <h3 className="font-bold text-lg">Subscription Plans</h3>
-                    <div className="grid md:grid-cols-2 gap-4">
-                      <div className="border-2 border-border p-4 space-y-2">
-                        <h4 className="font-bold">Monthly</h4>
-                        <p className="text-2xl font-bold text-primary">
+                  <div className="bg-secondary p-4 md:p-6 space-y-4">
+                    <h3 className="font-bold text-base md:text-lg">Subscription Plans</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
+                      <div className="border-2 border-border p-3 md:p-4 space-y-2">
+                        <h4 className="font-bold text-sm md:text-base">Monthly</h4>
+                        <p className="text-xl md:text-2xl font-bold text-primary">
                           $29.99/mo
                         </p>
-                        <ul className="text-sm space-y-1">
+                        <ul className="text-xs md:text-sm space-y-1">
                           <li>✓ All VIP tips</li>
                           <li>✓ Priority support</li>
                           <li>✓ Cancel anytime</li>
                         </ul>
-                        <Button className="w-full mt-4">
+                        <Button className="w-full mt-4 h-10 text-sm md:text-base">
                           Subscribe Monthly
                         </Button>
                       </div>
-                      <div className="border-2 border-primary p-4 space-y-2">
+                      <div className="border-2 border-primary p-3 md:p-4 space-y-2">
                         <div className="inline-block bg-primary text-primary-foreground text-xs px-2 py-1 mb-2">
                           BEST VALUE
                         </div>
-                        <h4 className="font-bold">Yearly</h4>
-                        <p className="text-2xl font-bold text-primary">
+                        <h4 className="font-bold text-sm md:text-base">Yearly</h4>
+                        <p className="text-xl md:text-2xl font-bold text-primary">
                           $249.99/yr
                         </p>
                         <p className="text-xs text-muted-foreground">
                           Save $110 per year
                         </p>
-                        <ul className="text-sm space-y-1">
+                        <ul className="text-xs md:text-sm space-y-1">
                           <li>✓ All VIP tips</li>
                           <li>✓ Priority support</li>
                           <li>✓ 2 months free</li>
                         </ul>
-                        <Button className="w-full mt-4">
+                        <Button className="w-full mt-4 h-10 text-sm md:text-base">
                           Subscribe Yearly
                         </Button>
                       </div>
@@ -151,20 +151,20 @@ export default function VIPAreaPage() {
 
                 {!user && (
                   <Card className="border-2 border-primary">
-                    <CardContent className="p-6 text-center">
-                      <h3 className="font-bold text-lg mb-2">
+                    <CardContent className="p-4 md:p-6 text-center">
+                      <h3 className="font-bold text-base md:text-lg mb-2">
                         Sign up or log in to subscribe
                       </h3>
-                      <p className="text-muted-foreground mb-4">
+                      <p className="text-sm md:text-base text-muted-foreground mb-4">
                         Create an account to access VIP features
                       </p>
-                      <Button>Get Started</Button>
+                      <Button className="h-10">Get Started</Button>
                     </CardContent>
                   </Card>
                 )}
 
-                <div className="border-2 border-border p-6">
-                  <h3 className="font-bold text-lg mb-4 text-center">
+                <div className="border-2 border-border p-4 md:p-6">
+                  <h3 className="font-bold text-base md:text-lg mb-4 text-center">
                     Have a VIP Token?
                   </h3>
                   <form onSubmit={handleTokenRedeem} className="space-y-4">
@@ -173,16 +173,16 @@ export default function VIPAreaPage() {
                         placeholder="Enter your VIP token code"
                         value={tokenCode}
                         onChange={(e) => setTokenCode(e.target.value)}
-                        className="text-center font-mono"
+                        className="text-center font-mono h-11 md:h-10 text-base"
                         required
                       />
                       {tokenError && (
-                        <p className="text-sm text-destructive mt-2">
+                        <p className="text-xs md:text-sm text-destructive mt-2">
                           {tokenError}
                         </p>
                       )}
                     </div>
-                    <Button type="submit" className="w-full">
+                    <Button type="submit" className="w-full h-10 text-sm md:text-base">
                       <CheckCircle className="h-4 w-4 mr-2" />
                       Redeem Token
                     </Button>

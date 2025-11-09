@@ -67,7 +67,7 @@ export function AppNavbar() {
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
           <Link
-            href="/"
+            href={user ? "/dashboard" : "/"}
             className="flex items-center space-x-2"
             onClick={closeMobileMenu}
           >
@@ -77,21 +77,35 @@ export function AppNavbar() {
             </div>
           </Link>
 
-          {/* Desktop Navigation Links (public only; authenticated moved to sidebar) */}
-          <div className="hidden lg:flex items-center space-x-1">
-            {publicNavItems.map((item) => (
-              <Link key={item.href} href={item.href}>
-                <Button
-                  variant={isActive(item.href) ? "default" : "ghost"}
-                  size="sm"
-                  className="gap-2"
-                >
-                  <item.icon className="h-4 w-4" />
-                  {item.label}
-                </Button>
-              </Link>
-            ))}
-          </div>
+          {/* Desktop Navigation Links (only show for non-authenticated users) */}
+          {!user && (
+            <div className="hidden lg:flex items-center space-x-1">
+              {publicNavItems.map((item) => (
+                <Link key={item.href} href={item.href}>
+                  <Button
+                    variant={isActive(item.href) ? "default" : "ghost"}
+                    size="sm"
+                    className="gap-2"
+                  >
+                    <item.icon className="h-4 w-4" />
+                    {item.label}
+                  </Button>
+                </Link>
+              ))}
+            </div>
+          )}
+
+          {/* Logged in user - show welcome message on desktop */}
+          {user && (
+            <div className="hidden lg:flex items-center gap-2 text-sm text-muted-foreground">
+              <span>Welcome, {user.displayName || "User"}</span>
+              {user.guest && (
+                <span className="text-xs bg-secondary px-2 py-1 rounded">
+                  Guest
+                </span>
+              )}
+            </div>
+          )}
 
           {/* Right side - Auth & Mobile Menu */}
           <div className="flex items-center gap-2">
@@ -196,26 +210,27 @@ export function AppNavbar() {
         {mobileMenuOpen && (
           <div className="lg:hidden border-t border-border">
             <div className="py-4 space-y-1">
-              {/* Public Nav Items */}
-              {publicNavItems.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={closeMobileMenu}
-                >
-                  <Button
-                    variant={isActive(item.href) ? "default" : "ghost"}
-                    className="w-full justify-start gap-2"
+              {/* Public Nav Items - only show when not logged in */}
+              {!user &&
+                publicNavItems.map((item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={closeMobileMenu}
                   >
-                    <item.icon className="h-4 w-4" />
-                    {item.label}
-                  </Button>
-                </Link>
-              ))}
+                    <Button
+                      variant={isActive(item.href) ? "default" : "ghost"}
+                      className="w-full justify-start gap-2"
+                    >
+                      <item.icon className="h-4 w-4" />
+                      {item.label}
+                    </Button>
+                  </Link>
+                ))}
 
-              {user && !user.guest && (
+              {/* Authenticated Nav Items for all logged in users (including guests) */}
+              {user && (
                 <>
-                  <div className="my-2 border-t border-border" />
                   {authenticatedNavItems.map((item) => (
                     <Link
                       key={item.href}

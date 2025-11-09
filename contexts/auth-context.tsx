@@ -90,7 +90,7 @@ export function useAuth() {
         title: "Welcome back!",
         description: `Logged in as ${email}`,
       });
-      router.push("/tips");
+      router.push("/dashboard");
     },
     [router]
   );
@@ -121,7 +121,7 @@ export function useAuth() {
         title: "Account created!",
         description: `Welcome, ${data.displayName}!`,
       });
-      router.push("/tips");
+      router.push("/dashboard");
     },
     [router]
   );
@@ -137,7 +137,7 @@ export function useAuth() {
       title: "Guest access enabled",
       description: "Limited access session.",
     });
-    router.push("/tips");
+    router.push("/dashboard");
   }, [router]);
 
   const logout = useCallback(async () => {

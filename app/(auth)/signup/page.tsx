@@ -77,28 +77,28 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="container mx-auto flex min-h-screen items-center justify-center px-4 py-12">
+    <div className="container mx-auto flex min-h-screen items-center justify-center px-4 py-8">
       <Card className="w-full max-w-md">
-        <CardHeader className="space-y-1">
+        <CardHeader className="space-y-1 p-4 md:p-6">
           <div className="flex items-center justify-center mb-2">
             <Icon />
           </div>
-          <CardTitle className="text-2xl text-center">
+          <CardTitle className="text-xl md:text-2xl text-center">
             Create an account
           </CardTitle>
-          <CardDescription className="text-center">
+          <CardDescription className="text-center text-sm md:text-base">
             Sign up to access exclusive betting tips and VIP content
           </CardDescription>
           {referralCode && (
-            <div className="bg-green-50 border border-green-200 text-green-800 px-3 py-2 rounded-md text-sm">
+            <div className="bg-green-50 border border-green-200 text-green-800 px-3 py-2 rounded-md text-xs md:text-sm">
               🎁 Referral code applied! You&apos;ll get bonus tokens on signup.
             </div>
           )}
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-4 md:p-6">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="displayName">Display Name</Label>
+              <Label htmlFor="displayName" className="text-sm md:text-base">Display Name</Label>
               <Input
                 id="displayName"
                 type="text"
@@ -107,10 +107,11 @@ export default function SignupPage() {
                 onChange={(e) => updateField("displayName", e.target.value)}
                 required
                 disabled={isLoading}
+                className="h-11 md:h-10 text-base"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email" className="text-sm md:text-base">Email</Label>
               <Input
                 id="email"
                 type="email"
@@ -119,10 +120,11 @@ export default function SignupPage() {
                 onChange={(e) => updateField("email", e.target.value)}
                 required
                 disabled={isLoading}
+                className="h-11 md:h-10 text-base"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password" className="text-sm md:text-base">Password</Label>
               <Input
                 id="password"
                 type="password"
@@ -131,20 +133,22 @@ export default function SignupPage() {
                 onChange={(e) => updateField("password", e.target.value)}
                 required
                 disabled={isLoading}
+                className="h-11 md:h-10 text-base"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="dob">Date of Birth (Optional)</Label>
+              <Label htmlFor="dob" className="text-sm md:text-base">Date of Birth (Optional)</Label>
               <Input
                 id="dob"
                 type="date"
                 value={formData.dob}
                 onChange={(e) => updateField("dob", e.target.value)}
                 disabled={isLoading}
+                className="h-11 md:h-10 text-base"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="country">Country (Optional)</Label>
+              <Label htmlFor="country" className="text-sm md:text-base">Country (Optional)</Label>
               <Input
                 id="country"
                 type="text"
@@ -152,11 +156,12 @@ export default function SignupPage() {
                 value={formData.country}
                 onChange={(e) => updateField("country", e.target.value)}
                 disabled={isLoading}
+                className="h-11 md:h-10 text-base"
               />
             </div>
             {!referralCode && (
               <div className="space-y-2">
-                <Label htmlFor="referralCode">Referral Code (Optional)</Label>
+                <Label htmlFor="referralCode" className="text-sm md:text-base">Referral Code (Optional)</Label>
                 <Input
                   id="referralCode"
                   type="text"
@@ -164,6 +169,7 @@ export default function SignupPage() {
                   value={formData.referralCode}
                   onChange={(e) => updateField("referralCode", e.target.value)}
                   disabled={isLoading}
+                  className="h-11 md:h-10 text-base"
                 />
               </div>
             )}
@@ -180,12 +186,12 @@ export default function SignupPage() {
                       analytics: e.target.checked,
                     }))
                   }
-                  className="rounded border-gray-300 mt-1"
+                  className="rounded border-gray-300 mt-1 h-4 w-4"
                   disabled={isLoading}
                 />
                 <Label
                   htmlFor="analytics"
-                  className="text-sm font-normal cursor-pointer"
+                  className="text-sm font-normal cursor-pointer leading-tight"
                 >
                   Allow analytics to help improve the platform
                 </Label>
@@ -201,12 +207,12 @@ export default function SignupPage() {
                       marketing: e.target.checked,
                     }))
                   }
-                  className="rounded border-gray-300 mt-1"
+                  className="rounded border-gray-300 mt-1 h-4 w-4"
                   disabled={isLoading}
                 />
                 <Label
                   htmlFor="marketing"
-                  className="text-sm font-normal cursor-pointer"
+                  className="text-sm font-normal cursor-pointer leading-tight"
                 >
                   Receive tips, promotions, and updates via email
                 </Label>
@@ -229,12 +235,12 @@ export default function SignupPage() {
               </div>
             )}
 
-            <Button type="submit" className="w-full" disabled={isLoading}>
+            <Button type="submit" className="w-full h-11 md:h-10 text-base" disabled={isLoading}>
               {isLoading ? "Creating account..." : "Create Account"}
             </Button>
           </form>
         </CardContent>
-        <CardFooter className="flex justify-center">
+        <CardFooter className="flex justify-center p-4 md:p-6">
           <div className="text-sm text-center text-muted-foreground">
             Already have an account?{" "}
             <Link

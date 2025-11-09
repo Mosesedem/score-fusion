@@ -51,21 +51,21 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="container mx-auto flex min-h-screen items-center justify-center px-4">
+    <div className="container mx-auto flex min-h-screen items-center justify-center px-4 py-8">
       <Card className="w-full max-w-md">
-        <CardHeader className="space-y-1">
+        <CardHeader className="space-y-1 p-4 md:p-6">
           <div className="flex items-center justify-center mb-2">
             <Icon />
           </div>
-          <CardTitle className="text-2xl text-center">Welcome back</CardTitle>
-          <CardDescription className="text-center">
+          <CardTitle className="text-xl md:text-2xl text-center">Welcome back</CardTitle>
+          <CardDescription className="text-center text-sm md:text-base">
             Enter your credentials to access your account
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-4 md:p-6">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email" className="text-sm md:text-base">Email</Label>
               <Input
                 id="email"
                 type="email"
@@ -74,10 +74,11 @@ export default function LoginPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 disabled={isLoading}
+                className="h-11 md:h-10 text-base"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password" className="text-sm md:text-base">Password</Label>
               <Input
                 id="password"
                 type="password"
@@ -86,6 +87,7 @@ export default function LoginPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 disabled={isLoading}
+                className="h-11 md:h-10 text-base"
               />
             </div>
             <div className="flex items-center space-x-2">
@@ -94,7 +96,7 @@ export default function LoginPage() {
                 id="remember"
                 checked={rememberMe}
                 onChange={(e) => setRememberMe(e.target.checked)}
-                className="rounded border-gray-300"
+                className="rounded border-gray-300 h-4 w-4"
                 disabled={isLoading}
               />
               <Label
@@ -109,7 +111,7 @@ export default function LoginPage() {
                 {error}
               </div>
             )}
-            <Button type="submit" className="w-full" disabled={isLoading}>
+            <Button type="submit" className="w-full h-11 md:h-10 text-base" disabled={isLoading}>
               {isLoading ? "Signing in..." : "Sign In"}
             </Button>
           </form>
@@ -127,16 +129,16 @@ export default function LoginPage() {
 
           <Button
             variant="outline"
-            className="w-full"
+            className="w-full h-11 md:h-10 text-base"
             onClick={handleGuestLogin}
             disabled={isLoading}
           >
             Continue as Guest
           </Button>
         </CardContent>
-        <CardFooter className="flex flex-col space-y-2">
+        <CardFooter className="flex flex-col space-y-2 p-4 md:p-6">
           <div className="text-sm text-center text-muted-foreground">
-            Don't have an account?{" "}
+            Don&apos;t have an account?{" "}
             <Link
               href="/signup"
               className="text-primary hover:underline font-medium"
@@ -146,7 +148,7 @@ export default function LoginPage() {
           </div>
           <Link
             href="/forgot-password"
-            className="text-sm text-muted-foreground hover:text-primary"
+            className="text-sm text-center text-muted-foreground hover:text-primary block"
           >
             Forgot password?
           </Link>

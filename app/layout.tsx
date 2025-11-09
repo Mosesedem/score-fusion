@@ -24,6 +24,22 @@ export const metadata: Metadata = {
   title: "ScoreFusion - Premium Betting Tips & Predictions",
   description:
     "Get exclusive betting tips, VIP predictions, and earn rewards with ScoreFusion. Join thousands of winners today!",
+  viewport: {
+    width: "device-width",
+    initialScale: 1,
+    maximumScale: 5,
+    userScalable: true,
+    viewportFit: "cover",
+  },
+  themeColor: "#ca8a04",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "ScoreFusion",
+  },
+  formatDetection: {
+    telephone: false,
+  },
 };
 
 export default function RootLayout({
@@ -39,7 +55,7 @@ export default function RootLayout({
         <AuthProvider>
           <AppNavbar />
           <AuthShell>
-            <main className="pt-16">{children}</main>
+            <main className="min-h-screen pt-16">{children}</main>
           </AuthShell>
           <Toaster />
         </AuthProvider>

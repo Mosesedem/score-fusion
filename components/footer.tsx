@@ -5,22 +5,22 @@ function Footer() {
   return (
     <>
       {/* Footer */}
-      <footer className="border-t border-border py-12 bg-secondary">
+      <footer className="border-t border-border py-8 md:py-12 bg-secondary">
         <div className="container mx-auto px-4">
-          <div className="grid md:grid-cols-4 gap-8 max-w-6xl mx-auto">
-            <div className="md:col-span-2">
-              <div className="flex items-center gap-2 mb-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8 max-w-6xl mx-auto">
+            <div className="col-span-2 md:col-span-2">
+              <div className="flex items-center gap-2 mb-3 md:mb-4">
                 <Icon />
-                <span className="text-2xl font-bold">ScoreFusion</span>
+                <span className="text-lg md:text-2xl font-bold">ScoreFusion</span>
               </div>
-              <p className="text-muted-foreground">
+              <p className="text-sm md:text-base text-muted-foreground">
                 Your trusted platform for expert sports predictions and betting
                 insights.
               </p>
             </div>
             <div>
-              <h3 className="font-bold mb-4">Quick Links</h3>
-              <ul className="space-y-2 text-muted-foreground text-sm">
+              <h3 className="font-bold mb-3 md:mb-4 text-sm md:text-base">Quick Links</h3>
+              <ul className="space-y-1.5 md:space-y-2 text-muted-foreground text-xs md:text-sm">
                 <li>
                   <Link href="/tips" className="hover:text-primary">
                     Free Tips
@@ -44,8 +44,8 @@ function Footer() {
               </ul>
             </div>
             <div>
-              <h3 className="font-bold mb-4">Support</h3>
-              <ul className="space-y-2 text-muted-foreground text-sm">
+              <h3 className="font-bold mb-3 md:mb-4 text-sm md:text-base">Support</h3>
+              <ul className="space-y-1.5 md:space-y-2 text-muted-foreground text-xs md:text-sm">
                 <li>
                   <Link href="/about" className="hover:text-primary">
                     About
@@ -74,7 +74,7 @@ function Footer() {
               </ul>
             </div>
           </div>
-          <div className="border-t border-border mt-8 pt-8 text-center text-muted-foreground text-sm">
+          <div className="border-t border-border mt-6 md:mt-8 pt-6 md:pt-8 text-center text-muted-foreground text-xs md:text-sm">
             <p>
               &copy; 2025 ScoreFusion. All rights reserved. For entertainment
               purposes only.

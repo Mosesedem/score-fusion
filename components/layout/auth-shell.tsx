@@ -6,7 +6,8 @@ import { AppSidebar } from "@/components/layout/app-sidebar";
 
 export default function AuthShell({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
-  const hasSidebar = !!user && !user.guest;
+  // Guest users now have same privileges as basic users - show sidebar for both
+  const hasSidebar = !!user;
 
   return (
     <div className={hasSidebar ? "lg:pl-64" : undefined}>

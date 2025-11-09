@@ -75,12 +75,12 @@ export default function TipsPage() {
     <div className="min-h-screen bg-background">
       {/* Hero Section */}
       <section className="border-b border-border bg-secondary">
-        <div className="container mx-auto px-4 py-12">
+        <div className="container mx-auto px-4 py-8 md:py-12">
           <div className="max-w-3xl">
-            <h1 className="text-4xl font-bold mb-4">
+            <h1 className="text-3xl md:text-4xl font-bold mb-3 md:mb-4">
               Expert Sports Predictions
             </h1>
-            <p className="text-xl text-muted-foreground">
+            <p className="text-base md:text-xl text-muted-foreground">
               Data-driven analysis and predictions from professional analysts.
               Get free predictions and premium VIP tips.
             </p>
@@ -90,32 +90,32 @@ export default function TipsPage() {
 
       {/* Stats Bar */}
       <section className="border-b border-border">
-        <div className="container mx-auto px-4 py-6">
-          <div className="grid md:grid-cols-3 gap-6">
+        <div className="container mx-auto px-4 py-4 md:py-6">
+          <div className="grid grid-cols-3 gap-4 md:gap-6">
             <div className="text-center">
-              <Target className="h-6 w-6 text-primary mx-auto mb-2" />
-              <div className="text-xl font-bold">
+              <Target className="h-5 w-5 md:h-6 md:w-6 text-primary mx-auto mb-1 md:mb-2" />
+              <div className="text-lg md:text-xl font-bold">
                 {tips.filter((t) => !t.isVIP).length}
               </div>
-              <div className="text-sm text-muted-foreground">
+              <div className="text-xs md:text-sm text-muted-foreground">
                 Free Predictions
               </div>
             </div>
             <div className="text-center">
-              <Lock className="h-6 w-6 text-primary mx-auto mb-2" />
-              <div className="text-xl font-bold">
+              <Lock className="h-5 w-5 md:h-6 md:w-6 text-primary mx-auto mb-1 md:mb-2" />
+              <div className="text-lg md:text-xl font-bold">
                 {tips.filter((t) => t.isVIP).length}
               </div>
-              <div className="text-sm text-muted-foreground">
+              <div className="text-xs md:text-sm text-muted-foreground">
                 VIP Predictions
               </div>
             </div>
             <div className="text-center">
-              <TrendingUp className="h-6 w-6 text-primary mx-auto mb-2" />
-              <div className="text-xl font-bold">
+              <TrendingUp className="h-5 w-5 md:h-6 md:w-6 text-primary mx-auto mb-1 md:mb-2" />
+              <div className="text-lg md:text-xl font-bold">
                 {tips.filter((t) => t.result === "won").length}
               </div>
-              <div className="text-sm text-muted-foreground">
+              <div className="text-xs md:text-sm text-muted-foreground">
                 Winning Predictions
               </div>
             </div>
@@ -124,37 +124,45 @@ export default function TipsPage() {
       </section>
 
       {/* Tips List */}
-      <section className="py-12">
+      <section className="py-8 md:py-12">
         <div className="container mx-auto px-4">
           {/* Filters */}
-          <div className="flex gap-2 mb-8">
+          <div className="flex flex-wrap gap-2 mb-6 md:mb-8">
             <Button
               variant={filter === "all" ? "default" : "outline"}
               onClick={() => setFilter("all")}
+              className="text-sm md:text-base"
+              size="sm"
             >
               All Predictions
             </Button>
             <Button
               variant={filter === "free" ? "default" : "outline"}
               onClick={() => setFilter("free")}
+              className="text-sm md:text-base"
+              size="sm"
             >
               Free Predictions
             </Button>
             <Button
               variant={filter === "vip" ? "default" : "outline"}
               onClick={() => setFilter("vip")}
+              className="text-sm md:text-base"
+              size="sm"
             >
-              <Lock className="h-4 w-4 mr-1" />
+              <Lock className="h-3 w-3 md:h-4 md:w-4 mr-1" />
               VIP Predictions
             </Button>
           </div>
 
           {loading ? (
             <div className="text-center py-12">
-              <p className="text-muted-foreground">Loading predictions...</p>
+              <p className="text-muted-foreground text-sm md:text-base">
+                Loading predictions...
+              </p>
             </div>
           ) : (
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
               {filteredTips.map((tip) => (
                 <Card
                   key={tip.id}
@@ -162,74 +170,76 @@ export default function TipsPage() {
                     tip.isVIP ? "border-primary" : "border-border"
                   } hover:border-primary transition-colors`}
                 >
-                  <CardHeader className="pb-3">
-                    <div className="flex items-center justify-between mb-2">
-                      <Badge className="bg-secondary">{tip.sport}</Badge>
-                      <div className="flex items-center gap-1">
+                  <CardHeader className="pb-3 p-4 md:p-6 md:pb-3">
+                    <div className="flex items-center justify-between mb-2 gap-2">
+                      <Badge className="bg-secondary text-xs">
+                        {tip.sport}
+                      </Badge>
+                      <div className="flex items-center gap-1 shrink-0">
                         {tip.isVIP && (
-                          <Badge className="bg-primary text-primary-foreground">
-                            <Lock className="h-3 w-3 mr-1" />
+                          <Badge className="bg-primary text-primary-foreground text-xs">
+                            <Lock className="h-2.5 w-2.5 md:h-3 md:w-3 mr-1" />
                             VIP
                           </Badge>
                         )}
                         {tip.featured && (
-                          <Badge className="bg-primary text-primary-foreground">
+                          <Badge className="bg-primary text-primary-foreground text-xs">
                             Featured
                           </Badge>
                         )}
                         {tip.result && (
                           <Badge
-                            className={
+                            className={`text-xs ${
                               tip.result === "won"
                                 ? "bg-green-500 text-white"
                                 : tip.result === "lost"
                                 ? "bg-red-500 text-white"
                                 : "bg-gray-500 text-white"
-                            }
+                            }`}
                           >
                             {tip.result.toUpperCase()}
                           </Badge>
                         )}
                       </div>
                     </div>
-                    <CardTitle className="text-lg line-clamp-2">
+                    <CardTitle className="text-base md:text-lg line-clamp-2">
                       {tip.title}
                     </CardTitle>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="p-4 md:p-6 md:pt-0">
                     {/* Team Match Display */}
                     {(tip.homeTeam || tip.awayTeam) && (
-                      <div className="flex items-center justify-between mb-4 p-3 bg-secondary rounded-md">
-                        <div className="flex-1 text-center">
+                      <div className="flex items-center justify-between mb-4 p-2 md:p-3 bg-secondary rounded-md">
+                        <div className="flex-1 text-center min-w-0">
                           {tip.homeTeam && (
                             <>
                               {tip.homeTeam.logoUrl && (
                                 <img
                                   src={tip.homeTeam.logoUrl}
                                   alt={tip.homeTeam.name}
-                                  className="w-10 h-10 mx-auto mb-1 object-contain"
+                                  className="w-8 h-8 md:w-10 md:h-10 mx-auto mb-1 object-contain"
                                 />
                               )}
-                              <p className="text-sm font-medium line-clamp-1">
+                              <p className="text-xs md:text-sm font-medium line-clamp-1">
                                 {tip.homeTeam.shortName || tip.homeTeam.name}
                               </p>
                             </>
                           )}
                         </div>
-                        <div className="px-3 text-muted-foreground font-bold">
+                        <div className="px-2 md:px-3 text-muted-foreground font-bold text-xs md:text-sm shrink-0">
                           VS
                         </div>
-                        <div className="flex-1 text-center">
+                        <div className="flex-1 text-center min-w-0">
                           {tip.awayTeam && (
                             <>
                               {tip.awayTeam.logoUrl && (
                                 <img
                                   src={tip.awayTeam.logoUrl}
                                   alt={tip.awayTeam.name}
-                                  className="w-10 h-10 mx-auto mb-1 object-contain"
+                                  className="w-8 h-8 md:w-10 md:h-10 mx-auto mb-1 object-contain"
                                 />
                               )}
-                              <p className="text-sm font-medium line-clamp-1">
+                              <p className="text-xs md:text-sm font-medium line-clamp-1">
                                 {tip.awayTeam.shortName || tip.awayTeam.name}
                               </p>
                             </>
@@ -239,7 +249,7 @@ export default function TipsPage() {
                     )}
 
                     {/* Prediction Summary */}
-                    <p className="text-sm text-muted-foreground mb-4 line-clamp-3">
+                    <p className="text-xs md:text-sm text-muted-foreground mb-4 line-clamp-3">
                       {tip.isVIP && !tip.result
                         ? "🔒 Unlock VIP access to view full analysis and ticket snapshots"
                         : tip.summary || tip.content}
@@ -250,7 +260,7 @@ export default function TipsPage() {
                       <div>
                         {tip.odds && (
                           <>
-                            <div className="text-2xl font-bold text-primary">
+                            <div className="text-xl md:text-2xl font-bold text-primary">
                               {tip.odds}
                             </div>
                             <div className="text-xs text-muted-foreground">
@@ -261,7 +271,7 @@ export default function TipsPage() {
                       </div>
                       {tip.predictedOutcome && (
                         <div className="text-right">
-                          <div className="text-sm font-bold">
+                          <div className="text-xs md:text-sm font-bold">
                             {tip.predictedOutcome}
                           </div>
                           <div className="text-xs text-muted-foreground">
@@ -272,12 +282,16 @@ export default function TipsPage() {
                     </div>
 
                     {/* Metadata */}
-                    <div className="flex items-center justify-between text-xs text-muted-foreground mb-4">
-                      <div className="flex items-center gap-1">
-                        <Calendar className="h-3 w-3" />
-                        {new Date(tip.createdAt).toLocaleDateString()}
+                    <div className="flex items-center justify-between text-xs text-muted-foreground mb-4 gap-2">
+                      <div className="flex items-center gap-1 min-w-0">
+                        <Calendar className="h-3 w-3 shrink-0" />
+                        <span className="truncate">
+                          {new Date(tip.createdAt).toLocaleDateString()}
+                        </span>
                       </div>
-                      {tip.authorName && <span>By {tip.authorName}</span>}
+                      {tip.authorName && (
+                        <span className="truncate">By {tip.authorName}</span>
+                      )}
                     </div>
 
                     {/* Ticket Snapshots Indicator */}
@@ -294,10 +308,14 @@ export default function TipsPage() {
                       )}
 
                     <Link href={`/tips/${tip.id}`}>
-                      <Button className="w-full" variant="outline">
+                      <Button
+                        className="w-full text-xs md:text-sm"
+                        variant="outline"
+                        size="sm"
+                      >
                         {tip.isVIP && !tip.result ? (
                           <>
-                            <Lock className="h-4 w-4 mr-2" />
+                            <Lock className="h-3 w-3 md:h-4 md:w-4 mr-2" />
                             Unlock Full Analysis
                           </>
                         ) : (
@@ -313,8 +331,8 @@ export default function TipsPage() {
 
           {!loading && filteredTips.length === 0 && (
             <Card>
-              <CardContent className="p-12 text-center">
-                <p className="text-muted-foreground mb-4">
+              <CardContent className="p-8 md:p-12 text-center">
+                <p className="text-muted-foreground mb-4 text-sm md:text-base">
                   No predictions available at the moment. Check back soon!
                 </p>
                 <Link href="/">
@@ -327,10 +345,12 @@ export default function TipsPage() {
       </section>
 
       {/* CTA Section */}
-      <section className="border-t border-border bg-secondary py-12">
+      <section className="border-t border-border bg-secondary py-8 md:py-12">
         <div className="container mx-auto px-4 text-center">
-          <h2 className="text-3xl font-bold mb-4">Want Premium Predictions?</h2>
-          <p className="text-xl text-muted-foreground mb-6">
+          <h2 className="text-2xl md:text-3xl font-bold mb-3 md:mb-4">
+            Want Premium Predictions?
+          </h2>
+          <p className="text-base md:text-xl text-muted-foreground mb-6 px-2">
             Upgrade to VIP for exclusive expert analysis, ticket snapshots, and
             premium predictions
           </p>
