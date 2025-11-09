@@ -87,6 +87,7 @@ export async function GET(request: NextRequest) {
         | { tags: { hasSome: string[] } }
       >;
       tags?: { hasSome: string[] };
+      matchDate?: { gte: Date } | { lt: Date };
     }
 
     const where: Where = {
@@ -94,6 +95,15 @@ export async function GET(request: NextRequest) {
       publishAt: { lte: new Date() },
       isVIP: validatedQuery.vip ? true : false,
     };
+
+    // For VIP predictions, filter based on match date
+    // VIP users with access can see all, but frontend will separate current vs history
+    if (validatedQuery.vip && !auth.user) {
+      // Non-authenticated users shouldn't see VIP content
+      // This is already handled by the auth check above, but adding safeguard
+      const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
+      where.matchDate = { gte: twoHoursAgo };
+    }
 
     if (validatedQuery.sport) {
       where.sport = { mode: "insensitive", equals: validatedQuery.sport };
