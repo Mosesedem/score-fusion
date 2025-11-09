@@ -29,7 +29,7 @@ const adminItems = [
   { href: "/admin/teams", label: "Teams", icon: Shield },
   { href: "/admin/vip-tokens", label: "VIP Tokens", icon: Crown },
   { href: "/admin/feature-flags", label: "Feature Flags", icon: Flag },
-  { href: "/admin/analytics", label: "Analytics", icon: BarChart3 },
+  // { href: "/admin/analytics", label: "Analytics", icon: BarChart3 },
 ];
 
 export function AdminSidebar() {
