@@ -1,40 +1,73 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { getAuthenticatedUser } from "@/lib/auth";
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   try {
-    // TODO: Get authenticated user from session/token
-    // const userId = await getUserFromRequest(request);
+    // Get authenticated user
+    const auth = await getAuthenticatedUser(request);
 
-    // For now, return mock response
-    // In production, check if user has active subscription or valid token redemption
+    if (!auth.user) {
+      return NextResponse.json({
+        success: false,
+        hasAccess: false,
+        error: "Authentication required",
+      });
+    }
 
-    const hasActiveSubscription = false; // await checkSubscription(userId);
-    const hasValidToken = false; // await checkTokenRedemption(userId);
+    if (auth.user.guest) {
+      return NextResponse.json({
+        success: true,
+        hasAccess: false,
+        subscription: null,
+        tokenAccess: null,
+      });
+    }
+
+    // Check for active subscription
+    const activeSubscription = await prisma.subscription.findFirst({
+      where: {
+        userId: auth.user.id,
+        status: "active",
+        currentPeriodEnd: { gte: new Date() },
+      },
+    });
+
+    // Check for valid VIP tokens
+    const validToken = await prisma.vIPToken.findFirst({
+      where: {
+        userId: auth.user.id,
+        expiresAt: { gte: new Date() },
+        OR: [{ used: 0 }, { used: { lt: prisma.vIPToken.fields.quantity } }],
+      },
+      orderBy: { expiresAt: "desc" },
+    });
+
+    const hasAccess = !!(activeSubscription || validToken);
 
     return NextResponse.json({
-      hasAccess: hasActiveSubscription || hasValidToken,
-      subscription: hasActiveSubscription
+      success: true,
+      hasAccess,
+      subscription: activeSubscription
         ? {
-            plan: "monthly",
-            status: "active",
-            currentPeriodEnd: new Date(
-              Date.now() + 30 * 24 * 60 * 60 * 1000
-            ).toISOString(),
+            plan: activeSubscription.plan,
+            status: activeSubscription.status,
+            currentPeriodEnd: activeSubscription.currentPeriodEnd.toISOString(),
+            cancelAtPeriodEnd: activeSubscription.cancelAtPeriodEnd,
           }
         : null,
-      tokenAccess: hasValidToken
+      tokenAccess: validToken
         ? {
-            expiresAt: new Date(
-              Date.now() + 7 * 24 * 60 * 60 * 1000
-            ).toISOString(),
+            expiresAt: validToken.expiresAt.toISOString(),
+            remaining: validToken.quantity - validToken.used,
+            type: validToken.type,
           }
         : null,
     });
   } catch (error) {
     console.error("VIP status check error:", error);
     return NextResponse.json(
-      { error: "Failed to check VIP status" },
+      { success: false, error: "Failed to check VIP status" },
       { status: 500 }
     );
   }

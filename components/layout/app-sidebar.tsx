@@ -227,6 +227,17 @@ export function AppSidebar() {
 
               {/* User Action Buttons */}
               <div className="space-y-2 pt-4 border-t border-border">
+                {user.isAdmin && (
+                  <Link href="/admin" onClick={closeSheet}>
+                    <Button
+                      variant="default"
+                      className="w-full justify-start gap-3 h-12"
+                    >
+                      <Crown className="h-5 w-5" />
+                      Admin Dashboard
+                    </Button>
+                  </Link>
+                )}
                 {user.guest ? (
                   <Link href="/signup" onClick={closeSheet}>
                     <Button

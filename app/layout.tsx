@@ -5,6 +5,7 @@ import { AuthProvider } from "@/contexts/auth-context";
 import { AppNavbar } from "@/components/layout/app-navbar";
 import { Toaster } from "@/components/ui/toaster";
 import AuthShell from "@/components/layout/auth-shell";
+import { FollowUsFloatingButton } from "@/components/follow-us-dialog";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -54,6 +55,7 @@ export default function RootLayout({
       >
         <AuthProvider>
           <AppNavbar />
+          <FollowUsFloatingButton />
           <AuthShell>
             <main className="min-h-screen pt-16">{children}</main>
           </AuthShell>
