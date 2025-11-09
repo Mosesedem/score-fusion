@@ -4,7 +4,7 @@ import { requireAdmin } from "@/lib/session";
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Check admin authentication
@@ -21,7 +21,7 @@ export async function PATCH(
     }
 
     const { userId, expirationDays, quantity, used, reason } = await req.json();
-    const tokenId = params.id;
+    const { id: tokenId } = await params;
 
     // Validate inputs
     if (quantity !== undefined && quantity < 1) {
@@ -91,10 +91,11 @@ export async function PATCH(
     });
 
     // Log the update in audit table
-    await prisma.auditLog.create({
+    await prisma.adminAuditLog.create({
       data: {
         userId: session.user.id,
         action: "TOKEN_UPDATED",
+        resource: updatedToken.id,
         details: {
           tokenId: updatedToken.id,
           token: updatedToken.token,
@@ -124,7 +125,7 @@ export async function PATCH(
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Check admin authentication
@@ -140,7 +141,7 @@ export async function DELETE(
       );
     }
 
-    const tokenId = params.id;
+    const { id: tokenId } = await params;
 
     // Get token before deleting for audit log
     const token = await prisma.vIPToken.findUnique({
@@ -157,10 +158,11 @@ export async function DELETE(
     });
 
     // Log the deletion
-    await prisma.auditLog.create({
+    await prisma.adminAuditLog.create({
       data: {
         userId: session.user.id,
         action: "TOKEN_DELETED",
+        resource: token.id,
         details: {
           tokenId: token.id,
           token: token.token,

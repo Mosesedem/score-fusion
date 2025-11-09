@@ -93,6 +93,26 @@ export default function AdminVIPTokensPage() {
     reason: "",
   });
   const [saving, setSaving] = useState(false);
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+  }>({
+    open: false,
+    title: "",
+    message: "",
+    onConfirm: () => {},
+  });
+  const [alertDialog, setAlertDialog] = useState<{
+    open: boolean;
+    title: string;
+    message: string;
+  }>({
+    open: false,
+    title: "",
+    message: "",
+  });
   const [formData, setFormData] = useState({
     userId: "",
     quantity: "1",
@@ -144,7 +164,11 @@ export default function AdminVIPTokensPage() {
     e.preventDefault();
 
     if (!formData.userId) {
-      alert("Please select a user");
+      setAlertDialog({
+        open: true,
+        title: "User Required",
+        message: "Please select a user to generate tokens for.",
+      });
       return;
     }
 
@@ -165,11 +189,13 @@ export default function AdminVIPTokensPage() {
       const data = await res.json();
 
       if (res.ok) {
-        alert(
-          `Successfully generated ${formData.quantity} VIP token${
+        setAlertDialog({
+          open: true,
+          title: "Success",
+          message: `Successfully generated ${formData.quantity} VIP token${
             parseInt(formData.quantity) > 1 ? "s" : ""
-          }! Email sent to user.`
-        );
+          }! Email sent to user.`,
+        });
         setShowForm(false);
         setFormData({
           userId: "",
@@ -179,11 +205,19 @@ export default function AdminVIPTokensPage() {
         });
         fetchTokens();
       } else {
-        alert(data.error || "Failed to generate tokens");
+        setAlertDialog({
+          open: true,
+          title: "Error",
+          message: data.error || "Failed to generate tokens",
+        });
       }
     } catch (error) {
       console.error("Failed to generate token:", error);
-      alert("Failed to generate tokens");
+      setAlertDialog({
+        open: true,
+        title: "Error",
+        message: "Failed to generate tokens. Please try again.",
+      });
     } finally {
       setGeneratingTokens(false);
     }
@@ -230,15 +264,27 @@ export default function AdminVIPTokensPage() {
       const data = await res.json();
 
       if (res.ok) {
-        alert("Token updated successfully!");
+        setAlertDialog({
+          open: true,
+          title: "Success",
+          message: "Token updated successfully!",
+        });
         setEditingToken(null);
         fetchTokens();
       } else {
-        alert(data.error || "Failed to update token");
+        setAlertDialog({
+          open: true,
+          title: "Error",
+          message: data.error || "Failed to update token",
+        });
       }
     } catch (error) {
       console.error("Failed to update token:", error);
-      alert("Failed to update token");
+      setAlertDialog({
+        open: true,
+        title: "Error",
+        message: "Failed to update token. Please try again.",
+      });
     } finally {
       setSaving(false);
     }
@@ -247,35 +293,46 @@ export default function AdminVIPTokensPage() {
   const handleDeleteToken = async () => {
     if (!editingToken) return;
 
-    if (
-      !confirm(
-        `Are you sure you want to delete token ${editingToken.token}? This action cannot be undone.`
-      )
-    ) {
-      return;
-    }
+    setConfirmDialog({
+      open: true,
+      title: "Delete Token",
+      message: `Are you sure you want to delete token ${editingToken.token}? This action cannot be undone.`,
+      onConfirm: async () => {
+        setSaving(true);
+        try {
+          const res = await fetch(`/api/admin/tokens/${editingToken.id}`, {
+            method: "DELETE",
+          });
 
-    setSaving(true);
-    try {
-      const res = await fetch(`/api/admin/tokens/${editingToken.id}`, {
-        method: "DELETE",
-      });
+          const data = await res.json();
 
-      const data = await res.json();
-
-      if (res.ok) {
-        alert("Token deleted successfully!");
-        setEditingToken(null);
-        fetchTokens();
-      } else {
-        alert(data.error || "Failed to delete token");
-      }
-    } catch (error) {
-      console.error("Failed to delete token:", error);
-      alert("Failed to delete token");
-    } finally {
-      setSaving(false);
-    }
+          if (res.ok) {
+            setAlertDialog({
+              open: true,
+              title: "Success",
+              message: "Token deleted successfully!",
+            });
+            setEditingToken(null);
+            fetchTokens();
+          } else {
+            setAlertDialog({
+              open: true,
+              title: "Error",
+              message: data.error || "Failed to delete token",
+            });
+          }
+        } catch (error) {
+          console.error("Failed to delete token:", error);
+          setAlertDialog({
+            open: true,
+            title: "Error",
+            message: "Failed to delete token. Please try again.",
+          });
+        } finally {
+          setSaving(false);
+        }
+      },
+    });
   };
 
   const getTokenStatus = (token: VIPToken) => {
@@ -910,6 +967,62 @@ export default function AdminVIPTokensPage() {
                   </Button>
                 </div>
               </div>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Confirmation Dialog */}
+        <Dialog
+          open={confirmDialog.open}
+          onOpenChange={(open) =>
+            !open && setConfirmDialog({ ...confirmDialog, open: false })
+          }
+        >
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{confirmDialog.title}</DialogTitle>
+              <DialogDescription>{confirmDialog.message}</DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() =>
+                  setConfirmDialog({ ...confirmDialog, open: false })
+                }
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={() => {
+                  confirmDialog.onConfirm();
+                  setConfirmDialog({ ...confirmDialog, open: false });
+                }}
+              >
+                Confirm
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Alert Dialog */}
+        <Dialog
+          open={alertDialog.open}
+          onOpenChange={(open) =>
+            !open && setAlertDialog({ ...alertDialog, open: false })
+          }
+        >
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{alertDialog.title}</DialogTitle>
+              <DialogDescription>{alertDialog.message}</DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button
+                onClick={() => setAlertDialog({ ...alertDialog, open: false })}
+              >
+                OK
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
