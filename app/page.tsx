@@ -346,56 +346,51 @@ export default function Home() {
       </section>
 
       {/* Download Now Section */}
-      <section className="py-16 border-t border-border">
+      <section className="py-12 md:py-16 border-t border-border">
         <div className="container mx-auto px-4">
           <div className="max-w-5xl mx-auto">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold mb-4">
+            <div className="text-center mb-8 md:mb-12">
+              <h2 className="text-2xl md:text-3xl font-bold mb-3 md:mb-4">
                 Download ScoreFusion App
               </h2>
-              <p className="text-xl text-muted-foreground">
+              <p className="text-lg md:text-xl text-muted-foreground px-4">
                 Get instant access to live scores, expert tips, and betting
                 insights on the go
               </p>
             </div>
 
-            <div className="grid md:grid-cols-2 gap-8 items-center">
+            <div className="grid md:grid-cols-2 gap-8 md:gap-12 items-center">
               {/* App Preview */}
-              <div className="relative">
-                <div className="bg-linear-to-br from-primary/20 to-primary/5 rounded-3xl p-8 aspect-square flex items-center justify-center">
-                  <div className="text-center">
-                    <Smartphone className="h-32 w-32 text-primary mx-auto mb-4" />
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-center gap-2 text-sm">
-                        <Activity className="h-4 w-4 text-primary animate-pulse" />
-                        <span>Real-time Updates</span>
-                      </div>
-                      <div className="flex items-center justify-center gap-2 text-sm">
-                        <TrendingUp className="h-4 w-4 text-primary" />
-                        <span>Expert Predictions</span>
-                      </div>
-                      <div className="flex items-center justify-center gap-2 text-sm">
-                        <Crown className="h-4 w-4 text-primary" />
-                        <span>VIP Exclusive Content</span>
-                      </div>
-                    </div>
-                  </div>
+              <div className="relative order-2 md:order-1">
+                <Image
+                  src="/images/download.png"
+                  alt="ScoreFusion App Interface"
+                  height={40}
+                  width={40}
+                  className="rounded-xl md:rounded-2xl shadow-2xl w-full max-w-xs md:max-w-sm object-cover"
+                />
+                <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 bg-background border border-border rounded-lg px-4 py-2 shadow-lg flex items-center gap-2 text-sm whitespace-nowrap">
+                  <Activity className="h-4 w-4 text-primary animate-pulse" />
+                  <span className="font-medium">Live on iOS & Android</span>
                 </div>
               </div>
 
               {/* Download Options */}
-              <div className="space-y-6">
+              <div className="space-y-6 order-1 md:order-2">
                 <div>
-                  <h3 className="text-xl font-bold mb-4">Available On</h3>
-                  <div className="flex items-center gap-4">
+                  <h3 className="text-lg md:text-xl font-bold mb-4">
+                    Available On
+                  </h3>
+                  <div className="flex flex-col sm:flex-row gap-3 md:gap-4">
                     {/* iOS Download */}
-                    <Button className="h-20 w-50 mb-4" variant="outline">
+                    <Button
+                      className="h-14 md:h-16 flex-1 justify-start px-4 md:px-6 gap-3"
+                      variant="outline"
+                    >
                       <svg
                         fill="#ffffff"
                         viewBox="0 0 24 24"
                         xmlns="http://www.w3.org/2000/svg"
-                        stroke="#ffffff"
-                        className="h-10"
                       >
                         <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
                         <g
@@ -407,22 +402,26 @@ export default function Home() {
                           {" "}
                           <path d="M18.71 19.5C17.88 20.74 17 21.95 15.66 21.97C14.32 22 13.89 21.18 12.37 21.18C10.84 21.18 10.37 21.95 9.09997 22C7.78997 22.05 6.79997 20.68 5.95997 19.47C4.24997 17 2.93997 12.45 4.69997 9.39C5.56997 7.87 7.12997 6.91 8.81997 6.88C10.1 6.86 11.32 7.75 12.11 7.75C12.89 7.75 14.37 6.68 15.92 6.84C16.57 6.87 18.39 7.1 19.56 8.82C19.47 8.88 17.39 10.1 17.41 12.63C17.44 15.65 20.06 16.66 20.09 16.67C20.06 16.74 19.67 18.11 18.71 19.5ZM13 3.5C13.73 2.67 14.94 2.04 15.94 2C16.07 3.17 15.6 4.35 14.9 5.19C14.21 6.04 13.07 6.7 11.95 6.61C11.8 5.46 12.36 4.26 13 3.5Z"></path>{" "}
                         </g>
-                      </svg>
+                      </svg>{" "}
                       <div className="text-left">
                         <div className="text-xs opacity-80">
                           Download on the
                         </div>
-                        <div className="text-lg font-semibold">App Store</div>
+                        <div className="text-base md:text-lg font-semibold">
+                          App Store
+                        </div>
                       </div>
                     </Button>
 
                     {/* Android Download */}
-                    <Button variant="outline" className="h-20 w-50">
+                    <Button
+                      variant="outline"
+                      className="h-14 md:h-16 flex-1 justify-start px-4 md:px-6 gap-3"
+                    >
                       <svg
                         viewBox="0 0 32 32"
                         fill="none"
                         xmlns="http://www.w3.org/2000/svg"
-                        className="h-20"
                       >
                         <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
                         <g
@@ -434,7 +433,6 @@ export default function Home() {
                           {" "}
                           <mask
                             id="mask0_87_8320"
-                            // maskType="alpha"
                             maskUnits="userSpaceOnUse"
                             x="7"
                             y="3"
@@ -518,36 +516,40 @@ export default function Home() {
                             </linearGradient>{" "}
                           </defs>{" "}
                         </g>
-                      </svg>
+                      </svg>{" "}
                       <div className="text-left">
                         <div className="text-xs opacity-80">GET IT ON</div>
-                        <div className="text-lg font-semibold">Google Play</div>
+                        <div className="text-base md:text-lg font-semibold">
+                          Google Play
+                        </div>
                       </div>
                     </Button>
                   </div>
                 </div>
 
                 <div className="border-t border-border pt-6">
-                  <h4 className="font-semibold mb-3">App Features:</h4>
+                  <h4 className="font-semibold mb-3 text-sm md:text-base">
+                    App Features:
+                  </h4>
                   <ul className="space-y-2 text-sm text-muted-foreground">
-                    <li className="flex items-center gap-2">
-                      <CheckCircle className="h-4 w-4 text-primary" />
+                    <li className="flex items-start gap-2">
+                      <CheckCircle className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
                       <span>Push notifications for live matches</span>
                     </li>
-                    <li className="flex items-center gap-2">
-                      <CheckCircle className="h-4 w-4 text-primary" />
+                    <li className="flex items-start gap-2">
+                      <CheckCircle className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
                       <span>Personalized tip recommendations</span>
                     </li>
-                    <li className="flex items-center gap-2">
-                      <CheckCircle className="h-4 w-4 text-primary" />
+                    <li className="flex items-start gap-2">
+                      <CheckCircle className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
                       <span>Track your betting history</span>
                     </li>
-                    <li className="flex items-center gap-2">
-                      <CheckCircle className="h-4 w-4 text-primary" />
+                    <li className="flex items-start gap-2">
+                      <CheckCircle className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
                       <span>Offline access to saved tips</span>
                     </li>
-                    <li className="flex items-center gap-2">
-                      <CheckCircle className="h-4 w-4 text-primary" />
+                    <li className="flex items-start gap-2">
+                      <CheckCircle className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
                       <span>Secure wallet management</span>
                     </li>
                   </ul>
@@ -556,15 +558,15 @@ export default function Home() {
                 <div className="bg-secondary rounded-lg p-4">
                   <div className="flex items-center gap-3">
                     <div className="flex -space-x-2">
-                      <div className="h-8 w-8 rounded-full bg-primary/20 border-2 border-background flex items-center justify-center text-xs font-bold">
+                      <div className="h-8 w-8 md:h-10 md:w-10 rounded-full bg-primary/20 border-2 border-background flex items-center justify-center text-xs md:text-sm font-bold">
                         4.8
                       </div>
-                      <div className="h-8 w-8 rounded-full bg-primary/40 border-2 border-background" />
-                      <div className="h-8 w-8 rounded-full bg-primary/60 border-2 border-background" />
+                      <div className="h-8 w-8 md:h-10 md:w-10 rounded-full bg-primary/40 border-2 border-background" />
+                      <div className="h-8 w-8 md:h-10 md:w-10 rounded-full bg-primary/60 border-2 border-background" />
                     </div>
                     <div className="text-sm">
                       <div className="font-semibold">Rated 4.8/5</div>
-                      <div className="text-muted-foreground">
+                      <div className="text-muted-foreground text-xs md:text-sm">
                         Over 10,000+ downloads
                       </div>
                     </div>
