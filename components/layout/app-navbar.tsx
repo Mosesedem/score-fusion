@@ -18,12 +18,6 @@ import {
   TrendingUp,
   Settings,
   LogOut,
-  LayoutDashboard,
-  Crown,
-  Trophy,
-  Bell,
-  Gift,
-  Wallet,
   BarChart3,
   Menu,
   X,
@@ -43,22 +37,13 @@ export function AppNavbar() {
   const toggleMobileMenu = () => setMobileMenuOpen(!mobileMenuOpen);
   const closeMobileMenu = () => setMobileMenuOpen(false);
 
-  // Navigation items
+  // Navigation items for non-authenticated users only
   const publicNavItems = [
     { href: "/", label: "Home", icon: Home },
     { href: "/tips", label: "Tips", icon: TrendingUp },
     { href: "/analytics", label: "Analytics", icon: BarChart3 },
     { href: "/help", label: "Help", icon: HelpCircle },
     { href: "/contact", label: "Contact", icon: Mail },
-  ];
-
-  const authenticatedNavItems = [
-    { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-    { href: "/vip", label: "VIP", icon: Crown },
-    { href: "/history", label: "History", icon: Trophy },
-    { href: "/notifications", label: "Notifications", icon: Bell },
-    { href: "/referral", label: "Refer & Earn", icon: Gift },
-    { href: "/earnings", label: "Earnings", icon: Wallet },
   ];
 
   return (
@@ -189,137 +174,58 @@ export function AppNavbar() {
               )}
             </div>
 
-            {/* Mobile Menu Button */}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="lg:hidden"
-              onClick={toggleMobileMenu}
-              aria-label="Toggle menu"
-            >
-              {mobileMenuOpen ? (
-                <X className="h-6 w-6" />
-              ) : (
-                <Menu className="h-6 w-6" />
-              )}
-            </Button>
+            {/* Mobile Menu Button - only show for non-authenticated users */}
+            {!user && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="lg:hidden"
+                onClick={toggleMobileMenu}
+                aria-label="Toggle menu"
+              >
+                {mobileMenuOpen ? (
+                  <X className="h-6 w-6" />
+                ) : (
+                  <Menu className="h-6 w-6" />
+                )}
+              </Button>
+            )}
           </div>
         </div>
 
-        {/* Mobile Menu */}
-        {mobileMenuOpen && (
+        {/* Mobile Menu - Only for non-authenticated users */}
+        {mobileMenuOpen && !user && (
           <div className="lg:hidden border-t border-border">
             <div className="py-4 space-y-1">
               {/* Public Nav Items - only show when not logged in */}
-              {!user &&
-                publicNavItems.map((item) => (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    onClick={closeMobileMenu}
+              {publicNavItems.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={closeMobileMenu}
+                >
+                  <Button
+                    variant={isActive(item.href) ? "default" : "ghost"}
+                    className="w-full justify-start gap-2"
                   >
-                    <Button
-                      variant={isActive(item.href) ? "default" : "ghost"}
-                      className="w-full justify-start gap-2"
-                    >
-                      <item.icon className="h-4 w-4" />
-                      {item.label}
-                    </Button>
-                  </Link>
-                ))}
-
-              {/* Authenticated Nav Items for all logged in users (including guests) */}
-              {user && (
-                <>
-                  {authenticatedNavItems.map((item) => (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      onClick={closeMobileMenu}
-                    >
-                      <Button
-                        variant={isActive(item.href) ? "default" : "ghost"}
-                        className="w-full justify-start gap-2"
-                      >
-                        <item.icon className="h-4 w-4" />
-                        {item.label}
-                      </Button>
-                    </Link>
-                  ))}
-                </>
-              )}
+                    <item.icon className="h-4 w-4" />
+                    {item.label}
+                  </Button>
+                </Link>
+              ))}
 
               {/* Mobile Auth Section */}
               <div className="pt-4 border-t border-border">
-                {!user ? (
-                  <div className="space-y-2">
-                    <Link href="/login" onClick={closeMobileMenu}>
-                      <Button variant="outline" className="w-full">
-                        Login
-                      </Button>
-                    </Link>
-                    <Link href="/signup" onClick={closeMobileMenu}>
-                      <Button className="w-full">Sign Up</Button>
-                    </Link>
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    <div className="px-3 py-2 text-sm">
-                      <p className="font-medium">
-                        {user.displayName || "User"}
-                      </p>
-                      {user.email && (
-                        <p className="text-xs text-muted-foreground">
-                          {user.email}
-                        </p>
-                      )}
-                    </div>
-                    {!user.guest && (
-                      <>
-                        <Link href="/profile" onClick={closeMobileMenu}>
-                          <Button
-                            variant="ghost"
-                            className="w-full justify-start gap-2"
-                          >
-                            <User className="h-4 w-4" />
-                            Profile
-                          </Button>
-                        </Link>
-                        <Link href="/settings" onClick={closeMobileMenu}>
-                          <Button
-                            variant="ghost"
-                            className="w-full justify-start gap-2"
-                          >
-                            <Settings className="h-4 w-4" />
-                            Settings
-                          </Button>
-                        </Link>
-                      </>
-                    )}
-                    {user.guest && (
-                      <Link href="/signup" onClick={closeMobileMenu}>
-                        <Button
-                          variant="ghost"
-                          className="w-full justify-start gap-2"
-                        >
-                          <User className="h-4 w-4" />
-                          Create Account
-                        </Button>
-                      </Link>
-                    )}
-                    <Button
-                      variant="ghost"
-                      className="w-full justify-start gap-2 text-red-500 hover:text-red-600 hover:bg-red-50"
-                      onClick={() => {
-                        logout();
-                        closeMobileMenu();
-                      }}
-                    >
-                      <LogOut className="h-4 w-4" />
-                      Logout
+                <div className="space-y-2">
+                  <Link href="/login" onClick={closeMobileMenu}>
+                    <Button variant="outline" className="w-full">
+                      Login
                     </Button>
-                  </div>
-                )}
+                  </Link>
+                  <Link href="/signup" onClick={closeMobileMenu}>
+                    <Button className="w-full">Sign Up</Button>
+                  </Link>
+                </div>
               </div>
             </div>
           </div>
