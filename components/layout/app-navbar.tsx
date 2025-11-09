@@ -137,9 +137,23 @@ export function AppNavbar() {
                         {user.guest && (
                           <p className="text-xs text-primary">Guest Account</p>
                         )}
+                        {user.role === "ADMIN" && (
+                          <p className="text-xs text-primary">Administrator</p>
+                        )}
                       </div>
                     </DropdownMenuLabel>
                     <DropdownMenuSeparator />
+                    {user.role === "ADMIN" && (
+                      <>
+                        <Link href="/admin">
+                          <DropdownMenuItem className="cursor-pointer">
+                            <User className="mr-2 h-4 w-4" />
+                            <span>Admin Panel</span>
+                          </DropdownMenuItem>
+                        </Link>
+                        <DropdownMenuSeparator />
+                      </>
+                    )}
                     {!user.guest && (
                       <>
                         <Link href="/profile">

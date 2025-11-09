@@ -30,6 +30,7 @@ declare module "next-auth/jwt" {
     isAdmin?: boolean;
     guest?: boolean;
     displayName?: string | null;
+    role?: string;
   }
 }
 
@@ -96,6 +97,7 @@ const authOptions: NextAuthOptions = {
             image: null,
             isAdmin: user.role === "ADMIN",
             guest: !!user.guest,
+            role: user.role,
           };
         } catch (e) {
           console.error("Authorize error:", e);
@@ -110,6 +112,7 @@ const authOptions: NextAuthOptions = {
         token.isAdmin = (user as ExtendedUser).isAdmin ?? false;
         token.guest = (user as ExtendedUser).guest ?? false;
         token.displayName = (user as ExtendedUser).name ?? null;
+        token.role = (user as ExtendedUser).role ?? "USER";
       }
       return token;
     },
@@ -120,7 +123,8 @@ const authOptions: NextAuthOptions = {
           token.displayName || session.user.name || null;
         session.user.isAdmin = token.isAdmin ?? false;
         session.user.guest = token.guest ?? false;
-        session.user.role = typeof token.role === "string" ? token.role : null;
+        session.user.role =
+          typeof token.role === "string" ? token.role : "USER";
       }
       return session;
     },

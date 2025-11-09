@@ -89,11 +89,22 @@ export function useAuth() {
         });
         throw new Error(message);
       }
+
+      // Fetch user data to determine redirect
+      const userResponse = await fetch("/api/auth/me");
+      const userData = await userResponse.json();
+
       toast({
         title: "Welcome back!",
         description: `Logged in as ${email}`,
       });
-      router.push("/dashboard");
+
+      // Redirect based on role
+      if (userData.success && userData.user?.role === "ADMIN") {
+        router.push("/admin");
+      } else {
+        router.push("/dashboard");
+      }
     },
     [router]
   );
@@ -124,6 +135,8 @@ export function useAuth() {
         title: "Account created!",
         description: `Welcome, ${data.displayName}!`,
       });
+
+      // New users are not admins, so always go to dashboard
       router.push("/dashboard");
     },
     [router]
