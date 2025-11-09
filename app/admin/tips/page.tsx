@@ -40,13 +40,13 @@ export default function AdminTipsPage() {
   });
 
   useEffect(() => {
-    if (!isLoading && (!user || !user.isAdmin)) {
+    if (!isLoading && (!user || user.role !== "ADMIN")) {
       router.push("/");
     }
   }, [user, isLoading, router]);
 
   useEffect(() => {
-    if (user?.isAdmin) {
+    if (user?.role === "ADMIN") {
       fetchTips();
     }
   }, [user]);
@@ -156,7 +156,7 @@ export default function AdminTipsPage() {
     );
   }
 
-  if (!user?.isAdmin) return null;
+  if (user?.role !== "ADMIN") return null;
 
   return (
     <div className="min-h-screen bg-background">

@@ -11,6 +11,7 @@ interface ExtendedUser {
   image?: string | null;
   isAdmin?: boolean;
   guest?: boolean;
+  role?: string | null;
 }
 
 declare module "next-auth" {
@@ -74,6 +75,7 @@ const authOptions: NextAuthOptions = {
               image: null,
               isAdmin: user.role === "ADMIN",
               guest: true,
+              role: user.role,
             };
           }
 
@@ -118,6 +120,7 @@ const authOptions: NextAuthOptions = {
           token.displayName || session.user.name || null;
         session.user.isAdmin = token.isAdmin ?? false;
         session.user.guest = token.guest ?? false;
+        session.user.role = typeof token.role === "string" ? token.role : null;
       }
       return session;
     },

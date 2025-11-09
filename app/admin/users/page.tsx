@@ -30,13 +30,13 @@ export default function AdminUsersPage() {
   const [filter, setFilter] = useState<"all" | "active" | "banned">("all");
 
   useEffect(() => {
-    if (!isLoading && (!user || !user.isAdmin)) {
+    if (!isLoading && (!user || user.role !== "ADMIN")) {
       router.push("/");
     }
   }, [user, isLoading, router]);
 
   useEffect(() => {
-    if (user?.isAdmin) {
+    if (user?.role === "ADMIN") {
       fetchUsers();
     }
   }, [user]);
@@ -135,7 +135,7 @@ export default function AdminUsersPage() {
     );
   }
 
-  if (!user?.isAdmin) return null;
+  if (user?.role !== "ADMIN") return null;
 
   return (
     <div className="min-h-screen bg-background">

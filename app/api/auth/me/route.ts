@@ -20,6 +20,7 @@ export async function GET(request: NextRequest) {
         displayName: auth.user.displayName,
         isAdmin: auth.user.isAdmin,
         guest: auth.user.guest,
+        role: auth.user.role,
         createdAt: auth.user.createdAt,
       },
     });

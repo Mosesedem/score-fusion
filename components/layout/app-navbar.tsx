@@ -33,6 +33,10 @@ export function AppNavbar() {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
+  // Don't show regular navbar on admin routes - admin has its own navbar
+  const isAdminRoute = pathname?.startsWith("/admin");
+  if (isAdminRoute) return null;
+
   const isActive = (path: string) => pathname === path;
 
   const toggleMobileMenu = () => setMobileMenuOpen(!mobileMenuOpen);

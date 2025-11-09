@@ -12,6 +12,7 @@ export interface User {
   isAdmin: boolean;
   guest: boolean;
   createdAt?: string;
+  role?: string;
 }
 
 interface AuthContextType {
@@ -55,6 +56,7 @@ export function useAuth() {
     name?: string | null;
     displayName?: string | null;
     isAdmin?: boolean;
+    role: string;
     guest?: boolean;
   };
 
@@ -67,6 +69,7 @@ export function useAuth() {
       displayName: u.displayName || u.name || null,
       isAdmin: u.isAdmin ?? false,
       guest: u.guest ?? false,
+      role: u.role,
     };
   }, [session, status]);
 
