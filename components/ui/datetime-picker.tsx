@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { format } from "date-fns";
 import { DayPicker } from "react-day-picker";
 import "react-day-picker/dist/style.css";
@@ -40,15 +40,25 @@ export function DateTimePicker({
   const [minutes, setMinutes] = useState<string>(
     date ? String(date.getMinutes()).padStart(2, "0") : "00"
   );
+  // Keep latest onChange without re-triggering effect
+  const onChangeRef = useRef(onChange);
+  useEffect(() => {
+    onChangeRef.current = onChange;
+  }, [onChange]);
+
+  // Note: We intentionally don't resync internal state when `value` changes
+  // after mount to avoid feedback loops and lint errors. The picker initializes
+  // from `value` on first render and then becomes locally controlled.
 
   useEffect(() => {
     if (date) {
       const updated = new Date(date);
       updated.setHours(parseInt(hours, 10));
       updated.setMinutes(parseInt(minutes, 10));
-      onChange(updated.toISOString());
+      onChangeRef.current(updated.toISOString());
     }
-  }, [date, hours, minutes, onChange]);
+    // Do not depend on onChange to prevent infinite loops from new function identities
+  }, [date, hours, minutes]);
 
   return (
     <div className="space-y-1">

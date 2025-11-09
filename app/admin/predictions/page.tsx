@@ -331,8 +331,8 @@ export default function AdminPredictionsPage() {
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
-    if (!formData.title.trim()) newErrors.title = "Title is required";
-    if (!formData.summary.trim()) newErrors.summary = "Summary is required";
+    // if (!formData.title.trim()) newErrors.title = "Title is required";
+    // if (!formData.summary.trim()) newErrors.summary = "Summary is required";
     if (!formData.matchDate) newErrors.matchDate = "Match date is required";
     if (!formData.predictedOutcome.trim())
       newErrors.outcome = "Predicted outcome is required";

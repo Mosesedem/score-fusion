@@ -6,7 +6,7 @@ import { requireAdmin } from "@/lib/session";
 // Tip creation/update schema
 const tipSchema = z.object({
   title: z.string().min(5, "Title must be at least 5 characters"),
-  content: z.string().min(20, "Content must be at least 20 characters"),
+  content: z.string().optional(),
   summary: z.string().optional(),
   odds: z.number().positive("Odds must be positive").optional(),
   oddsSource: z.enum(["manual", "api_auto"]).default("manual"),
