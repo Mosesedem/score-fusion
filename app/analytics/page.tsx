@@ -30,7 +30,10 @@ interface Match {
   league?: {
     name: string;
     country: string;
+    logo?: string;
   };
+  homeTeamLogo?: string;
+  awayTeamLogo?: string;
   statistics?: {
     possession?: { home: number; away: number };
     shots?: { home: number; away: number };
@@ -101,53 +104,122 @@ export default function AnalyticsPage() {
   const fetchData = async () => {
     try {
       setLoading(true);
+      console.groupCollapsed(`[Analytics] fetchData (${selectedPeriod})`);
+      console.time("[Analytics] fetchData time");
 
-      // Fetch all matches for today
-      const today = new Date();
-      const tomorrow = new Date(today);
-      tomorrow.setDate(tomorrow.getDate() + 1);
+      // Determine date range based on selected period
+      const now = new Date();
+      const start = new Date(now);
+      const end = new Date(now);
+
+      if (selectedPeriod === "today") {
+        start.setHours(0, 0, 0, 0);
+      } else if (selectedPeriod === "week") {
+        start.setDate(start.getDate() - 6);
+        start.setHours(0, 0, 0, 0);
+      } else if (selectedPeriod === "month") {
+        start.setDate(start.getDate() - 29);
+        start.setHours(0, 0, 0, 0);
+      }
+      end.setHours(23, 59, 59, 999);
+
+      // Fetch all matches in date range with a single API call
+      const matchesUrl = `/api/livescores/matches?source=api&sport=football&dateFrom=${start.toISOString()}&dateTo=${end.toISOString()}&limit=500`;
+      const liveUrl = `/api/livescores/matches?source=api&status=live&sport=football&limit=50`;
+      const tipsUrl = `/api/tips?sport=football&limit=100`;
+
+      console.log("[Analytics] Fetching URLs", {
+        matchesUrl,
+        liveUrl,
+        tipsUrl,
+      });
 
       const [matchesRes, liveMatchesRes, tipsRes] = await Promise.all([
-        fetch(
-          `/api/livescores/matches?sport=football&dateFrom=${today.toISOString()}&dateTo=${tomorrow.toISOString()}&limit=50`
-        ),
-        fetch("/api/livescores/matches?status=live&sport=football&limit=20"),
-        fetch("/api/tips?sport=football&limit=50"),
+        fetch(matchesUrl),
+        fetch(liveUrl),
+        fetch(tipsUrl),
       ]);
+
+      console.log("[Analytics] Responses status", {
+        matchesOk: matchesRes.ok,
+        matchesStatus: matchesRes.status,
+        liveOk: liveMatchesRes.ok,
+        liveStatus: liveMatchesRes.status,
+        tipsOk: tipsRes.ok,
+        tipsStatus: tipsRes.status,
+      });
 
       let allMatches: Match[] = [];
       let live: Match[] = [];
       let allTips: Tip[] = [];
 
-      if (matchesRes.ok) {
-        const matchesData = await matchesRes.json();
-        if (matchesData.success && matchesData.data?.matches) {
-          allMatches = matchesData.data.matches;
+      // Process matches response
+      try {
+        const matchesData = await matchesRes.json().catch(() => null);
+        console.log("[Analytics] matches json", matchesData);
+        if (!matchesRes.ok) {
+          console.error("[Analytics] matches fetch failed", matchesRes.status);
+        } else if (!matchesData?.success) {
+          console.warn("[Analytics] matches success=false", matchesData?.error);
+        } else if (!matchesData?.data?.matches) {
+          console.warn("[Analytics] matches missing data.matches");
+        } else {
+          allMatches = matchesData.data.matches as Match[];
         }
+      } catch (e) {
+        console.error("[Analytics] matches parse error", e);
       }
 
-      if (liveMatchesRes.ok) {
-        const liveData = await liveMatchesRes.json();
-        if (liveData.success && liveData.data?.matches) {
-          live = liveData.data.matches;
+      try {
+        const liveData = await liveMatchesRes.json().catch(() => null);
+        console.log("[Analytics] live json", liveData);
+        if (!liveMatchesRes.ok) {
+          console.error("[Analytics] live fetch failed", liveMatchesRes.status);
+        } else if (!liveData?.success) {
+          console.warn("[Analytics] live success=false", liveData?.error);
+        } else if (!liveData?.data?.matches) {
+          console.warn("[Analytics] live missing data.matches");
+        } else {
+          live = liveData.data.matches as Match[];
         }
+      } catch (e) {
+        console.error("[Analytics] live parse error", e);
       }
 
-      if (tipsRes.ok) {
-        const tipsData = await tipsRes.json();
-        if (tipsData.success && tipsData.data?.tips) {
-          allTips = tipsData.data.tips;
+      try {
+        const tipsData = await tipsRes.json().catch(() => null);
+        console.log("[Analytics] tips json", tipsData);
+        if (!tipsRes.ok) {
+          console.error("[Analytics] tips fetch failed", tipsRes.status);
+        } else if (!tipsData?.success) {
+          console.warn("[Analytics] tips success=false", tipsData?.error);
+        } else if (!tipsData?.data?.tips) {
+          console.warn("[Analytics] tips missing data.tips");
+        } else {
+          allTips = tipsData.data.tips as Tip[];
         }
+      } catch (e) {
+        console.error("[Analytics] tips parse error", e);
       }
+
+      console.log("[Analytics] counts", {
+        allMatches: allMatches.length,
+        live: live.length,
+        tips: allTips.length,
+      });
 
       setMatches(allMatches);
       setLiveMatches(live);
 
       // Calculate analytics
+      console.time("[Analytics] calculateAnalytics time");
       calculateAnalytics(allMatches, live, allTips);
+      console.timeEnd("[Analytics] calculateAnalytics time");
       setLastUpdate(new Date());
+      console.timeEnd("[Analytics] fetchData time");
+      console.groupEnd();
     } catch (error) {
-      console.error("Error fetching analytics data:", error);
+      console.error("[Analytics] Error fetching analytics data:", error);
     } finally {
       setLoading(false);
     }
@@ -158,10 +230,16 @@ export default function AnalyticsPage() {
     live: Match[],
     allTips: Tip[]
   ) => {
+    console.groupCollapsed("[Analytics] calculateAnalytics details");
+    console.log("[Analytics] input sizes", {
+      allMatches: allMatches.length,
+      live: live.length,
+      allTips: allTips.length,
+    });
+
     // Match analytics
-    const completedMatches = allMatches.filter(
-      (m) => m.status === "finished"
-    ).length;
+    const finishedMatches = allMatches.filter((m) => m.status === "finished");
+    const completedMatches = finishedMatches.length;
 
     // Tip performance
     const wonTips = allTips.filter((t) => t.result === "won").length;
@@ -176,8 +254,8 @@ export default function AnalyticsPage() {
       string,
       { matches: number; totalGoals: number }
     >();
-    allMatches.forEach((match) => {
-      if (match.league?.name && match.status === "finished") {
+    finishedMatches.forEach((match) => {
+      if (match.league?.name) {
         const league = match.league.name;
         const goals = (match.homeTeamScore || 0) + (match.awayTeamScore || 0);
         const existing = leagueMap.get(league) || { matches: 0, totalGoals: 0 };
@@ -197,14 +275,77 @@ export default function AnalyticsPage() {
       .sort((a, b) => b.matches - a.matches)
       .slice(0, 5);
 
-    // Team form analysis (mock data for demonstration)
-    const trendingTeams = [
-      { team: "Manchester City", wins: 8, draws: 1, losses: 1, form: "WWWDW" },
-      { team: "Liverpool", wins: 7, draws: 2, losses: 1, form: "WDWWW" },
-      { team: "Arsenal", wins: 7, draws: 2, losses: 1, form: "WWDWW" },
-      { team: "Real Madrid", wins: 9, draws: 0, losses: 1, form: "WWWWW" },
-      { team: "Barcelona", wins: 8, draws: 1, losses: 1, form: "WWWWD" },
-    ];
+    // Team form analysis (computed from finished matches within the selected period)
+    type TeamAgg = {
+      wins: number;
+      draws: number;
+      losses: number;
+      recent: ("W" | "D" | "L")[];
+    };
+    const teamMap = new Map<string, TeamAgg>();
+
+    // Sort by date to build correct recency order
+    const finishedSorted = [...finishedMatches].sort((a, b) => {
+      const da = new Date(a.scheduledAt).getTime();
+      const db = new Date(b.scheduledAt).getTime();
+      return da - db;
+    });
+
+    const pushResult = (name: string, res: "W" | "D" | "L") => {
+      const entry = teamMap.get(name) || {
+        wins: 0,
+        draws: 0,
+        losses: 0,
+        recent: [],
+      };
+      if (res === "W") entry.wins += 1;
+      else if (res === "D") entry.draws += 1;
+      else entry.losses += 1;
+      entry.recent.push(res);
+      // cap history to last 10 results to avoid unbounded growth in memory
+      if (entry.recent.length > 10) entry.recent.shift();
+      teamMap.set(name, entry);
+    };
+
+    finishedSorted.forEach((m) => {
+      const hs = m.homeTeamScore ?? 0;
+      const as = m.awayTeamScore ?? 0;
+      if (!m.homeTeam || !m.awayTeam) return;
+      if (hs > as) {
+        pushResult(m.homeTeam, "W");
+        pushResult(m.awayTeam, "L");
+      } else if (hs < as) {
+        pushResult(m.homeTeam, "L");
+        pushResult(m.awayTeam, "W");
+      } else {
+        pushResult(m.homeTeam, "D");
+        pushResult(m.awayTeam, "D");
+      }
+    });
+
+    const trendingTeams = Array.from(teamMap.entries())
+      .map(([team, agg]) => ({
+        team,
+        wins: agg.wins,
+        draws: agg.draws,
+        losses: agg.losses,
+        // most recent 5 results
+        form: agg.recent.slice(-5).reverse().join("") || "",
+      }))
+      .filter((t) => t.form.length > 0)
+      .sort((a, b) => {
+        // primary: wins desc, secondary: draws desc, tertiary: losses asc
+        if (b.wins !== a.wins) return b.wins - a.wins;
+        if (b.draws !== a.draws) return b.draws - a.draws;
+        return a.losses - b.losses;
+      })
+      .slice(0, 5);
+
+    if (trendingTeams.length === 0) {
+      console.warn(
+        "[Analytics] No trending teams computed (insufficient finished matches in range)"
+      );
+    }
 
     setAnalytics({
       totalMatches: allMatches.length,
@@ -220,6 +361,16 @@ export default function AnalyticsPage() {
       leagueStats,
       trendingTeams,
     });
+    console.log("[Analytics] analytics computed", {
+      totals: {
+        matches: allMatches.length,
+        live: live.length,
+        completed: completedMatches,
+      },
+      leagueStatsCount: leagueStats.length,
+      trendingTeamsCount: trendingTeams.length,
+    });
+    console.groupEnd();
   };
 
   useEffect(() => {
@@ -404,7 +555,16 @@ export default function AnalyticsPage() {
                               {match.league?.name || "Unknown League"}
                             </div>
                             <div className="flex items-center justify-between mb-2">
-                              <span className="font-semibold">
+                              <span className="font-semibold flex items-center gap-2">
+                                {match.homeTeamLogo && (
+                                  // eslint-disable-next-line @next/next/no-img-element
+                                  <img
+                                    src={match.homeTeamLogo}
+                                    alt={match.homeTeam}
+                                    className="h-5 w-5 object-contain"
+                                    loading="lazy"
+                                  />
+                                )}
                                 {match.homeTeam}
                               </span>
                               <span className="text-2xl font-bold">
@@ -412,7 +572,16 @@ export default function AnalyticsPage() {
                               </span>
                             </div>
                             <div className="flex items-center justify-between">
-                              <span className="font-semibold">
+                              <span className="font-semibold flex items-center gap-2">
+                                {match.awayTeamLogo && (
+                                  // eslint-disable-next-line @next/next/no-img-element
+                                  <img
+                                    src={match.awayTeamLogo}
+                                    alt={match.awayTeam}
+                                    className="h-5 w-5 object-contain"
+                                    loading="lazy"
+                                  />
+                                )}
                                 {match.awayTeam}
                               </span>
                               <span className="text-2xl font-bold">
@@ -708,6 +877,9 @@ export default function AnalyticsPage() {
                         Match
                       </th>
                       <th className="text-center py-3 px-4 text-sm font-medium text-muted-foreground">
+                        Possession
+                      </th>
+                      <th className="text-center py-3 px-4 text-sm font-medium text-muted-foreground">
                         Score
                       </th>
                       <th className="text-center py-3 px-4 text-sm font-medium text-muted-foreground">
@@ -731,10 +903,38 @@ export default function AnalyticsPage() {
                           {match.league?.name || "N/A"}
                         </td>
                         <td className="py-3 px-4 text-sm">
-                          <div>{match.homeTeam}</div>
-                          <div className="text-muted-foreground">
+                          <div className="flex items-center gap-2">
+                            {match.homeTeamLogo && (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img
+                                src={match.homeTeamLogo}
+                                alt={match.homeTeam}
+                                className="h-4 w-4 object-contain"
+                              />
+                            )}
+                            {match.homeTeam}
+                          </div>
+                          <div className="text-muted-foreground flex items-center gap-2">
+                            {match.awayTeamLogo && (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img
+                                src={match.awayTeamLogo}
+                                alt={match.awayTeam}
+                                className="h-4 w-4 object-contain"
+                              />
+                            )}
                             {match.awayTeam}
                           </div>
+                        </td>
+                        <td className="py-3 px-4 text-center text-xs">
+                          {match.statistics?.possession ? (
+                            <span className="font-medium">
+                              {match.statistics.possession.home}% /{" "}
+                              {match.statistics.possession.away}%
+                            </span>
+                          ) : (
+                            <span className="text-muted-foreground">-</span>
+                          )}
                         </td>
                         <td className="py-3 px-4 text-center font-semibold">
                           {match.status === "finished" ||
