@@ -1,7 +1,8 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
-import { requireAdmin } from "@/lib/auth";
+import { requireAdmin } from "@/lib/session";
 
 // Query schemas
 const usersQuerySchema = z.object({
@@ -47,12 +48,15 @@ const updateUserSchema = z.object({
 export async function GET(request: NextRequest) {
   try {
     // Check admin authentication
-    const auth = await requireAdmin(request);
+    const { error, session } = await requireAdmin();
 
-    if (!auth.user) {
-      return NextResponse.json(
-        { success: false, error: auth.error || "Admin access required" },
-        { status: auth.error ? 401 : 403 }
+    if (error || !session) {
+      return (
+        error ||
+        NextResponse.json(
+          { success: false, error: "Admin access required" },
+          { status: 403 }
+        )
       );
     }
 
@@ -172,20 +176,89 @@ export async function GET(request: NextRequest) {
       prisma.user.count({ where }),
     ]);
 
+    console.log("Admin users query results:", {
+      totalFound: total,
+      usersReturned: users.length,
+      where: JSON.stringify(where),
+    });
+
     const hasMore = skip + users.length < total;
 
     // Calculate additional metrics for each user
-    const usersWithMetrics = users.map((user) => ({
-      ...user,
-      totalBets: user._count.bets,
-      totalReferrals: user._count.referredUsers,
-      betWinRate: calculateWinRate(user.bets),
-      totalEarnings: user.referralEarnings
-        .filter((e) => e.status === "confirmed")
-        .reduce((sum, e) => sum + Number(e.amount), 0),
-      vipStatus: user.subscriptions.length > 0,
-      subscriptionPlan: user.subscriptions[0]?.plan || null,
-    }));
+    interface Bet {
+      amount: number;
+      status: string;
+    }
+
+    interface ReferralEarning {
+      amount: number | string;
+      status: string;
+    }
+
+    interface Subscription {
+      plan: string;
+      currentPeriodEnd: Date;
+      createdAt?: Date;
+    }
+
+    interface UserCount {
+      bets: number;
+      referredUsers: number;
+    }
+
+    interface UserProfile {
+      country?: string | null;
+      selfExclusionUntil?: Date | null;
+      marketingConsent?: boolean | null;
+      analyticsConsent?: boolean | null;
+    }
+
+    interface Wallet {
+      balance: number | string;
+      tokens: number;
+      bonusTokens?: number;
+      totalEarned?: number | string;
+      totalWithdrawn?: number | string;
+    }
+
+    interface UserDB {
+      id: string;
+      displayName?: string | null;
+      email?: string | null;
+      guest: boolean;
+      deletedAt: Date | null;
+      profile: UserProfile | null;
+      wallet: Wallet | null;
+      subscriptions: Subscription[];
+      bets: Bet[];
+      referralEarnings: ReferralEarning[];
+      referredUsers: Array<{ id: string; createdAt: Date }>;
+      _count: UserCount;
+      [key: string]: any;
+    }
+
+    type UserWithMetrics = UserDB & {
+      totalBets: number;
+      totalReferrals: number;
+      betWinRate: number;
+      totalEarnings: number;
+      vipStatus: boolean;
+      subscriptionPlan: string | null;
+    };
+
+    const usersWithMetrics: UserWithMetrics[] = (users as UserDB[]).map(
+      (user) => ({
+        ...user,
+        totalBets: user._count.bets,
+        totalReferrals: user._count.referredUsers,
+        betWinRate: calculateWinRate(user.bets),
+        totalEarnings: user.referralEarnings
+          .filter((e) => e.status === "confirmed")
+          .reduce((sum, e) => sum + Number(e.amount), 0),
+        vipStatus: user.subscriptions.length > 0,
+        subscriptionPlan: user.subscriptions[0]?.plan || null,
+      })
+    );
 
     return NextResponse.json({
       success: true,
@@ -220,12 +293,15 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     // Check admin authentication
-    const auth = await requireAdmin(request);
+    const { error, session } = await requireAdmin();
 
-    if (!auth.user) {
-      return NextResponse.json(
-        { success: false, error: auth.error || "Admin access required" },
-        { status: auth.error ? 401 : 403 }
+    if (error || !session) {
+      return (
+        error ||
+        NextResponse.json(
+          { success: false, error: "Admin access required" },
+          { status: 403 }
+        )
       );
     }
 
@@ -235,19 +311,19 @@ export async function POST(request: NextRequest) {
     const { action, userId, data } = body;
 
     if (action === "ban" && userId) {
-      return await banUser(userId, data.reason, auth.user.id);
+      return await banUser(userId, data.reason, session.user.id);
     }
 
     if (action === "unban" && userId) {
-      return await unbanUser(userId, auth.user.id);
+      return await unbanUser(userId, session.user.id);
     }
 
     if (action === "update_wallet" && userId) {
-      return await updateUserWallet(userId, data, auth.user.id);
+      return await updateUserWallet(userId, data, session.user.id);
     }
 
     if (action === "self_exclude" && userId) {
-      return await setSelfExclusion(userId, data.days, auth.user.id);
+      return await setSelfExclusion(userId, data.days, session.user.id);
     }
 
     return NextResponse.json(
@@ -263,15 +339,160 @@ export async function POST(request: NextRequest) {
   }
 }
 
+export async function PATCH(request: NextRequest) {
+  try {
+    // Check admin authentication
+    const { error, session } = await requireAdmin();
+
+    if (error || !session) {
+      return (
+        error ||
+        NextResponse.json(
+          { success: false, error: "Admin access required" },
+          { status: 403 }
+        )
+      );
+    }
+
+    const body = await request.json();
+    const { userId, status, role } = body;
+
+    if (!userId) {
+      return NextResponse.json(
+        { success: false, error: "User ID required" },
+        { status: 400 }
+      );
+    }
+
+    const updateData: any = {};
+
+    // Handle status changes
+    if (status) {
+      if (status === "BANNED") {
+        updateData.status = "BANNED";
+        updateData.lockedUntil = new Date(
+          Date.now() + 365 * 24 * 60 * 60 * 1000
+        ); // 1 year
+      } else if (status === "ACTIVE") {
+        updateData.status = "ACTIVE";
+        updateData.lockedUntil = null;
+        updateData.loginAttempts = 0;
+      }
+    }
+
+    // Handle role changes
+    if (role) {
+      updateData.role = role;
+    }
+
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: updateData,
+    });
+
+    // Create audit log
+    await prisma.adminAuditLog.create({
+      data: {
+        userId: session.user.id,
+        action: status
+          ? status === "BANNED"
+            ? "ban_user"
+            : "unban_user"
+          : "update_user_role",
+        resource: userId,
+        details: {
+          changes: updateData,
+          updatedBy: session.user.displayName || session.user.name,
+        },
+      },
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: "User updated successfully",
+      data: { user: updatedUser },
+    });
+  } catch (error) {
+    console.error("Admin users PATCH error:", error);
+    return NextResponse.json(
+      { success: false, error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    // Check admin authentication
+    const { error, session } = await requireAdmin();
+
+    if (error || !session) {
+      return (
+        error ||
+        NextResponse.json(
+          { success: false, error: "Admin access required" },
+          { status: 403 }
+        )
+      );
+    }
+
+    const body = await request.json();
+    const { userId } = body;
+
+    if (!userId) {
+      return NextResponse.json(
+        { success: false, error: "User ID required" },
+        { status: 400 }
+      );
+    }
+
+    // Soft delete the user
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        deletedAt: new Date(),
+        status: "DELETED",
+      },
+    });
+
+    // Create audit log
+    await prisma.adminAuditLog.create({
+      data: {
+        userId: session.user.id,
+        action: "delete_user",
+        resource: userId,
+        details: {
+          deletedBy: session.user.displayName || session.user.name,
+          deletedAt: new Date(),
+        },
+      },
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: "User deleted successfully",
+    });
+  } catch (error) {
+    console.error("Admin users DELETE error:", error);
+    return NextResponse.json(
+      { success: false, error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
+
 export async function PUT(request: NextRequest) {
   try {
     // Check admin authentication
-    const auth = await requireAdmin(request);
+    const { error, session } = await requireAdmin();
 
-    if (!auth.user) {
-      return NextResponse.json(
-        { success: false, error: auth.error || "Admin access required" },
-        { status: auth.error ? 401 : 403 }
+    if (error || !session) {
+      return (
+        error ||
+        NextResponse.json(
+          { success: false, error: "Admin access required" },
+          { status: 403 }
+        )
       );
     }
 
@@ -291,116 +512,164 @@ export async function PUT(request: NextRequest) {
     const validatedData = updateUserSchema.parse(body);
 
     // Update user in transaction
-    const result = await prisma.$transaction(async (tx) => {
-      // Update basic user info
-      const updateData: any = {};
-      if (validatedData.displayName)
-        updateData.displayName = validatedData.displayName;
-      if (validatedData.email)
-        updateData.email = validatedData.email.toLowerCase();
-      if (validatedData.isAdmin !== undefined)
-        updateData.isAdmin = validatedData.isAdmin;
+    interface DepositLimits {
+      daily?: number;
+      weekly?: number;
+      monthly?: number;
+    }
 
-      // Handle status changes
-      if (validatedData.status) {
-        switch (validatedData.status) {
-          case "banned":
-            updateData.lockedUntil = new Date(
-              Date.now() + 365 * 24 * 60 * 60 * 1000
-            ); // 1 year
-            break;
-          case "active":
-            updateData.lockedUntil = null;
-            break;
-        }
-      }
+    interface ProfileInput {
+      country?: string | null;
+      selfExclusionUntil?: string;
+      depositLimits?: DepositLimits;
+    }
 
-      const updatedUser = await tx.user.update({
-        where: { id: userId },
-        data: updateData,
-        include: {
-          profile: true,
-          wallet: true,
-        },
-      });
+    interface WalletAdjustmentInput {
+      amount: number;
+      reason: string;
+      type: "bonus" | "penalty" | "refund";
+    }
 
-      // Update profile if provided
-      if (validatedData.profile) {
-        await tx.profile.upsert({
-          where: { userId },
-          update: validatedData.profile,
-          create: {
-            userId,
-            ...validatedData.profile,
-          },
-        });
-      }
+    interface WalletRecord {
+      balance: number | string;
+      tokens: number;
+      bonusTokens?: number | null;
+    }
 
-      // Handle wallet adjustments
-      if (validatedData.walletAdjustment) {
-        const { amount, reason, type } = validatedData.walletAdjustment;
+    interface UpdatedUserResult {
+      id: string;
+      displayName?: string | null;
+      email?: string | null;
+      profile?: any;
+      wallet?: WalletRecord | null;
+      [key: string]: any;
+    }
 
-        const wallet = await tx.wallet.findUnique({
-          where: { userId },
-        });
+    const result = await prisma.$transaction(
+      async (tx: any): Promise<UpdatedUserResult> => {
+        // Narrow validatedData shape for local usage
+        const vd = validatedData as {
+          displayName?: string;
+          email?: string;
+          isAdmin?: boolean;
+          status?: "banned" | "active" | "self_excluded" | "vip";
+          profile?: ProfileInput;
+          walletAdjustment?: WalletAdjustmentInput;
+        };
 
-        if (!wallet) {
-          throw new Error("User wallet not found");
-        }
+        // Update basic user info
+        const updateData: Partial<{
+          displayName: string;
+          email: string;
+          isAdmin: boolean;
+          lockedUntil: Date | null;
+          loginAttempts?: number;
+        }> = {};
+        if (vd.displayName) updateData.displayName = vd.displayName;
+        if (vd.email) updateData.email = vd.email.toLowerCase();
+        if (vd.isAdmin !== undefined) updateData.isAdmin = vd.isAdmin;
 
-        let newBalance = Number(wallet.balance);
-        let newTokens = wallet.tokens;
-
-        switch (type) {
-          case "bonus":
-            newBalance += amount;
-            break;
-          case "penalty":
-            newBalance = Math.max(0, newBalance - Math.abs(amount));
-            break;
-          case "refund":
-            newBalance += amount;
-            newTokens += Math.floor(amount * 100); // Add tokens equivalent to amount
-            break;
+        // Handle status changes
+        if (vd.status) {
+          switch (vd.status) {
+            case "banned":
+              updateData.lockedUntil = new Date(
+                Date.now() + 365 * 24 * 60 * 60 * 1000
+              ); // 1 year
+              break;
+            case "active":
+              updateData.lockedUntil = null;
+              break;
+          }
         }
 
-        await tx.wallet.update({
-          where: { userId },
-          data: {
-            balance: newBalance,
-            tokens: newTokens,
+        const updatedUser = await tx.user.update({
+          where: { id: userId },
+          data: updateData,
+          include: {
+            profile: true,
+            wallet: true,
           },
         });
 
-        // Create earning record
-        await tx.earning.create({
-          data: {
-            userId,
-            type: `admin_${type}`,
-            amount: type === "penalty" ? -Math.abs(amount) : amount,
-            currency: "USD",
-            tokens: type === "refund" ? Math.floor(amount * 100) : 0,
-            status: "confirmed",
-            description: `Admin ${type}: ${reason}`,
-            confirmedAt: new Date(),
-          },
-        });
+        // Update profile if provided
+        if (vd.profile) {
+          await tx.profile.upsert({
+            where: { userId },
+            update: vd.profile,
+            create: {
+              userId,
+              ...vd.profile,
+            },
+          });
+        }
+
+        // Handle wallet adjustments
+        if (vd.walletAdjustment) {
+          const { amount, reason, type } = vd.walletAdjustment;
+
+          const wallet = (await tx.wallet.findUnique({
+            where: { userId },
+          })) as WalletRecord | null;
+
+          if (!wallet) {
+            throw new Error("User wallet not found");
+          }
+
+          let newBalance = Number(wallet.balance);
+          let newTokens = wallet.tokens;
+
+          switch (type) {
+            case "bonus":
+              newBalance += amount;
+              break;
+            case "penalty":
+              newBalance = Math.max(0, newBalance - Math.abs(amount));
+              break;
+            case "refund":
+              newBalance += amount;
+              newTokens += Math.floor(amount * 100); // Add tokens equivalent to amount
+              break;
+          }
+
+          await tx.wallet.update({
+            where: { userId },
+            data: {
+              balance: newBalance,
+              tokens: newTokens,
+            },
+          });
+
+          // Create earning record
+          await tx.earning.create({
+            data: {
+              userId,
+              type: `admin_${type}`,
+              amount: type === "penalty" ? -Math.abs(amount) : amount,
+              currency: "USD",
+              tokens: type === "refund" ? Math.floor(amount * 100) : 0,
+              status: "confirmed",
+              description: `Admin ${type}: ${reason}`,
+              confirmedAt: new Date(),
+            },
+          });
+        }
+
+        return updatedUser as UpdatedUserResult;
       }
-
-      return updatedUser;
-    });
+    );
 
     // Create audit log
     await prisma.adminAuditLog.create({
       data: {
-        userId: auth.user.id,
+        userId: session.user.id,
         action: "update_user",
         resource: userId,
         details: {
           updatedFields: Object.keys(validatedData),
-          updatedBy: auth.user.displayName,
+          updatedBy: session.user.displayName || session.user.name,
         },
-        ipAddress: request.ip || undefined,
+        ipAddress: request.headers.get("x-forwarded-for") || undefined,
         userAgent: request.headers.get("user-agent") || undefined,
       },
     });
@@ -441,14 +710,31 @@ function calculateWinRate(bets: any[]): number {
 }
 
 async function banUser(userId: string, reason: string, adminId: string) {
-  const result = await prisma.$transaction(async (tx) => {
+  interface UserUpdateData {
+    lockedUntil: Date;
+    loginAttempts: number;
+  }
+
+  interface AuditLogDetails {
+    reason: string;
+    bannedAt: Date;
+  }
+
+  interface AuditLogData {
+    userId: string;
+    action: string;
+    resource: string;
+    details: AuditLogDetails;
+  }
+
+  const result = await prisma.$transaction(async (tx: any) => {
     // Lock user account
     await tx.user.update({
       where: { id: userId },
       data: {
         lockedUntil: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // 1 year
         loginAttempts: 5,
-      },
+      } as UserUpdateData,
     });
 
     // Revoke all active sessions
@@ -464,7 +750,7 @@ async function banUser(userId: string, reason: string, adminId: string) {
           reason,
           bannedAt: new Date(),
         },
-      },
+      } as AuditLogData,
     });
   });
 
@@ -475,13 +761,29 @@ async function banUser(userId: string, reason: string, adminId: string) {
 }
 
 async function unbanUser(userId: string, adminId: string) {
-  await prisma.$transaction(async (tx) => {
+  interface UserUnbanUpdateData {
+    lockedUntil: null;
+    loginAttempts: number;
+  }
+
+  interface UnbanAuditLogDetails {
+    unbannedAt: Date;
+  }
+
+  interface UnbanAuditLogData {
+    userId: string;
+    action: string;
+    resource: string;
+    details: UnbanAuditLogDetails;
+  }
+
+  await prisma.$transaction(async (tx: any) => {
     await tx.user.update({
       where: { id: userId },
       data: {
         lockedUntil: null,
         loginAttempts: 0,
-      },
+      } as UserUnbanUpdateData,
     });
 
     await tx.adminAuditLog.create({
@@ -492,7 +794,7 @@ async function unbanUser(userId: string, adminId: string) {
         details: {
           unbannedAt: new Date(),
         },
-      },
+      } as UnbanAuditLogData,
     });
   });
 
@@ -509,10 +811,39 @@ async function updateUserWallet(
 ) {
   const { amount, reason, type } = adjustment;
 
-  await prisma.$transaction(async (tx) => {
-    const wallet = await tx.wallet.findUnique({
+  interface Wallet {
+    balance: number | string;
+    [key: string]: any;
+  }
+
+  interface EarningData {
+    userId: string;
+    type: string;
+    amount: number;
+    currency: string;
+    status: string;
+    description: string;
+    confirmedAt: Date;
+  }
+
+  interface AuditLogDetails {
+    amount: number;
+    type: string;
+    reason: string;
+    newBalance: number;
+  }
+
+  interface AuditLogData {
+    userId: string;
+    action: string;
+    resource: string;
+    details: AuditLogDetails;
+  }
+
+  await prisma.$transaction(async (tx: any) => {
+    const wallet = (await tx.wallet.findUnique({
       where: { userId },
-    });
+    })) as Wallet | null;
 
     if (!wallet) {
       throw new Error("User wallet not found");
@@ -539,7 +870,7 @@ async function updateUserWallet(
         status: "confirmed",
         description: `Admin ${type}: ${reason}`,
         confirmedAt: new Date(),
-      },
+      } as EarningData,
     });
 
     await tx.adminAuditLog.create({
@@ -553,7 +884,7 @@ async function updateUserWallet(
           reason,
           newBalance,
         },
-      },
+      } as AuditLogData,
     });
   });
 
@@ -567,16 +898,32 @@ async function setSelfExclusion(userId: string, days: number, adminId: string) {
   const exclusionDate = new Date();
   exclusionDate.setDate(exclusionDate.getDate() + days);
 
-  await prisma.$transaction(async (tx) => {
+  interface SelfExclusionProfile {
+    selfExclusionUntil: Date;
+  }
+
+  interface SelfExclusionAuditDetails {
+    days: number;
+    exclusionUntil: Date;
+  }
+
+  interface SelfExclusionAuditLogData {
+    userId: string;
+    action: string;
+    resource: string;
+    details: SelfExclusionAuditDetails;
+  }
+
+  await prisma.$transaction(async (tx: any) => {
     await tx.profile.upsert({
       where: { userId },
       update: {
         selfExclusionUntil: exclusionDate,
-      },
+      } as SelfExclusionProfile,
       create: {
         userId,
         selfExclusionUntil: exclusionDate,
-      },
+      } as SelfExclusionProfile,
     });
 
     await tx.adminAuditLog.create({
@@ -588,7 +935,7 @@ async function setSelfExclusion(userId: string, days: number, adminId: string) {
           days,
           exclusionUntil: exclusionDate,
         },
-      },
+      } as SelfExclusionAuditLogData,
     });
   });
 

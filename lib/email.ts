@@ -410,4 +410,190 @@ export class EmailService {
 
     return this.sendEmail({ to, subject, html });
   }
+
+  // VIP Token email
+  static async sendVIPTokenEmail(
+    to: string,
+    displayName: string,
+    tokens: string[],
+    expirationDays: number,
+    reason: string
+  ) {
+    const subject = "Your VIP Access Tokens Have Arrived! 🌟";
+    const expirationDate = new Date();
+    expirationDate.setDate(expirationDate.getDate() + expirationDays);
+
+    const html = `
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>${subject}</title>
+      </head>
+      <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f8fafc; color: #1e293b;">
+        <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f8fafc; padding: 40px 20px;">
+          <tr>
+            <td align="center">
+              <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
+                <!-- Header -->
+                <tr>
+                  <td style="background: linear-gradient(135deg, #eab308 0%, #f59e0b 100%); padding: 40px; text-align: center;">
+                    <div style="display: inline-block; width: 64px; height: 64px; background-color: rgba(255, 255, 255, 0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 16px;">
+                      <span style="font-size: 32px;">⭐</span>
+                    </div>
+                    <h1 style="margin: 0; color: #ffffff; font-size: 32px; font-weight: 700; letter-spacing: -0.5px;">
+                      VIP Access Granted
+                    </h1>
+                  </td>
+                </tr>
+                
+                <!-- Content -->
+                <tr>
+                  <td style="padding: 40px;">
+                    <h2 style="margin: 0 0 20px; color: ${DARK_BG}; font-size: 24px; font-weight: 600;">
+                      Hi ${displayName}! 🎉
+                    </h2>
+                    
+                    <p style="margin: 0 0 16px; color: #475569; font-size: 16px; line-height: 1.6;">
+                      Great news! You've been granted VIP access to exclusive premium content on Score Fusion.
+                    </p>
+                    
+                    <p style="margin: 0 0 24px; color: #475569; font-size: 16px; line-height: 1.6;">
+                      <strong>Reason:</strong> ${reason}
+                    </p>
+                    
+                    <!-- Token Info Box -->
+                    <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 24px;">
+                      <tr>
+                        <td style="padding: 20px; background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-radius: 8px; border-left: 4px solid #eab308;">
+                          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                            <span style="color: #92400e; font-size: 14px; font-weight: 600; text-transform: uppercase;">Valid For</span>
+                            <span style="color: #92400e; font-size: 16px; font-weight: 700;">${expirationDays} Days</span>
+                          </div>
+                          <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span style="color: #92400e; font-size: 14px; font-weight: 600; text-transform: uppercase;">Expires On</span>
+                            <span style="color: #92400e; font-size: 16px; font-weight: 700;">${expirationDate.toLocaleDateString(
+                              "en-US",
+                              {
+                                month: "short",
+                                day: "numeric",
+                                year: "numeric",
+                              }
+                            )}</span>
+                          </div>
+                        </td>
+                      </tr>
+                    </table>
+
+                    <h3 style="margin: 0 0 16px; color: ${DARK_BG}; font-size: 18px; font-weight: 600;">
+                      Your VIP Access ${tokens.length > 1 ? "PINs" : "PIN"}:
+                    </h3>
+                    
+                    ${tokens
+                      .map(
+                        (token, index) => `
+                      <!-- Token Code Box -->
+                      <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 16px;">
+                        <tr>
+                          <td style="padding: 20px; background-color: #f1f5f9; border-radius: 8px; border: 2px solid #eab308;">
+                            ${
+                              tokens.length > 1
+                                ? `<p style="margin: 0 0 8px; color: #64748b; font-size: 12px; font-weight: 600; text-transform: uppercase;">PIN ${
+                                    index + 1
+                                  }</p>`
+                                : ""
+                            }
+                            <p style="margin: 0; color: ${DARK_BG}; font-size: 28px; font-weight: 700; letter-spacing: 4px; font-family: 'Courier New', monospace; text-align: center;">
+                              ${token}
+                            </p>
+                          </td>
+                        </tr>
+                      </table>
+                    `
+                      )
+                      .join("")}
+                    
+                    <!-- How to Use -->
+                    <table width="100%" cellpadding="0" cellspacing="0" style="margin-top: 24px; margin-bottom: 24px;">
+                      <tr>
+                        <td style="padding: 20px; background-color: #f0fdf4; border-left: 4px solid ${PRIMARY_COLOR}; border-radius: 4px;">
+                          <h3 style="margin: 0 0 12px; color: #065f46; font-size: 16px; font-weight: 600;">
+                            How to Use Your ${
+                              tokens.length > 1 ? "PINs" : "PIN"
+                            }:
+                          </h3>
+                          <ol style="margin: 0; padding-left: 20px; color: #047857; font-size: 14px; line-height: 1.6;">
+                            <li style="margin-bottom: 8px;">Navigate to the VIP section on Score Fusion</li>
+                            <li style="margin-bottom: 8px;">Enter ${
+                              tokens.length > 1
+                                ? "one of your PINs"
+                                : "your PIN"
+                            } when prompted</li>
+                            <li style="margin-bottom: 8px;">Enjoy exclusive premium tips and insights!</li>
+                            ${
+                              tokens.length > 1
+                                ? '<li style="margin-bottom: 0;">Each PIN can be used once</li>'
+                                : ""
+                            }
+                          </ol>
+                        </td>
+                      </tr>
+                    </table>
+                    
+                    <!-- CTA Button -->
+                    <table width="100%" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td align="center">
+                          <a href="${
+                            process.env.NEXT_PUBLIC_APP_URL ||
+                            "https://getscorefusion.com"
+                          }/vip" 
+                             style="display: inline-block; padding: 14px 32px; background: linear-gradient(135deg, #eab308 0%, #f59e0b 100%); color: #ffffff; text-decoration: none; border-radius: 8px; font-size: 16px; font-weight: 600;">
+                            Access VIP Content Now
+                          </a>
+                        </td>
+                      </tr>
+                    </table>
+                    
+                    <p style="margin: 24px 0 0; color: #64748b; font-size: 14px; line-height: 1.6;">
+                      <strong>Important:</strong> Keep ${
+                        tokens.length > 1 ? "these PINs" : "this PIN"
+                      } secure. ${
+      tokens.length > 1 ? "They are" : "It is"
+    } your personal access code${
+      tokens.length > 1 ? "s" : ""
+    } to premium content.
+                    </p>
+                  </td>
+                </tr>
+                
+                <!-- Footer -->
+                <tr>
+                  <td style="background-color: #f8fafc; padding: 32px 40px; text-align: center; border-top: 1px solid #e2e8f0;">
+                    <p style="margin: 0 0 8px; color: #64748b; font-size: 14px;">
+                      © ${new Date().getFullYear()} ${FROM_NAME}. All rights reserved.
+                    </p>
+                    <p style="margin: 0; color: #94a3b8; font-size: 12px;">
+                      <a href="${
+                        process.env.NEXT_PUBLIC_APP_URL ||
+                        "https://getscorefusion.com"
+                      }/privacy" style="color: #64748b; text-decoration: none; margin: 0 8px;">Privacy Policy</a> | 
+                      <a href="${
+                        process.env.NEXT_PUBLIC_APP_URL ||
+                        "https://getscorefusion.com"
+                      }/terms" style="color: #64748b; text-decoration: none; margin: 0 8px;">Terms of Service</a>
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+      </body>
+      </html>
+    `;
+
+    return this.sendEmail({ to, subject, html });
+  }
 }
