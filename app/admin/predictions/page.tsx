@@ -1,4 +1,5 @@
 "use client";
+/* eslint-disable @next/next/no-img-element */
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -8,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { DateTimePicker } from "@/components/ui/datetime-picker";
 import {
   Plus,
   Edit,
@@ -15,7 +17,6 @@ import {
   CheckCircle,
   XCircle,
   Image as ImageIcon,
-  Upload,
   X,
 } from "lucide-react";
 
@@ -23,6 +24,12 @@ interface Team {
   id: string;
   name: string;
   logoUrl?: string;
+  shortName?: string;
+  league?: string;
+  country?: string;
+  externalId?: string;
+  sport?: string;
+  metadata?: Record<string, unknown>;
 }
 
 interface Tip {
@@ -39,6 +46,7 @@ interface Tip {
   awayTeam?: Team;
   predictionType?: string;
   predictedOutcome?: string;
+  confidenceLevel?: number;
   ticketSnapshots: string[];
   isVIP: boolean;
   featured: boolean;
@@ -57,6 +65,24 @@ export default function AdminPredictionsPage() {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingTip, setEditingTip] = useState<Tip | null>(null);
+  // Separate search states for home & away API-Football queries
+  const [homeSearchQuery, setHomeSearchQuery] = useState("");
+  const [awaySearchQuery, setAwaySearchQuery] = useState("");
+  const [homeSearchResults, setHomeSearchResults] = useState<Team[]>([]);
+  const [awaySearchResults, setAwaySearchResults] = useState<Team[]>([]);
+  const [searchingHomeTeams, setSearchingHomeTeams] = useState(false);
+  const [searchingAwayTeams, setSearchingAwayTeams] = useState(false);
+  const [manualMode, setManualMode] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [manualHomeTeam, setManualHomeTeam] = useState({
+    name: "",
+    logoUrl: "",
+  });
+  const [manualAwayTeam, setManualAwayTeam] = useState({
+    name: "",
+    logoUrl: "",
+  });
   const [formData, setFormData] = useState({
     title: "",
     content: "",
@@ -76,6 +102,7 @@ export default function AdminPredictionsPage() {
     status: "published" as "draft" | "scheduled" | "published" | "archived",
     publishAt: "",
     tags: "",
+    confidenceLevel: "75",
   });
 
   useEffect(() => {
@@ -93,7 +120,7 @@ export default function AdminPredictionsPage() {
 
   const fetchTips = async () => {
     try {
-      const res = await fetch("/api/admin/tips");
+      const res = await fetch("/api/admin/predictions");
       if (res.ok) {
         const data = await res.json();
         setTips(data.data.tips || []);
@@ -117,17 +144,76 @@ export default function AdminPredictionsPage() {
     }
   };
 
-  const handleAddTicketSnapshot = () => {
-    if (formData.ticketSnapshots.length < 10) {
-      const url = prompt("Enter ticket snapshot URL:");
-      if (url) {
-        setFormData({
-          ...formData,
-          ticketSnapshots: [...formData.ticketSnapshots, url],
-        });
+  const uploadToCloudinary = async (
+    file: File
+  ): Promise<{ secure_url: string; public_id: string }> => {
+    const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME as
+      | string
+      | undefined;
+    const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET as
+      | string
+      | undefined;
+
+    if (!cloudName || !uploadPreset) {
+      throw new Error(
+        "Cloudinary is not configured. Set NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME and NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET."
+      );
+    }
+
+    const fd = new FormData();
+    fd.append("file", file);
+    fd.append("upload_preset", uploadPreset);
+
+    const res = await fetch(
+      `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
+      {
+        method: "POST",
+        body: fd,
       }
-    } else {
-      alert("Maximum 10 ticket snapshots allowed");
+    );
+    if (!res.ok) {
+      try {
+        const errJson = await res.json();
+        throw new Error(errJson?.error?.message || "Cloudinary upload failed");
+      } catch {
+        throw new Error("Cloudinary upload failed");
+      }
+    }
+    return res.json();
+  };
+
+  const handleTicketSnapshotUpload = async (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    if (!e.target.files || e.target.files.length === 0) return;
+    if (formData.ticketSnapshots.length >= 10) {
+      setErrors({ ...errors, tickets: "Maximum 10 ticket snapshots allowed" });
+      return;
+    }
+    const file = e.target.files[0];
+    if (file.size > 5 * 1024 * 1024) {
+      setErrors({ ...errors, tickets: "File size must be less than 5MB" });
+      return;
+    }
+    setUploadingImage(true);
+    setErrors({ ...errors, tickets: "" });
+    try {
+      const result = await uploadToCloudinary(file);
+      setFormData({
+        ...formData,
+        ticketSnapshots: [...formData.ticketSnapshots, result.secure_url],
+      });
+    } catch (err) {
+      console.error("Snapshot upload failed", err);
+      setErrors({
+        ...errors,
+        tickets:
+          err instanceof Error
+            ? `Failed to upload image: ${err.message}`
+            : "Failed to upload image. Please try again.",
+      });
+    } finally {
+      setUploadingImage(false);
     }
   };
 
@@ -138,21 +224,191 @@ export default function AdminPredictionsPage() {
     });
   };
 
+  const searchTeams = async (query: string, target: "home" | "away") => {
+    if (query.length < 2) {
+      if (target === "home") setHomeSearchResults([]);
+      else setAwaySearchResults([]);
+      return;
+    }
+    if (target === "home") {
+      setSearchingHomeTeams(true);
+    } else {
+      setSearchingAwayTeams(true);
+    }
+    try {
+      const res = await fetch(
+        `/api/admin/teams/search?query=${encodeURIComponent(query)}&sport=${
+          formData.sport
+        }`
+      );
+      if (res.ok) {
+        const data = await res.json();
+        if (target === "home") setHomeSearchResults(data.data.teams || []);
+        else setAwaySearchResults(data.data.teams || []);
+      }
+    } catch (error) {
+      console.error("Failed to search teams:", error);
+    } finally {
+      if (target === "home") {
+        setSearchingHomeTeams(false);
+      } else {
+        setSearchingAwayTeams(false);
+      }
+    }
+  };
+
+  const handleSelectTeamFromAPI = async (
+    team: Team,
+    position: "home" | "away"
+  ) => {
+    // Create team in our database if it doesn't exist
+    try {
+      const res = await fetch("/api/admin/teams/search", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(team),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        const createdTeam = data.data.team;
+
+        // Add to local teams list
+        setTeams((prev) => {
+          const exists = prev.find((t) => t.id === createdTeam.id);
+          return exists ? prev : [...prev, createdTeam];
+        });
+
+        // Set in form
+        if (position === "home") {
+          setFormData({ ...formData, homeTeamId: createdTeam.id });
+          setHomeSearchResults([]);
+          setHomeSearchQuery("");
+        } else {
+          setFormData({ ...formData, awayTeamId: createdTeam.id });
+          setAwaySearchResults([]);
+          setAwaySearchQuery("");
+        }
+      }
+    } catch (error) {
+      console.error("Failed to create team:", error);
+      alert("Failed to add team. Please try again.");
+    }
+  };
+
+  const handleManualTeamLogoUpload = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+    position: "home" | "away"
+  ) => {
+    if (!e.target.files || e.target.files.length === 0) return;
+    const file = e.target.files[0];
+    if (file.size > 2 * 1024 * 1024) {
+      setErrors({ ...errors, logo: "Logo size must be less than 2MB" });
+      return;
+    }
+    setUploadingImage(true);
+    setErrors({ ...errors, logo: "" });
+    try {
+      const result = await uploadToCloudinary(file);
+      if (position === "home") {
+        setManualHomeTeam({ ...manualHomeTeam, logoUrl: result.secure_url });
+      } else {
+        setManualAwayTeam({ ...manualAwayTeam, logoUrl: result.secure_url });
+      }
+    } catch (err) {
+      console.error("Logo upload failed", err);
+      setErrors({
+        ...errors,
+        logo:
+          err instanceof Error
+            ? `Failed to upload logo: ${err.message}`
+            : "Failed to upload logo. Please try again.",
+      });
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
+  const validateForm = () => {
+    const newErrors: Record<string, string> = {};
+    if (!formData.title.trim()) newErrors.title = "Title is required";
+    if (!formData.summary.trim()) newErrors.summary = "Summary is required";
+    if (!formData.matchDate) newErrors.matchDate = "Match date is required";
+    if (!formData.predictedOutcome.trim())
+      newErrors.outcome = "Predicted outcome is required";
+    if (manualMode) {
+      if (!manualHomeTeam.name.trim())
+        newErrors.homeTeam = "Home team name is required";
+      if (!manualAwayTeam.name.trim())
+        newErrors.awayTeam = "Away team name is required";
+    } else {
+      if (!formData.homeTeamId)
+        newErrors.homeTeam = "Please select a home team";
+      if (!formData.awayTeamId)
+        newErrors.awayTeam = "Please select an away team";
+    }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!validateForm()) return;
     try {
       const url = editingTip
-        ? `/api/admin/tips?id=${editingTip.id}`
-        : "/api/admin/tips";
+        ? `/api/admin/predictions?id=${editingTip.id}`
+        : "/api/admin/predictions";
       const method = editingTip ? "PUT" : "POST";
+
+      // Handle manual mode team creation
+      let homeTeamId = formData.homeTeamId;
+      let awayTeamId = formData.awayTeamId;
+      if (manualMode) {
+        if (manualHomeTeam.name) {
+          const homeRes = await fetch("/api/admin/teams/search", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              name: manualHomeTeam.name,
+              logoUrl: manualHomeTeam.logoUrl,
+              sport: formData.sport,
+              league: formData.league,
+            }),
+          });
+          if (homeRes.ok) {
+            const homeData = await homeRes.json();
+            homeTeamId = homeData.data?.team?.id || homeTeamId;
+          }
+        }
+        if (manualAwayTeam.name) {
+          const awayRes = await fetch("/api/admin/teams/search", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              name: manualAwayTeam.name,
+              logoUrl: manualAwayTeam.logoUrl,
+              sport: formData.sport,
+              league: formData.league,
+            }),
+          });
+          if (awayRes.ok) {
+            const awayData = await awayRes.json();
+            awayTeamId = awayData.data?.team?.id || awayTeamId;
+          }
+        }
+      }
 
       const payload = {
         ...formData,
+        homeTeamId: homeTeamId || undefined,
+        awayTeamId: awayTeamId || undefined,
         odds: formData.odds ? parseFloat(formData.odds) : undefined,
+        confidenceLevel: formData.confidenceLevel
+          ? parseInt(formData.confidenceLevel as unknown as string)
+          : undefined,
         matchDate: formData.matchDate || undefined,
         publishAt: formData.publishAt || new Date().toISOString(),
-        homeTeamId: formData.homeTeamId || undefined,
-        awayTeamId: formData.awayTeamId || undefined,
+        content: formData.content || formData.summary,
         tags: formData.tags
           .split(",")
           .map((t) => t.trim())
@@ -170,13 +426,14 @@ export default function AdminPredictionsPage() {
         setShowForm(false);
         setEditingTip(null);
         resetForm();
+        setErrors({});
       } else {
         const error = await res.json();
-        alert(error.error || "Failed to save prediction");
+        setErrors({ submit: error.error || "Failed to save prediction" });
       }
     } catch (error) {
       console.error("Failed to save prediction:", error);
-      alert("Failed to save prediction");
+      setErrors({ submit: "Failed to save prediction. Please try again." });
     }
   };
 
@@ -200,7 +457,12 @@ export default function AdminPredictionsPage() {
       status: "published",
       publishAt: "",
       tags: "",
+      confidenceLevel: "75",
     });
+    setManualHomeTeam({ name: "", logoUrl: "" });
+    setManualAwayTeam({ name: "", logoUrl: "" });
+    setManualMode(false);
+    setErrors({});
   };
 
   const handleEdit = (tip: Tip) => {
@@ -224,6 +486,7 @@ export default function AdminPredictionsPage() {
       status: tip.status as "draft" | "scheduled" | "published" | "archived",
       publishAt: tip.publishAt,
       tags: tip.tags.join(", "),
+      confidenceLevel: tip.confidenceLevel?.toString() || "75",
     });
     setShowForm(true);
   };
@@ -232,7 +495,7 @@ export default function AdminPredictionsPage() {
     if (!confirm("Are you sure you want to delete this prediction?")) return;
 
     try {
-      const res = await fetch(`/api/admin/tips?id=${id}`, {
+      const res = await fetch(`/api/admin/predictions?id=${id}`, {
         method: "DELETE",
       });
 
@@ -250,7 +513,7 @@ export default function AdminPredictionsPage() {
 
   const handleSettle = async (id: string, result: string) => {
     try {
-      const res = await fetch(`/api/admin/tips?id=${id}`, {
+      const res = await fetch(`/api/admin/predictions?id=${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ result }),
@@ -303,52 +566,28 @@ export default function AdminPredictionsPage() {
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-6">
-                {/* Basic Info */}
+                {/* Match & Teams FIRST */}
+                {errors.submit && (
+                  <div className="bg-destructive/10 text-destructive px-4 py-3 rounded-md">
+                    {errors.submit}
+                  </div>
+                )}
                 <div className="space-y-4">
-                  <h3 className="font-bold text-lg">Basic Information</h3>
-                  <div>
-                    <Label htmlFor="title">Prediction Title *</Label>
-                    <Input
-                      id="title"
-                      value={formData.title}
-                      onChange={(e) =>
-                        setFormData({ ...formData, title: e.target.value })
-                      }
-                      placeholder="e.g., Manchester United vs Liverpool - Match Winner"
-                      required
-                    />
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-bold text-lg">Match & Teams</h3>
+                    <div className="flex items-center gap-2">
+                      <Label htmlFor="manualMode" className="text-sm">
+                        Manual Mode
+                      </Label>
+                      <input
+                        type="checkbox"
+                        id="manualMode"
+                        checked={manualMode}
+                        onChange={(e) => setManualMode(e.target.checked)}
+                        className="h-4 w-4"
+                      />
+                    </div>
                   </div>
-
-                  <div>
-                    <Label htmlFor="summary">Short Summary</Label>
-                    <Input
-                      id="summary"
-                      value={formData.summary}
-                      onChange={(e) =>
-                        setFormData({ ...formData, summary: e.target.value })
-                      }
-                      placeholder="Brief description for preview"
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="content">Full Analysis *</Label>
-                    <textarea
-                      id="content"
-                      className="w-full min-h-[200px] px-3 py-2 bg-background border-2 border-border text-foreground rounded-md"
-                      value={formData.content}
-                      onChange={(e) =>
-                        setFormData({ ...formData, content: e.target.value })
-                      }
-                      placeholder="Detailed prediction analysis (supports markdown)"
-                      required
-                    />
-                  </div>
-                </div>
-
-                {/* Match Details */}
-                <div className="space-y-4">
-                  <h3 className="font-bold text-lg">Match & Teams</h3>
                   <div className="grid md:grid-cols-3 gap-4">
                     <div>
                       <Label htmlFor="sport">Sport *</Label>
@@ -381,72 +620,336 @@ export default function AdminPredictionsPage() {
                     </div>
 
                     <div>
-                      <Label htmlFor="matchDate">Match Date</Label>
-                      <Input
-                        id="matchDate"
-                        type="datetime-local"
+                      <DateTimePicker
                         value={formData.matchDate}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            matchDate: e.target.value,
-                          })
+                        onChange={(iso) =>
+                          setFormData({ ...formData, matchDate: iso })
                         }
+                        label="Match Date & Time"
+                        required
                       />
+                      {errors.matchDate && (
+                        <p className="text-xs text-destructive mt-1">
+                          {errors.matchDate}
+                        </p>
+                      )}
                     </div>
                   </div>
+                  {!manualMode ? (
+                    <>
+                      <div className="grid md:grid-cols-2 gap-4">
+                        {/* HOME TEAM SELECTION */}
+                        <div className="space-y-2">
+                          <Label htmlFor="homeTeamId">Home Team *</Label>
+                          <select
+                            id="homeTeamId"
+                            className={`w-full px-3 py-2 bg-background border-2 border-border text-foreground rounded-md ${
+                              errors.homeTeam ? "border-destructive" : ""
+                            }`}
+                            value={formData.homeTeamId}
+                            onChange={(e) =>
+                              setFormData({
+                                ...formData,
+                                homeTeamId: e.target.value,
+                              })
+                            }
+                          >
+                            <option value="">Select Home Team</option>
+                            {teams.map((team) => (
+                              <option key={team.id} value={team.id}>
+                                {team.name}
+                              </option>
+                            ))}
+                          </select>
+                          {errors.homeTeam && (
+                            <p className="text-xs text-destructive mt-1">
+                              {errors.homeTeam}
+                            </p>
+                          )}
+                          <div className="border-2 border-dashed border-border p-3 rounded-md">
+                            <Label
+                              htmlFor="homeTeamSearch"
+                              className="text-xs font-medium"
+                            >
+                              Search Home Team (API-Football)
+                            </Label>
+                            <Input
+                              id="homeTeamSearch"
+                              placeholder="e.g., Chelsea"
+                              value={homeSearchQuery}
+                              onChange={(e) => {
+                                setHomeSearchQuery(e.target.value);
+                                searchTeams(e.target.value, "home");
+                              }}
+                              className="mt-1"
+                            />
+                            {searchingHomeTeams && (
+                              <p className="text-xs text-muted-foreground mt-1">
+                                Searching...
+                              </p>
+                            )}
+                            {homeSearchResults.length > 0 && (
+                              <div className="mt-2 max-h-48 overflow-y-auto space-y-2">
+                                {homeSearchResults.map((t) => (
+                                  <div
+                                    key={t.externalId || t.name}
+                                    className="flex items-center justify-between p-2 border border-border rounded-md hover:bg-secondary"
+                                  >
+                                    <div className="flex items-center gap-2">
+                                      {t.logoUrl && (
+                                        <img
+                                          src={t.logoUrl}
+                                          alt={t.name}
+                                          className="w-6 h-6 object-contain"
+                                        />
+                                      )}
+                                      <span className="text-xs font-medium">
+                                        {t.name}
+                                      </span>
+                                    </div>
+                                    <Button
+                                      type="button"
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() =>
+                                        handleSelectTeamFromAPI(t, "home")
+                                      }
+                                    >
+                                      Select
+                                    </Button>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        {/* AWAY TEAM SELECTION */}
+                        <div className="space-y-2">
+                          <Label htmlFor="awayTeamId">Away Team *</Label>
+                          <select
+                            id="awayTeamId"
+                            className={`w-full px-3 py-2 bg-background border-2 border-border text-foreground rounded-md ${
+                              errors.awayTeam ? "border-destructive" : ""
+                            }`}
+                            value={formData.awayTeamId}
+                            onChange={(e) =>
+                              setFormData({
+                                ...formData,
+                                awayTeamId: e.target.value,
+                              })
+                            }
+                          >
+                            <option value="">Select Away Team</option>
+                            {teams.map((team) => (
+                              <option key={team.id} value={team.id}>
+                                {team.name}
+                              </option>
+                            ))}
+                          </select>
+                          {errors.awayTeam && (
+                            <p className="text-xs text-destructive mt-1">
+                              {errors.awayTeam}
+                            </p>
+                          )}
+                          <div className="border-2 border-dashed border-border p-3 rounded-md">
+                            <Label
+                              htmlFor="awayTeamSearch"
+                              className="text-xs font-medium"
+                            >
+                              Search Away Team (API-Football)
+                            </Label>
+                            <Input
+                              id="awayTeamSearch"
+                              placeholder="e.g., Barcelona"
+                              value={awaySearchQuery}
+                              onChange={(e) => {
+                                setAwaySearchQuery(e.target.value);
+                                searchTeams(e.target.value, "away");
+                              }}
+                              className="mt-1"
+                            />
+                            {searchingAwayTeams && (
+                              <p className="text-xs text-muted-foreground mt-1">
+                                Searching...
+                              </p>
+                            )}
+                            {awaySearchResults.length > 0 && (
+                              <div className="mt-2 max-h-48 overflow-y-auto space-y-2">
+                                {awaySearchResults.map((t) => (
+                                  <div
+                                    key={t.externalId || t.name}
+                                    className="flex items-center justify-between p-2 border border-border rounded-md hover:bg-secondary"
+                                  >
+                                    <div className="flex items-center gap-2">
+                                      {t.logoUrl && (
+                                        <img
+                                          src={t.logoUrl}
+                                          alt={t.name}
+                                          className="w-6 h-6 object-contain"
+                                        />
+                                      )}
+                                      <span className="text-xs font-medium">
+                                        {t.name}
+                                      </span>
+                                    </div>
+                                    <Button
+                                      type="button"
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() =>
+                                        handleSelectTeamFromAPI(t, "away")
+                                      }
+                                    >
+                                      Select
+                                    </Button>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="grid md:grid-cols-2 gap-4">
+                        <div className="space-y-3">
+                          <Label>Home Team *</Label>
+                          <Input
+                            placeholder="Team name"
+                            value={manualHomeTeam.name}
+                            onChange={(e) =>
+                              setManualHomeTeam({
+                                ...manualHomeTeam,
+                                name: e.target.value,
+                              })
+                            }
+                            className={
+                              errors.homeTeam ? "border-destructive" : ""
+                            }
+                          />
+                          <Input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) =>
+                              handleManualTeamLogoUpload(e, "home")
+                            }
+                            disabled={uploadingImage}
+                          />
+                          {manualHomeTeam.logoUrl && (
+                            <img
+                              src={manualHomeTeam.logoUrl}
+                              alt="Home Team Logo"
+                              className="w-16 h-16 object-contain border rounded"
+                            />
+                          )}
+                          {errors.homeTeam && (
+                            <p className="text-xs text-destructive">
+                              {errors.homeTeam}
+                            </p>
+                          )}
+                        </div>
+                        <div className="space-y-3">
+                          <Label>Away Team *</Label>
+                          <Input
+                            placeholder="Team name"
+                            value={manualAwayTeam.name}
+                            onChange={(e) =>
+                              setManualAwayTeam({
+                                ...manualAwayTeam,
+                                name: e.target.value,
+                              })
+                            }
+                            className={
+                              errors.awayTeam ? "border-destructive" : ""
+                            }
+                          />
+                          <Input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) =>
+                              handleManualTeamLogoUpload(e, "away")
+                            }
+                            disabled={uploadingImage}
+                          />
+                          {manualAwayTeam.logoUrl && (
+                            <img
+                              src={manualAwayTeam.logoUrl}
+                              alt="Away Team Logo"
+                              className="w-16 h-16 object-contain border rounded"
+                            />
+                          )}
+                          {errors.awayTeam && (
+                            <p className="text-xs text-destructive">
+                              {errors.awayTeam}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      {errors.logo && (
+                        <p className="text-xs text-destructive">
+                          {errors.logo}
+                        </p>
+                      )}
+                    </>
+                  )}
+                </div>
 
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="homeTeamId">Home Team</Label>
-                      <select
-                        id="homeTeamId"
-                        className="w-full px-3 py-2 bg-background border-2 border-border text-foreground rounded-md"
-                        value={formData.homeTeamId}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            homeTeamId: e.target.value,
-                          })
-                        }
-                      >
-                        <option value="">Select Home Team</option>
-                        {teams.map((team) => (
-                          <option key={team.id} value={team.id}>
-                            {team.name}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div>
-                      <Label htmlFor="awayTeamId">Away Team</Label>
-                      <select
-                        id="awayTeamId"
-                        className="w-full px-3 py-2 bg-background border-2 border-border text-foreground rounded-md"
-                        value={formData.awayTeamId}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            awayTeamId: e.target.value,
-                          })
-                        }
-                      >
-                        <option value="">Select Away Team</option>
-                        {teams.map((team) => (
-                          <option key={team.id} value={team.id}>
-                            {team.name}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
+                {/* Basic Info */}
+                <div className="space-y-4">
+                  <h3 className="font-bold text-lg">Basic Information</h3>
+                  <div>
+                    <Label htmlFor="title">Prediction Title *</Label>
+                    <Input
+                      id="title"
+                      value={formData.title}
+                      onChange={(e) =>
+                        setFormData({ ...formData, title: e.target.value })
+                      }
+                      placeholder="e.g., Manchester United vs Liverpool - Match Winner"
+                      className={errors.title ? "border-destructive" : ""}
+                    />
+                    {errors.title && (
+                      <p className="text-xs text-destructive mt-1">
+                        {errors.title}
+                      </p>
+                    )}
+                  </div>
+                  <div>
+                    <Label htmlFor="summary">Short Summary *</Label>
+                    <Input
+                      id="summary"
+                      value={formData.summary}
+                      onChange={(e) =>
+                        setFormData({ ...formData, summary: e.target.value })
+                      }
+                      placeholder="Brief description for preview"
+                      className={errors.summary ? "border-destructive" : ""}
+                    />
+                    {errors.summary && (
+                      <p className="text-xs text-destructive mt-1">
+                        {errors.summary}
+                      </p>
+                    )}
+                  </div>
+                  <div>
+                    <Label htmlFor="content">Full Analysis (Optional)</Label>
+                    <textarea
+                      id="content"
+                      className="w-full min-h-[200px] px-3 py-2 bg-background border-2 border-border text-foreground rounded-md"
+                      value={formData.content}
+                      onChange={(e) =>
+                        setFormData({ ...formData, content: e.target.value })
+                      }
+                      placeholder="Detailed analysis (supports markdown)"
+                    />
                   </div>
                 </div>
 
                 {/* Prediction Details */}
                 <div className="space-y-4">
                   <h3 className="font-bold text-lg">Prediction Details</h3>
-                  <div className="grid md:grid-cols-3 gap-4">
+                  <div className="grid md:grid-cols-4 gap-4">
                     <div>
                       <Label htmlFor="predictionType">Prediction Type</Label>
                       <select
@@ -501,6 +1004,26 @@ export default function AdminPredictionsPage() {
                         placeholder="e.g., 2.50"
                       />
                     </div>
+
+                    <div>
+                      <Label htmlFor="confidenceLevel">
+                        Confidence Level (%)
+                      </Label>
+                      <Input
+                        id="confidenceLevel"
+                        type="number"
+                        min={1}
+                        max={100}
+                        value={formData.confidenceLevel}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            confidenceLevel: e.target.value,
+                          })
+                        }
+                        placeholder="e.g., 75"
+                      />
+                    </div>
                   </div>
 
                   <div>
@@ -528,17 +1051,22 @@ export default function AdminPredictionsPage() {
                     <h3 className="font-bold text-lg">
                       Ticket Snapshots ({formData.ticketSnapshots.length}/10)
                     </h3>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={handleAddTicketSnapshot}
-                      disabled={formData.ticketSnapshots.length >= 10}
-                    >
-                      <Upload className="h-4 w-4 mr-2" />
-                      Add Snapshot
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        id="ticketUpload"
+                        type="file"
+                        accept="image/*"
+                        onChange={handleTicketSnapshotUpload}
+                        disabled={
+                          uploadingImage ||
+                          formData.ticketSnapshots.length >= 10
+                        }
+                      />
+                    </div>
                   </div>
+                  {errors.tickets && (
+                    <p className="text-xs text-destructive">{errors.tickets}</p>
+                  )}
 
                   {formData.ticketSnapshots.length > 0 && (
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -578,7 +1106,11 @@ export default function AdminPredictionsPage() {
                         onChange={(e) =>
                           setFormData({
                             ...formData,
-                            status: e.target.value as any,
+                            status: e.target.value as
+                              | "draft"
+                              | "scheduled"
+                              | "published"
+                              | "archived",
                           })
                         }
                       >
@@ -590,17 +1122,12 @@ export default function AdminPredictionsPage() {
                     </div>
 
                     <div>
-                      <Label htmlFor="publishAt">Publish Date/Time</Label>
-                      <Input
-                        id="publishAt"
-                        type="datetime-local"
+                      <DateTimePicker
                         value={formData.publishAt}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            publishAt: e.target.value,
-                          })
+                        onChange={(iso) =>
+                          setFormData({ ...formData, publishAt: iso })
                         }
+                        label="Publish Date/Time"
                       />
                     </div>
 
@@ -742,6 +1269,11 @@ export default function AdminPredictionsPage() {
                       {tip.predictedOutcome && (
                         <span className="text-muted-foreground">
                           Prediction: {tip.predictedOutcome}
+                        </span>
+                      )}
+                      {typeof tip.confidenceLevel === "number" && (
+                        <span className="text-muted-foreground">
+                          Confidence: {tip.confidenceLevel}%
                         </span>
                       )}
                     </div>

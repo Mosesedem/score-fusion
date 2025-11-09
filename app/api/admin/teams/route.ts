@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
-import { getAuthenticatedUser } from "@/lib/auth";
+import { requireAdmin } from "@/lib/session";
 
 // Team create/update schema
 const teamSchema = z.object({
@@ -28,14 +28,8 @@ const teamQuerySchema = z.object({
 // GET - List teams
 export async function GET(request: NextRequest) {
   try {
-    const auth = await getAuthenticatedUser(request);
-
-    if (!auth.user || auth.user.role !== "ADMIN") {
-      return NextResponse.json(
-        { success: false, error: "Admin access required" },
-        { status: 403 }
-      );
-    }
+    const { error, session } = await requireAdmin();
+    if (error || !session) return error as NextResponse;
 
     const { searchParams } = new URL(request.url);
     const query = Object.fromEntries(searchParams.entries());
@@ -112,14 +106,8 @@ export async function GET(request: NextRequest) {
 // POST - Create team
 export async function POST(request: NextRequest) {
   try {
-    const auth = await getAuthenticatedUser(request);
-
-    if (!auth.user || auth.user.role !== "ADMIN") {
-      return NextResponse.json(
-        { success: false, error: "Admin access required" },
-        { status: 403 }
-      );
-    }
+    const { error, session } = await requireAdmin();
+    if (error || !session) return error as NextResponse;
 
     const body = await request.json();
     const validatedData = teamSchema.parse(body);
@@ -157,7 +145,7 @@ export async function POST(request: NextRequest) {
     // Log admin action
     await prisma.adminAuditLog.create({
       data: {
-        userId: auth.user.id,
+        userId: session.user.id,
         action: "create_team",
         resource: team.id,
         details: {
@@ -191,14 +179,8 @@ export async function POST(request: NextRequest) {
 // PATCH - Update team
 export async function PATCH(request: NextRequest) {
   try {
-    const auth = await getAuthenticatedUser(request);
-
-    if (!auth.user || auth.user.role !== "ADMIN") {
-      return NextResponse.json(
-        { success: false, error: "Admin access required" },
-        { status: 403 }
-      );
-    }
+    const { error, session } = await requireAdmin();
+    if (error || !session) return error as NextResponse;
 
     const body = await request.json();
     const validatedData = teamSchema.parse(body);
@@ -244,7 +226,7 @@ export async function PATCH(request: NextRequest) {
     // Log admin action
     await prisma.adminAuditLog.create({
       data: {
-        userId: auth.user.id,
+        userId: session.user.id,
         action: "update_team",
         resource: team.id,
         details: {
@@ -278,14 +260,8 @@ export async function PATCH(request: NextRequest) {
 // DELETE - Delete team
 export async function DELETE(request: NextRequest) {
   try {
-    const auth = await getAuthenticatedUser(request);
-
-    if (!auth.user || auth.user.role !== "ADMIN") {
-      return NextResponse.json(
-        { success: false, error: "Admin access required" },
-        { status: 403 }
-      );
-    }
+    const { error, session } = await requireAdmin();
+    if (error || !session) return error as NextResponse;
 
     const { searchParams } = new URL(request.url);
     const teamId = searchParams.get("id");
@@ -317,7 +293,7 @@ export async function DELETE(request: NextRequest) {
     // Log admin action
     await prisma.adminAuditLog.create({
       data: {
-        userId: auth.user.id,
+        userId: session.user.id,
         action: "delete_team",
         resource: teamId,
         details: {

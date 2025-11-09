@@ -1,9 +1,11 @@
 "use client";
+/* eslint-disable @next/next/no-img-element */
 
 import { useAuth } from "@/contexts/auth-context";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import { Crown, Lock, Star, TrendingUp, CheckCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 
@@ -13,10 +15,49 @@ export default function VIPAreaPage() {
   const [loading, setLoading] = useState(true);
   const [tokenCode, setTokenCode] = useState("");
   const [tokenError, setTokenError] = useState("");
+  const [vipPredictions, setVipPredictions] = useState<
+    Array<{
+      id: string;
+      title: string;
+      summary?: string;
+      content: string;
+      odds?: number;
+      sport: string;
+      league?: string;
+      homeTeam?: { name: string; logoUrl?: string };
+      awayTeam?: { name: string; logoUrl?: string };
+      predictedOutcome?: string;
+      ticketSnapshots: string[];
+      result?: string;
+      createdAt: string;
+    }>
+  >([]);
+  const [loadingPredictions, setLoadingPredictions] = useState(false);
 
   useEffect(() => {
     checkVIPAccess();
   }, [user]);
+
+  useEffect(() => {
+    if (hasVIPAccess) {
+      fetchVIPPredictions();
+    }
+  }, [hasVIPAccess]);
+
+  const fetchVIPPredictions = async () => {
+    setLoadingPredictions(true);
+    try {
+      const res = await fetch("/api/predictions?vip=true");
+      if (res.ok) {
+        const data = await res.json();
+        setVipPredictions(data.data?.predictions || []);
+      }
+    } catch (error) {
+      console.error("Failed to fetch VIP predictions:", error);
+    } finally {
+      setLoadingPredictions(false);
+    }
+  };
 
   const checkVIPAccess = async () => {
     try {
@@ -26,8 +67,8 @@ export default function VIPAreaPage() {
         const data = await res.json();
         setHasVIPAccess(data.hasAccess);
       }
-    } catch (error) {
-      console.error("Failed to check VIP access:", error);
+    } catch {
+      // Silently handle errors
     } finally {
       setLoading(false);
     }
@@ -52,7 +93,7 @@ export default function VIPAreaPage() {
       } else {
         setTokenError(data.error || "Invalid token code");
       }
-    } catch (error) {
+    } catch {
       setTokenError("Failed to redeem token. Please try again.");
     }
   };
@@ -237,13 +278,105 @@ export default function VIPAreaPage() {
             </p>
           </CardHeader>
           <CardContent>
-            <div className="text-center py-12 text-muted-foreground">
-              <Crown className="h-16 w-16 mx-auto mb-4 opacity-50" />
-              <p className="text-lg">No VIP predictions available yet</p>
-              <p className="text-sm mt-2">
-                Check back soon for premium sports predictions
-              </p>
-            </div>
+            {loadingPredictions ? (
+              <div className="text-center py-12 text-muted-foreground">
+                <Crown className="h-16 w-16 mx-auto mb-4 opacity-50 animate-pulse" />
+                <p className="text-lg">Loading VIP predictions...</p>
+              </div>
+            ) : vipPredictions.length === 0 ? (
+              <div className="text-center py-12 text-muted-foreground">
+                <Crown className="h-16 w-16 mx-auto mb-4 opacity-50" />
+                <p className="text-lg">No VIP predictions available yet</p>
+                <p className="text-sm mt-2">
+                  Check back soon for premium sports predictions
+                </p>
+              </div>
+            ) : (
+              <div className="grid gap-4 md:grid-cols-2">
+                {vipPredictions.map((prediction) => (
+                  <Card key={prediction.id} className="border-2 border-primary">
+                    <CardContent className="p-4">
+                      <h3 className="font-bold mb-2">{prediction.title}</h3>
+                      {(prediction.homeTeam || prediction.awayTeam) && (
+                        <div className="flex items-center justify-between mb-3 p-2 bg-secondary rounded">
+                          <div className="text-center flex-1">
+                            {prediction.homeTeam?.logoUrl && (
+                              <img
+                                src={prediction.homeTeam.logoUrl}
+                                alt={prediction.homeTeam.name}
+                                className="w-8 h-8 mx-auto mb-1"
+                              />
+                            )}
+                            <p className="text-xs font-medium">
+                              {prediction.homeTeam?.name}
+                            </p>
+                          </div>
+                          <div className="px-3 font-bold text-muted-foreground">
+                            VS
+                          </div>
+                          <div className="text-center flex-1">
+                            {prediction.awayTeam?.logoUrl && (
+                              <img
+                                src={prediction.awayTeam.logoUrl}
+                                alt={prediction.awayTeam.name}
+                                className="w-8 h-8 mx-auto mb-1"
+                              />
+                            )}
+                            <p className="text-xs font-medium">
+                              {prediction.awayTeam?.name}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                      <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
+                        {prediction.summary || prediction.content}
+                      </p>
+                      <div className="flex items-center justify-between">
+                        {prediction.odds && (
+                          <div>
+                            <div className="text-xl font-bold text-primary">
+                              {prediction.odds}
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              Odds
+                            </div>
+                          </div>
+                        )}
+                        {prediction.predictedOutcome && (
+                          <div className="text-right">
+                            <div className="text-sm font-bold">
+                              {prediction.predictedOutcome}
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              Prediction
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                      {prediction.ticketSnapshots.length > 0 && (
+                        <div className="mt-3 text-xs text-muted-foreground">
+                          📊 {prediction.ticketSnapshots.length} ticket
+                          snapshot(s)
+                        </div>
+                      )}
+                      {prediction.result && (
+                        <Badge
+                          className={`mt-3 ${
+                            prediction.result === "won"
+                              ? "bg-green-500"
+                              : prediction.result === "lost"
+                              ? "bg-red-500"
+                              : "bg-gray-500"
+                          }`}
+                        >
+                          {prediction.result.toUpperCase()}
+                        </Badge>
+                      )}
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
 

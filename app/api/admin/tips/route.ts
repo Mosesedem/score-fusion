@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
-import { requireAdmin } from "@/lib/auth";
+import { requireAdmin } from "@/lib/session";
 
 // Tip creation/update schema
 const tipSchema = z.object({
@@ -61,14 +61,8 @@ const tipsQuerySchema = z.object({
 export async function GET(request: NextRequest) {
   try {
     // Check admin authentication
-    const auth = await requireAdmin(request);
-
-    if (!auth.user) {
-      return NextResponse.json(
-        { success: false, error: auth.error || "Admin access required" },
-        { status: auth.error ? 401 : 403 }
-      );
-    }
+    const { error, session } = await requireAdmin();
+    if (error || !session) return error as NextResponse;
 
     const { searchParams } = new URL(request.url);
     const query = Object.fromEntries(searchParams.entries());
@@ -233,14 +227,8 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     // Check admin authentication
-    const auth = await requireAdmin(request);
-
-    if (!auth.user) {
-      return NextResponse.json(
-        { success: false, error: auth.error || "Admin access required" },
-        { status: auth.error ? 401 : 403 }
-      );
-    }
+    const { error, session } = await requireAdmin();
+    if (error || !session) return error as NextResponse;
 
     const body = await request.json();
 
@@ -257,8 +245,8 @@ export async function POST(request: NextRequest) {
         publishAt: validatedData.publishAt
           ? new Date(validatedData.publishAt)
           : new Date(),
-        authorId: validatedData.authorId || auth.user.id,
-        authorName: validatedData.authorName || auth.user.displayName,
+        authorId: validatedData.authorId || session.user.id,
+        authorName: validatedData.authorName || session.user.displayName,
       },
       include: {
         match: true,
@@ -275,7 +263,7 @@ export async function POST(request: NextRequest) {
     // Create audit log
     await prisma.adminAuditLog.create({
       data: {
-        userId: auth.user.id,
+        userId: session.user.id,
         action: "create_tip",
         resource: tip.id,
         details: {
@@ -284,7 +272,7 @@ export async function POST(request: NextRequest) {
           isVIP: tip.isVIP,
           status: tip.status,
         },
-        ipAddress: request.ip || undefined,
+        ipAddress: request.headers.get("x-forwarded-for") || undefined,
         userAgent: request.headers.get("user-agent") || undefined,
       },
     });
@@ -317,14 +305,8 @@ export async function POST(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     // Check admin authentication
-    const auth = await requireAdmin(request);
-
-    if (!auth.user) {
-      return NextResponse.json(
-        { success: false, error: auth.error || "Admin access required" },
-        { status: auth.error ? 401 : 403 }
-      );
-    }
+    const { error, session } = await requireAdmin();
+    if (error || !session) return error as NextResponse;
 
     const { searchParams } = new URL(request.url);
     const tipId = searchParams.get("id");
@@ -369,7 +351,7 @@ export async function PUT(request: NextRequest) {
     // Create audit log
     await prisma.adminAuditLog.create({
       data: {
-        userId: auth.user.id,
+        userId: session.user.id,
         action: "update_tip",
         resource: tip.id,
         details: {
@@ -377,7 +359,7 @@ export async function PUT(request: NextRequest) {
           sport: tip.sport,
           updatedFields: Object.keys(validatedData),
         },
-        ipAddress: request.ip || undefined,
+        ipAddress: request.headers.get("x-forwarded-for") || undefined,
         userAgent: request.headers.get("user-agent") || undefined,
       },
     });
@@ -410,14 +392,8 @@ export async function PUT(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   try {
     // Check admin authentication
-    const auth = await requireAdmin(request);
-
-    if (!auth.user) {
-      return NextResponse.json(
-        { success: false, error: auth.error || "Admin access required" },
-        { status: auth.error ? 401 : 403 }
-      );
-    }
+    const { error, session } = await requireAdmin();
+    if (error || !session) return error as NextResponse;
 
     const { searchParams } = new URL(request.url);
     const tipId = searchParams.get("id");
@@ -461,7 +437,7 @@ export async function DELETE(request: NextRequest) {
     // Create audit log
     await prisma.adminAuditLog.create({
       data: {
-        userId: auth.user.id,
+        userId: session.user.id,
         action: "delete_tip",
         resource: tipId,
         details: {
@@ -469,7 +445,7 @@ export async function DELETE(request: NextRequest) {
           sport: tip.sport,
         },
       },
-      ipAddress: request.ip || undefined,
+      ipAddress: request.headers.get("x-forwarded-for") || undefined,
       userAgent: request.headers.get("user-agent") || undefined,
     });
 

@@ -1,4 +1,5 @@
 "use client";
+/* eslint-disable @next/next/no-img-element */
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
@@ -52,13 +53,13 @@ export default function TipsPage() {
 
   const fetchTips = async () => {
     try {
-      const res = await fetch("/api/tips");
+      const res = await fetch("/api/predictions");
       if (res.ok) {
         const data = await res.json();
-        setTips(data.data?.tips || data.tips || []);
+        setTips(data.data?.predictions || []);
       }
     } catch (error) {
-      console.error("Failed to fetch tips:", error);
+      console.error("Failed to fetch predictions:", error);
     } finally {
       setLoading(false);
     }
