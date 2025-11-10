@@ -75,15 +75,15 @@ export async function GET(request: NextRequest) {
     }
 
     interface Where {
-      status: string;
+      status: "published";
       publishAt: { lte: Date };
-      sport?: { mode: string; equals: string };
+      sport?: { mode: "insensitive"; equals: string };
       featured?: boolean;
       isVIP: boolean;
       OR?: Array<
-        | { title: { mode: string; contains: string } }
-        | { content: { mode: string; contains: string } }
-        | { summary: { mode: string; contains: string } }
+        | { title: { mode: "insensitive"; contains: string } }
+        | { content: { mode: "insensitive"; contains: string } }
+        | { summary: { mode: "insensitive"; contains: string } }
         | { tags: { hasSome: string[] } }
       >;
       tags?: { hasSome: string[] };

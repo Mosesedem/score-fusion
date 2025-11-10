@@ -243,31 +243,16 @@ export async function getVIPEntitlements(userId: string) {
           cancelAtPeriodEnd: sub.cancelAtPeriodEnd,
         })
       ),
-      tokens: availableTokens.map(
-        (token: {
-          id: string;
-          type: string;
-          quantity: number;
-          used: number;
-          expiresAt: Date;
-          tipId: string | null;
-          tip: {
-            id: string;
-            title: string;
-            sport: string;
-            summary: string;
-          } | null;
-        }) => ({
-          id: token.id,
-          type: token.type,
-          quantity: token.quantity,
-          used: token.used,
-          remaining: token.quantity - token.used,
-          expiresAt: token.expiresAt,
-          tipId: token.tipId,
-          tip: token.tip,
-        })
-      ),
+      tokens: availableTokens.map((token) => ({
+        id: token.id,
+        type: token.type,
+        quantity: token.quantity,
+        used: token.used,
+        remaining: token.quantity - token.used,
+        expiresAt: token.expiresAt,
+        tipId: token.tipId,
+        tip: token.tip,
+      })),
     };
   } catch (error) {
     console.error("Error getting VIP entitlements:", error);

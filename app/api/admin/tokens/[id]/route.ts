@@ -1,3 +1,4 @@
+import { Prisma } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/session";
@@ -69,7 +70,6 @@ export async function PATCH(
       metadata.lastEditedAt = new Date().toISOString();
     }
 
-    // Update token
     const updatedToken = await prisma.vIPToken.update({
       where: { id: tokenId },
       data: {
@@ -77,7 +77,9 @@ export async function PATCH(
         ...(newExpiresAt && { expiresAt: newExpiresAt }),
         ...(quantity !== undefined && { quantity }),
         ...(used !== undefined && { used }),
-        ...(reason !== undefined && { metadata }),
+        ...(reason !== undefined && {
+          metadata: metadata as Prisma.InputJsonValue,
+        }),
       },
       include: {
         user: {

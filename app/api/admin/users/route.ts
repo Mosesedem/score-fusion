@@ -186,12 +186,12 @@ export async function GET(request: NextRequest) {
 
     // Calculate additional metrics for each user
     interface Bet {
-      amount: number;
+      amount: number | { toNumber: () => number };
       status: string;
     }
 
     interface ReferralEarning {
-      amount: number | string;
+      amount: number | string | { toNumber: () => number };
       status: string;
     }
 
@@ -214,11 +214,11 @@ export async function GET(request: NextRequest) {
     }
 
     interface Wallet {
-      balance: number | string;
+      balance: number | string | { toNumber: () => number };
       tokens: number;
       bonusTokens?: number;
-      totalEarned?: number | string;
-      totalWithdrawn?: number | string;
+      totalEarned?: number | string | { toNumber: () => number };
+      totalWithdrawn?: number | string | { toNumber: () => number };
     }
 
     interface UserDB {
@@ -246,19 +246,19 @@ export async function GET(request: NextRequest) {
       subscriptionPlan: string | null;
     };
 
-    const usersWithMetrics: UserWithMetrics[] = (users as UserDB[]).map(
-      (user) => ({
-        ...user,
-        totalBets: user._count.bets,
-        totalReferrals: user._count.referredUsers,
-        betWinRate: calculateWinRate(user.bets),
-        totalEarnings: user.referralEarnings
-          .filter((e) => e.status === "confirmed")
-          .reduce((sum, e) => sum + Number(e.amount), 0),
-        vipStatus: user.subscriptions.length > 0,
-        subscriptionPlan: user.subscriptions[0]?.plan || null,
-      })
-    );
+    const usersWithMetrics: UserWithMetrics[] = (
+      users as unknown as UserDB[]
+    ).map((user) => ({
+      ...user,
+      totalBets: user._count.bets,
+      totalReferrals: user._count.referredUsers,
+      betWinRate: calculateWinRate(user.bets),
+      totalEarnings: user.referralEarnings
+        .filter((e) => e.status === "confirmed")
+        .reduce((sum, e) => sum + Number(e.amount), 0),
+      vipStatus: user.subscriptions.length > 0,
+      subscriptionPlan: user.subscriptions[0]?.plan || null,
+    }));
 
     return NextResponse.json({
       success: true,

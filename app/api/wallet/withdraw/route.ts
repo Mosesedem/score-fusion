@@ -1,118 +1,136 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { z } from 'zod'
-import { prisma } from '@/lib/db'
-import { getAuthenticatedUser } from '@/lib/auth'
-import { rateLimit } from '@/lib/redis'
+import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
+import { prisma } from "@/lib/db";
+import { getAuthenticatedUser } from "@/lib/auth";
+import { rateLimit } from "@/lib/redis";
 
 // Validation schemas
 const createWithdrawalSchema = z.object({
-  amount: z.number().positive('Amount must be positive').min(10, 'Minimum withdrawal amount is $10'),
-  method: z.enum(['bank_transfer', 'crypto', 'paypal'], {
-    errorMap: () => ({ message: 'Invalid withdrawal method' }),
+  amount: z
+    .number()
+    .positive("Amount must be positive")
+    .min(10, "Minimum withdrawal amount is $10"),
+  method: z.enum(["bank_transfer", "crypto", "paypal"], {
+    errorMap: () => ({ message: "Invalid withdrawal method" }),
   }),
-  destination: z.object({
-    // Bank transfer fields
-    accountName: z.string().optional(),
-    accountNumber: z.string().optional(),
-    bankName: z.string().optional(),
-    routingNumber: z.string().optional(),
-    swiftCode: z.string().optional(),
-    // Crypto fields
-    walletAddress: z.string().optional(),
-    cryptoCurrency: z.string().optional(),
-    network: z.string().optional(),
-    // PayPal fields
-    email: z.string().email('Invalid PayPal email').optional(),
-  }).optional(),
-})
+  destination: z
+    .object({
+      // Bank transfer fields
+      accountName: z.string().optional(),
+      accountNumber: z.string().optional(),
+      bankName: z.string().optional(),
+      routingNumber: z.string().optional(),
+      swiftCode: z.string().optional(),
+      // Crypto fields
+      walletAddress: z.string().optional(),
+      cryptoCurrency: z.string().optional(),
+      network: z.string().optional(),
+      // PayPal fields
+      email: z.string().email("Invalid PayPal email").optional(),
+    })
+    .optional(),
+});
 
 // Withdrawal limits and fees
-const MIN_WITHDRAWAL_AMOUNT = 10 // $10 minimum
-const MAX_WITHDRAWAL_AMOUNT = 10000 // $10,000 maximum per withdrawal
-const WITHDRAWAL_FEE_PERCENTAGE = 0.02 // 2% fee
-const MIN_WITHDRAWAL_FEE = 1 // $1 minimum fee
-const MAX_DAILY_WITHDRAWAL = 500 // $500 daily limit for new users
+const MIN_WITHDRAWAL_AMOUNT = 10; // $10 minimum
+const MAX_WITHDRAWAL_AMOUNT = 10000; // $10,000 maximum per withdrawal
+const WITHDRAWAL_FEE_PERCENTAGE = 0.02; // 2% fee
+const MIN_WITHDRAWAL_FEE = 1; // $1 minimum fee
+const MAX_DAILY_WITHDRAWAL = 500; // $500 daily limit for new users
 
 export async function POST(request: NextRequest) {
   try {
     // Rate limiting
-    const ip = request.ip || 'unknown'
-    const rateLimitResult = await rateLimit.check(`withdraw:ip:${ip}`, 3, 300000) // 3 per 5 min
+    const ip = request.headers.get("x-forwarded-for") || "unknown";
+    const rateLimitResult = await rateLimit.check(
+      `withdraw:ip:${ip}`,
+      3,
+      300000
+    ); // 3 per 5 min
 
     if (!rateLimitResult.allowed) {
       return NextResponse.json(
-        { success: false, error: 'Too many withdrawal attempts. Please try again later.' },
+        {
+          success: false,
+          error: "Too many withdrawal attempts. Please try again later.",
+        },
         { status: 429 }
-      )
+      );
     }
 
     // Get authenticated user
-    const auth = await getAuthenticatedUser(request)
+    const auth = await getAuthenticatedUser(request);
 
     if (!auth.user || auth.user.guest) {
       return NextResponse.json(
-        { success: false, error: 'Authentication required' },
+        { success: false, error: "Authentication required" },
         { status: 401 }
-      )
+      );
     }
 
-    const userId = auth.user.id
-    const body = await request.json()
+    const userId = auth.user.id;
+    const body = await request.json();
 
     // Validate input
-    const validatedData = createWithdrawalSchema.parse(body)
+    const validatedData = createWithdrawalSchema.parse(body);
 
     // Validate amount limits
     if (validatedData.amount > MAX_WITHDRAWAL_AMOUNT) {
       return NextResponse.json(
-        { success: false, error: `Maximum withdrawal amount is $${MAX_WITHDRAWAL_AMOUNT}` },
+        {
+          success: false,
+          error: `Maximum withdrawal amount is $${MAX_WITHDRAWAL_AMOUNT}`,
+        },
         { status: 400 }
-      )
+      );
     }
 
     // Get user wallet
     const wallet = await prisma.wallet.findUnique({
       where: { userId },
-    })
+    });
 
     if (!wallet) {
       return NextResponse.json(
-        { success: false, error: 'Wallet not found' },
+        { success: false, error: "Wallet not found" },
         { status: 404 }
-      )
+      );
     }
 
     // Check sufficient balance
     if (Number(wallet.balance) < validatedData.amount) {
       return NextResponse.json(
-        { success: false, error: 'Insufficient balance' },
+        { success: false, error: "Insufficient balance" },
         { status: 400 }
-      )
+      );
     }
 
     // Check daily withdrawal limit for new users (less than 30 days old)
-    const userAge = Date.now() - new Date(auth.user.createdAt).getTime()
-    const isUserNew = userAge < 30 * 24 * 60 * 60 * 1000 // 30 days
+    const userAge = Date.now() - new Date(auth.user.createdAt).getTime();
+    const isUserNew = userAge < 30 * 24 * 60 * 60 * 1000; // 30 days
 
     if (isUserNew) {
-      const today = new Date()
-      today.setHours(0, 0, 0, 0)
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
 
       const dailyWithdrawals = await prisma.withdrawal.aggregate({
         where: {
           userId,
-          status: { not: 'failed' },
+          status: { not: "failed" },
           createdAt: { gte: today },
         },
         _sum: { amount: true },
-      })
+      });
 
-      const todayTotal = Number(dailyWithdrawals._sum.amount || 0)
+      const todayTotal = Number(dailyWithdrawals._sum.amount || 0);
       if (todayTotal + validatedData.amount > MAX_DAILY_WITHDRAWAL) {
         return NextResponse.json(
-          { success: false, error: `Daily withdrawal limit of $${MAX_DAILY_WITHDRAWAL} exceeded` },
+          {
+            success: false,
+            error: `Daily withdrawal limit of $${MAX_DAILY_WITHDRAWAL} exceeded`,
+          },
           { status: 400 }
-        )
+        );
       }
     }
 
@@ -120,36 +138,42 @@ export async function POST(request: NextRequest) {
     const withdrawalFee = Math.max(
       validatedData.amount * WITHDRAWAL_FEE_PERCENTAGE,
       MIN_WITHDRAWAL_FEE
-    )
-    const netAmount = validatedData.amount - withdrawalFee
+    );
+    const netAmount = validatedData.amount - withdrawalFee;
 
     // Validate destination details based on method
-    const destination = validatedData.destination || {}
-    if (validatedData.method === 'bank_transfer') {
-      if (!destination.accountName || !destination.accountNumber || !destination.bankName) {
+    const destination = validatedData.destination || {};
+    if (validatedData.method === "bank_transfer") {
+      if (
+        !destination.accountName ||
+        !destination.accountNumber ||
+        !destination.bankName
+      ) {
         return NextResponse.json(
-          { success: false, error: 'Bank account details are required' },
+          { success: false, error: "Bank account details are required" },
           { status: 400 }
-        )
+        );
       }
-    } else if (validatedData.method === 'crypto') {
+    } else if (validatedData.method === "crypto") {
       if (!destination.walletAddress || !destination.cryptoCurrency) {
         return NextResponse.json(
-          { success: false, error: 'Crypto wallet details are required' },
+          { success: false, error: "Crypto wallet details are required" },
           { status: 400 }
-        )
+        );
       }
-    } else if (validatedData.method === 'paypal') {
+    } else if (validatedData.method === "paypal") {
       if (!destination.email) {
         return NextResponse.json(
-          { success: false, error: 'PayPal email is required' },
+          { success: false, error: "PayPal email is required" },
           { status: 400 }
-        )
+        );
       }
     }
 
     // Generate transaction ID
-    const transactionId = `wd_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+    const transactionId = `wd_${Date.now()}_${Math.random()
+      .toString(36)
+      .substr(2, 9)}`;
 
     // Process withdrawal
     const withdrawal = await prisma.$transaction(async (tx) => {
@@ -158,15 +182,15 @@ export async function POST(request: NextRequest) {
         data: {
           userId,
           amount: validatedData.amount,
-          currency: 'USD',
+          currency: "USD",
           method: validatedData.method,
           destination: destination,
           fee: withdrawalFee,
           netAmount,
-          status: 'pending',
+          status: "pending",
           transactionId,
         },
-      })
+      });
 
       // Update wallet (put balance on hold)
       await tx.wallet.update({
@@ -174,16 +198,16 @@ export async function POST(request: NextRequest) {
         data: {
           balance: { decrement: validatedData.amount },
         },
-      })
+      });
 
-      return newWithdrawal
-    })
+      return newWithdrawal;
+    });
 
     // Track withdrawal analytics
     await prisma.analyticsEvent.create({
       data: {
         userId,
-        type: 'withdrawal_requested',
+        type: "withdrawal_requested",
         payload: {
           withdrawalId: withdrawal.id,
           transactionId: withdrawal.transactionId,
@@ -194,13 +218,13 @@ export async function POST(request: NextRequest) {
           timestamp: new Date().toISOString(),
         },
         ipAddress: ip,
-        userAgent: request.headers.get('user-agent') || undefined,
+        userAgent: request.headers.get("user-agent") || undefined,
       },
-    })
+    });
 
     return NextResponse.json({
       success: true,
-      message: 'Withdrawal request submitted successfully',
+      message: "Withdrawal request submitted successfully",
       data: {
         withdrawal: {
           id: withdrawal.id,
@@ -215,24 +239,23 @@ export async function POST(request: NextRequest) {
         wallet: {
           newBalance: Number(wallet.balance) - validatedData.amount,
         },
-        estimatedProcessingTime: '1-3 business days',
+        estimatedProcessingTime: "1-3 business days",
       },
-    })
-
+    });
   } catch (error) {
-    console.error('Withdrawal POST error:', error)
+    console.error("Withdrawal POST error:", error);
 
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { success: false, error: error.errors[0].message },
         { status: 400 }
-      )
+      );
     }
 
     return NextResponse.json(
-      { success: false, error: 'Internal server error' },
+      { success: false, error: "Internal server error" },
       { status: 500 }
-    )
+    );
   }
 }
 
@@ -240,16 +263,16 @@ export async function POST(request: NextRequest) {
 export async function GET(request: NextRequest) {
   try {
     // Get authenticated user
-    const auth = await getAuthenticatedUser(request)
+    const auth = await getAuthenticatedUser(request);
 
     if (!auth.user || auth.user.guest) {
       return NextResponse.json(
-        { success: false, error: 'Authentication required' },
+        { success: false, error: "Authentication required" },
         { status: 401 }
-      )
+      );
     }
 
-    const userId = auth.user.id
+    const userId = auth.user.id;
 
     // Get user wallet and withdrawal history
     const [wallet, withdrawals] = await Promise.all([
@@ -258,16 +281,16 @@ export async function GET(request: NextRequest) {
       }),
       prisma.withdrawal.findMany({
         where: { userId },
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: "desc" },
         take: 20,
       }),
-    ])
+    ]);
 
     if (!wallet) {
       return NextResponse.json(
-        { success: false, error: 'Wallet not found' },
+        { success: false, error: "Wallet not found" },
         { status: 404 }
-      )
+      );
     }
 
     // Get withdrawal statistics
@@ -275,32 +298,32 @@ export async function GET(request: NextRequest) {
       where: { userId },
       _sum: { amount: true, fee: true },
       _count: { id: true },
-    })
+    });
 
-    const totalWithdrawn = Number(stats._sum.amount || 0)
-    const totalFees = Number(stats._sum.fee || 0)
-    const totalWithdrawals = stats._count.id || 0
+    const totalWithdrawn = Number(stats._sum.amount || 0);
+    const totalFees = Number(stats._sum.fee || 0);
+    const totalWithdrawals = stats._count.id || 0;
 
     // Check today's withdrawals for limit tracking
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
     const todayWithdrawals = await prisma.withdrawal.aggregate({
       where: {
         userId,
-        status: { not: 'failed' },
+        status: { not: "failed" },
         createdAt: { gte: today },
       },
       _sum: { amount: true },
-    })
+    });
 
-    const todayTotal = Number(todayWithdrawals._sum.amount || 0)
+    const todayTotal = Number(todayWithdrawals._sum.amount || 0);
 
     // Calculate withdrawal limits
-    const userAge = Date.now() - new Date(auth.user.createdAt).getTime()
-    const isUserNew = userAge < 30 * 24 * 60 * 60 * 1000 // 30 days
-    const dailyLimit = isUserNew ? MAX_DAILY_WITHDRAWAL : Infinity
-    const remainingDailyLimit = Math.max(0, dailyLimit - todayTotal)
+    const userAge = Date.now() - new Date(auth.user.createdAt).getTime();
+    const isUserNew = userAge < 30 * 24 * 60 * 60 * 1000; // 30 days
+    const dailyLimit = isUserNew ? MAX_DAILY_WITHDRAWAL : Infinity;
+    const remainingDailyLimit = Math.max(0, dailyLimit - todayTotal);
 
     return NextResponse.json({
       success: true,
@@ -329,31 +352,43 @@ export async function GET(request: NextRequest) {
         },
         availableMethods: [
           {
-            id: 'bank_transfer',
-            name: 'Bank Transfer',
-            description: 'Direct transfer to your bank account',
-            processingTime: '1-3 business days',
-            fee: `${(WITHDRAWAL_FEE_PERCENTAGE * 100).toFixed(1)}% (min $${MIN_WITHDRAWAL_FEE})`,
-            fields: ['accountName', 'accountNumber', 'bankName', 'routingNumber', 'swiftCode'],
+            id: "bank_transfer",
+            name: "Bank Transfer",
+            description: "Direct transfer to your bank account",
+            processingTime: "1-3 business days",
+            fee: `${(WITHDRAWAL_FEE_PERCENTAGE * 100).toFixed(
+              1
+            )}% (min $${MIN_WITHDRAWAL_FEE})`,
+            fields: [
+              "accountName",
+              "accountNumber",
+              "bankName",
+              "routingNumber",
+              "swiftCode",
+            ],
           },
           {
-            id: 'crypto',
-            name: 'Cryptocurrency',
-            description: 'Transfer to your crypto wallet',
-            processingTime: '24-48 hours',
-            fee: `${(WITHDRAWAL_FEE_PERCENTAGE * 100).toFixed(1)}% (min $${MIN_WITHDRAWAL_FEE})`,
-            fields: ['walletAddress', 'cryptoCurrency', 'network'],
+            id: "crypto",
+            name: "Cryptocurrency",
+            description: "Transfer to your crypto wallet",
+            processingTime: "24-48 hours",
+            fee: `${(WITHDRAWAL_FEE_PERCENTAGE * 100).toFixed(
+              1
+            )}% (min $${MIN_WITHDRAWAL_FEE})`,
+            fields: ["walletAddress", "cryptoCurrency", "network"],
           },
           {
-            id: 'paypal',
-            name: 'PayPal',
-            description: 'Transfer to your PayPal account',
-            processingTime: '1-2 business days',
-            fee: `${(WITHDRAWAL_FEE_PERCENTAGE * 100).toFixed(1)}% (min $${MIN_WITHDRAWAL_FEE})`,
-            fields: ['email'],
+            id: "paypal",
+            name: "PayPal",
+            description: "Transfer to your PayPal account",
+            processingTime: "1-2 business days",
+            fee: `${(WITHDRAWAL_FEE_PERCENTAGE * 100).toFixed(
+              1
+            )}% (min $${MIN_WITHDRAWAL_FEE})`,
+            fields: ["email"],
           },
         ],
-        history: withdrawals.map(withdrawal => ({
+        history: withdrawals.map((withdrawal) => ({
           id: withdrawal.id,
           transactionId: withdrawal.transactionId,
           amount: Number(withdrawal.amount),
@@ -368,13 +403,12 @@ export async function GET(request: NextRequest) {
           updatedAt: withdrawal.updatedAt,
         })),
       },
-    })
-
+    });
   } catch (error) {
-    console.error('Withdrawal GET error:', error)
+    console.error("Withdrawal GET error:", error);
     return NextResponse.json(
-      { success: false, error: 'Internal server error' },
+      { success: false, error: "Internal server error" },
       { status: 500 }
-    )
+    );
   }
 }

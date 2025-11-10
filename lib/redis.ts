@@ -1,7 +1,9 @@
-import { createClient, RedisClientType } from "redis";
+import { createClient } from "redis";
 
 declare global {
-  var __redis: RedisClientType | undefined;
+  // Using a broad type to avoid conflicts between multiple RedisClientType versions
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  var __redis: any | undefined;
 }
 
 const createRedisClient = () => {
@@ -27,7 +29,8 @@ const createRedisClient = () => {
   return client;
 };
 
-const redis = globalThis.__redis || createRedisClient();
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const redis: any = globalThis.__redis || createRedisClient();
 
 if (process.env.NODE_ENV !== "production") {
   globalThis.__redis = redis;
@@ -47,7 +50,7 @@ export const cacheHelpers = {
   },
 
   // Set cache value with optional TTL (seconds)
-  async set(key: string, value: any, ttl?: number): Promise<void> {
+  async set(key: string, value: unknown, ttl?: number): Promise<void> {
     try {
       const serialized = JSON.stringify(value);
       if (ttl) {
@@ -130,8 +133,8 @@ export const sessionStore = {
 
   async setSession(
     sessionId: string,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    sessionData: any,
+    // Accept arbitrary serializable session data
+    sessionData: Record<string, unknown>,
     ttl: number = 86400
   ): Promise<void> {
     return cacheHelpers.set(`session:${sessionId}`, sessionData, ttl);

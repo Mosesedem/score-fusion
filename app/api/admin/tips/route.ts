@@ -17,7 +17,16 @@ const tipSchema = z.object({
   // Team relations for predictions
   homeTeamId: z.string().uuid().optional(),
   awayTeamId: z.string().uuid().optional(),
-  predictionType: z.string().optional(), // winner, over_under, both_teams_score, etc.
+  predictionType: z
+    .enum([
+      "winner",
+      "over_under",
+      "both_teams_score",
+      "correct_score",
+      "handicap",
+      "other",
+    ])
+    .optional(), // Match Prisma PredictionType enum
   predictedOutcome: z.string().optional(), // home_win, draw, away_win, over, under, yes, no
   // Ticket snapshots (up to 10)
   ticketSnapshots: z
@@ -118,23 +127,9 @@ export async function GET(request: NextRequest) {
         take,
         orderBy,
         include: {
-          match: {
-            select: {
-              id: true,
-              homeTeam: true,
-              awayTeam: true,
-              homeTeamScore: true,
-              awayTeamScore: true,
-              status: true,
-              scheduledAt: true,
-            },
-          },
+          match: true,
           homeTeam: {
-            select: {
-              id: true,
-              name: true,
-              shortName: true,
-              logoUrl: true,
+            include: {
               sport: {
                 select: {
                   name: true,
@@ -144,11 +139,7 @@ export async function GET(request: NextRequest) {
             },
           },
           awayTeam: {
-            select: {
-              id: true,
-              name: true,
-              shortName: true,
-              logoUrl: true,
+            include: {
               sport: {
                 select: {
                   name: true,
@@ -190,7 +181,7 @@ export async function GET(request: NextRequest) {
     interface TeamInfo {
       id: string;
       name: string;
-      shortName: string;
+      shortName: string | null;
       logoUrl: string | null;
       sport: {
         name: string;
@@ -208,8 +199,8 @@ export async function GET(request: NextRequest) {
 
     interface Match {
       id: string;
-      homeTeam: TeamInfo;
-      awayTeam: TeamInfo;
+      homeTeam: string;
+      awayTeam: string;
       homeTeamScore: number | null;
       awayTeamScore: number | null;
       status: string;
@@ -235,7 +226,7 @@ export async function GET(request: NextRequest) {
       publishAt: Date;
       isVIP: boolean;
       featured: boolean;
-      authorId: string;
+      authorId: string | null;
       authorName: string | null;
       tags: string[];
       attachments: string[];
@@ -269,28 +260,39 @@ export async function GET(request: NextRequest) {
     }
 
     const tipsWithMetrics: TipWithMetrics[] = tips.map(
-      (tip: (typeof tips)[number]): TipWithMetrics => {
+      (tip): TipWithMetrics => {
+        const normalizedBets: BetSnapshot[] = tip.bets.map((bet) => ({
+          id: bet.id,
+          amount: Number(bet.amount),
+          odds: bet.odds ? Number(bet.odds) : 0,
+          status: bet.status,
+          placedAt: bet.placedAt,
+        }));
+
         const metrics: BetMetrics = {
           totalBets: tip._count.bets,
-          betWinRate: calculateWinRate(tip.bets),
-          totalStaked: tip.bets.reduce(
-            (sum: number, bet: BetSnapshot): number => sum + Number(bet.amount),
+          betWinRate: calculateWinRate(normalizedBets),
+          totalStaked: normalizedBets.reduce(
+            (sum: number, bet: BetSnapshot): number => sum + bet.amount,
             0
           ),
         };
 
         return {
           ...tip,
+          odds: tip.odds ? Number(tip.odds) : null,
+          bets: normalizedBets,
           ...metrics,
-          matchInfo: tip.match
-            ? {
-                homeTeam: tip.match.homeTeam,
-                awayTeam: tip.match.awayTeam,
-                score: `${tip.match.homeTeamScore} - ${tip.match.awayTeamScore}`,
-                status: tip.match.status,
-                scheduledAt: tip.match.scheduledAt,
-              }
-            : null,
+          matchInfo:
+            tip.match && tip.homeTeam && tip.awayTeam
+              ? {
+                  homeTeam: tip.homeTeam,
+                  awayTeam: tip.awayTeam,
+                  score: `${tip.match.homeTeamScore} - ${tip.match.awayTeamScore}`,
+                  status: tip.match.status,
+                  scheduledAt: tip.match.scheduledAt,
+                }
+              : null,
         };
       }
     );
@@ -336,10 +338,15 @@ export async function POST(request: NextRequest) {
     // Validate input
     const validatedData = tipSchema.parse(body);
 
+    // Destructure relational fields from validatedData
+    const { matchId, homeTeamId, awayTeamId, ...createData } = validatedData;
+
     // Create tip
     const tip = await prisma.tip.create({
       data: {
-        ...validatedData,
+        ...createData,
+        content: validatedData.content || "",
+        summary: validatedData.summary || "",
         matchDate: validatedData.matchDate
           ? new Date(validatedData.matchDate)
           : undefined,
@@ -348,6 +355,9 @@ export async function POST(request: NextRequest) {
           : new Date(),
         authorId: validatedData.authorId || session.user.id,
         authorName: validatedData.authorName || session.user.displayName,
+        ...(matchId && { match: { connect: { id: matchId } } }),
+        ...(homeTeamId && { homeTeam: { connect: { id: homeTeamId } } }),
+        ...(awayTeamId && { awayTeam: { connect: { id: awayTeamId } } }),
       },
       include: {
         match: true,
@@ -373,8 +383,8 @@ export async function POST(request: NextRequest) {
           isVIP: tip.isVIP,
           status: tip.status,
         },
-        ipAddress: request.headers.get("x-forwarded-for") || undefined,
-        userAgent: request.headers.get("user-agent") || undefined,
+        ipAddress: request.headers.get("x-forwarded-for") || null,
+        userAgent: request.headers.get("user-agent") || null,
       },
     });
 
@@ -424,18 +434,23 @@ export async function PUT(request: NextRequest) {
     // Validate input
     const validatedData = tipSchema.parse(body);
 
+    // Destructure relational fields from validatedData
+    const { matchId, homeTeamId, awayTeamId, ...updateData } = validatedData;
+
     // Update tip
     const tip = await prisma.tip.update({
       where: { id: tipId },
       data: {
-        ...validatedData,
+        ...updateData,
         matchDate: validatedData.matchDate
           ? new Date(validatedData.matchDate)
           : undefined,
         publishAt: validatedData.publishAt
           ? new Date(validatedData.publishAt)
           : undefined,
-        updatedAt: new Date(),
+        ...(matchId && { match: { connect: { id: matchId } } }),
+        ...(homeTeamId && { homeTeam: { connect: { id: homeTeamId } } }),
+        ...(awayTeamId && { awayTeam: { connect: { id: awayTeamId } } }),
       },
       include: {
         match: true,
@@ -460,8 +475,8 @@ export async function PUT(request: NextRequest) {
           sport: tip.sport,
           updatedFields: Object.keys(validatedData),
         },
-        ipAddress: request.headers.get("x-forwarded-for") || undefined,
-        userAgent: request.headers.get("user-agent") || undefined,
+        ipAddress: request.headers.get("x-forwarded-for") || null,
+        userAgent: request.headers.get("user-agent") || null,
       },
     });
 
@@ -545,9 +560,9 @@ export async function DELETE(request: NextRequest) {
           title: tip.title,
           sport: tip.sport,
         },
+        ipAddress: request.headers.get("x-forwarded-for") || null,
+        userAgent: request.headers.get("user-agent") || null,
       },
-      ipAddress: request.headers.get("x-forwarded-for") || undefined,
-      userAgent: request.headers.get("user-agent") || undefined,
     });
 
     return NextResponse.json({

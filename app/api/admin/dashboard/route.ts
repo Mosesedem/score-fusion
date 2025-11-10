@@ -192,7 +192,7 @@ export async function GET() {
           type: string;
           userId: string | null;
           createdAt: Date;
-          payload: Record<string, unknown> | null;
+          payload: unknown;
         }) => ({
           id: activity.id,
           type: activity.type,

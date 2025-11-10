@@ -54,13 +54,13 @@ export async function POST(request: NextRequest) {
       userId: string | null;
       tipId: string | null;
       createdAt: Date;
-      updatedAt: Date;
+      updatedAt?: Date | null;
       usedAt: Date | null;
       tip: {
         id: string;
         title: string;
         sport: string;
-        summary: string;
+        summary: string | null;
       } | null;
     }
 
@@ -71,11 +71,11 @@ export async function POST(request: NextRequest) {
       quantity: number;
       used: number;
       expiresAt: Date;
-      userId: string;
+      userId: string | null;
       tipId: string | null;
       createdAt: Date;
-      updatedAt: Date;
-      usedAt: Date;
+      updatedAt?: Date | null;
+      usedAt: Date | null;
     }
 
     const result: UpdatedToken = await prisma.$transaction(
@@ -83,7 +83,16 @@ export async function POST(request: NextRequest) {
         // Find the token
         const vipToken: VIPTokenWithTip | null = await tx.vIPToken.findUnique({
           where: { token: validatedData.token },
-          include: { tip: true },
+          include: {
+            tip: {
+              select: {
+                id: true,
+                title: true,
+                sport: true,
+                summary: true,
+              },
+            },
+          },
         });
 
         if (!vipToken) {
@@ -256,7 +265,7 @@ export async function GET() {
       id: string;
       title: string;
       sport: string;
-      summary: string;
+      summary: string | null;
     }
 
     interface TokenData {
@@ -301,7 +310,7 @@ export async function GET() {
         id: string;
         title: string;
         sport: string;
-        summary: string;
+        summary: string | null;
       } | null;
     }
 
