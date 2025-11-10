@@ -40,6 +40,7 @@ export default function ForgotPasswordPage() {
           "If an account matches that email, a reset link has been sent."
       );
       setEmail("");
+      window.location.href = "/reset-password";
     } catch (error) {
       console.error("Forgot password error", error);
       setErrorMessage("Something went wrong. Please try again later.");
