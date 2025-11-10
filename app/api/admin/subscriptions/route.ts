@@ -11,6 +11,102 @@ const subscriptionSchema = z.object({
   durationDays: z.number().positive().optional(),
 });
 
+export async function GET(request: NextRequest) {
+  try {
+    // Check admin authentication
+    const { error, session } = await requireAdmin();
+
+    if (error || !session) {
+      return (
+        error ||
+        NextResponse.json(
+          { success: false, error: "Admin access required" },
+          { status: 403 }
+        )
+      );
+    }
+
+    const { searchParams } = new URL(request.url);
+    const page = parseInt(searchParams.get("page") || "1");
+    const limit = parseInt(searchParams.get("limit") || "20");
+    const search = searchParams.get("search") || "";
+    const status = searchParams.get("status") || "";
+
+    const skip = (page - 1) * limit;
+
+    // Build where clause
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const where: any = {};
+
+    if (search) {
+      where.user = {
+        OR: [
+          { email: { contains: search, mode: "insensitive" } },
+          { displayName: { contains: search, mode: "insensitive" } },
+          { name: { contains: search, mode: "insensitive" } },
+        ],
+      };
+    }
+
+    if (status && status !== "all") {
+      if (status === "trial") {
+        where.AND = [{ status: "active" }, { trialEnd: { gte: new Date() } }];
+      } else {
+        where.status = status;
+      }
+    }
+
+    // Fetch subscriptions
+    const [subscriptions, total] = await Promise.all([
+      prisma.subscription.findMany({
+        where,
+        include: {
+          user: {
+            select: {
+              id: true,
+              email: true,
+              displayName: true,
+              name: true,
+            },
+          },
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+        skip,
+        take: limit,
+      }),
+      prisma.subscription.count({ where }),
+    ]);
+
+    const totalPages = Math.ceil(total / limit);
+    const hasMore = page < totalPages;
+
+    return NextResponse.json({
+      success: true,
+      data: {
+        subscriptions,
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages,
+          hasMore,
+        },
+      },
+    });
+  } catch (error) {
+    console.error("Failed to fetch subscriptions:", error);
+    return NextResponse.json(
+      {
+        success: false,
+        error: error instanceof Error ? error.message : "Internal server error",
+      },
+      { status: 500 }
+    );
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     // Check admin authentication

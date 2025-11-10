@@ -16,14 +16,15 @@ import {
   Menu,
   X,
   LogOut,
-  BarChart3,
   Trophy,
   UserCog,
+  CreditCard,
 } from "lucide-react";
 
 const adminItems = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
   { href: "/admin/users", label: "Users", icon: Users },
+  { href: "/admin/subscriptions", label: "Subscriptions", icon: CreditCard },
   { href: "/admin/tips", label: "Tips Management", icon: TrendingUp },
   { href: "/admin/predictions", label: "Predictions", icon: Trophy },
   { href: "/admin/teams", label: "Teams", icon: Shield },
