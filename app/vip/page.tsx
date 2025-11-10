@@ -339,11 +339,11 @@ export default function VIPAreaPage() {
                   <Card key={prediction.id} className="border-2 border-primary">
                     <CardContent className="p-4">
                       <div className="flex items-center gap-1.5 md:gap-2 mb-2 flex-wrap">
-                        <Badge className="bg-secondary text-[10px] md:text-xs px-1.5 md:px-2 py-0.5">
+                        <Badge className=" text-[10px] md:text-xs px-1.5 md:px-2 py-0.5">
                           {prediction.sport}
                         </Badge>
                         {prediction.league && (
-                          <Badge className="bg-secondary text-[10px] md:text-xs px-1.5 md:px-2 py-0.5">
+                          <Badge className=" text-[10px] md:text-xs px-1.5 md:px-2 py-0.5">
                             {prediction.league}
                           </Badge>
                         )}

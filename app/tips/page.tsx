@@ -210,7 +210,7 @@ export default function TipsPage() {
                 >
                   <CardHeader className="pb-2 p-3 md:p-4 lg:p-6 lg:pb-3">
                     <div className="flex items-center justify-between mb-1.5 md:mb-2 gap-1.5 md:gap-2">
-                      <Badge className="bg-secondary text-[10px] md:text-xs px-1.5 md:px-2 py-0.5">
+                      <Badge className=" text-[10px] md:text-xs px-1.5 md:px-2 py-0.5">
                         {tip.sport}
                       </Badge>
                       <div className="flex items-center gap-1 shrink-0 flex-wrap">

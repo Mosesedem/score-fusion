@@ -61,7 +61,6 @@ export default function TipDetailPage() {
   const params = useParams();
   const router = useRouter();
   const [tip, setTip] = useState<Tip | null>(null);
-  const [hasVipAccess, setHasVipAccess] = useState(false);
   const [loading, setLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
@@ -71,7 +70,6 @@ export default function TipDetailPage() {
       if (res.ok) {
         const data = await res.json();
         setTip(data.data.prediction);
-        setHasVipAccess(data.data.hasVipAccess);
       } else if (res.status === 404) {
         router.push("/tips");
       }
@@ -312,68 +310,51 @@ export default function TipDetailPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-4 md:p-6 pt-0">
-                {tip.isVIP && !hasVipAccess ? (
-                  <div className="text-center py-6 md:py-8">
-                    <Lock className="h-12 w-12 md:h-16 md:w-16 mx-auto mb-3 md:mb-4 text-muted-foreground opacity-50" />
-                    <p className="text-sm md:text-base text-muted-foreground mb-4">
-                      {tip.content}
-                    </p>
-                    <Link href="/vip">
-                      <Button size="sm" className="text-xs md:text-sm">
-                        <Lock className="h-3 w-3 md:h-4 md:w-4 mr-2" />
-                        Get VIP Access
-                      </Button>
-                    </Link>
-                  </div>
-                ) : (
-                  <div className="prose prose-sm md:prose-base max-w-none dark:prose-invert">
-                    <div
-                      className="text-sm md:text-base leading-relaxed whitespace-pre-wrap"
-                      dangerouslySetInnerHTML={{ __html: tip.content }}
-                    />
-                  </div>
-                )}
+                <div className="prose prose-sm md:prose-base max-w-none dark:prose-invert">
+                  <div
+                    className="text-sm md:text-base leading-relaxed whitespace-pre-wrap"
+                    dangerouslySetInnerHTML={{ __html: tip.content }}
+                  />
+                </div>
               </CardContent>
             </Card>
 
             {/* Ticket Snapshots */}
-            {hasVipAccess &&
-              tip.ticketSnapshots &&
-              tip.ticketSnapshots.length > 0 && (
-                <Card className="mb-4 md:mb-6">
-                  <CardHeader className="p-4 md:p-6">
-                    <CardTitle className="text-base md:text-lg lg:text-xl flex items-center gap-2">
-                      <TrendingUp className="h-4 w-4 md:h-5 md:w-5" />
-                      Ticket Snapshots ({tip.ticketSnapshots.length})
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-4 md:p-6 pt-0">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
-                      {tip.ticketSnapshots.map((snapshot, index) => (
-                        <div
-                          key={index}
-                          className="relative rounded-lg overflow-hidden border-2 border-border hover:border-primary transition-colors cursor-pointer"
-                          onClick={() => setSelectedImage(snapshot)}
-                        >
-                          <img
-                            src={snapshot}
-                            alt={`Ticket snapshot ${index + 1}`}
-                            className="w-full h-auto object-contain"
-                          />
-                          <div className="absolute top-2 right-2">
-                            <Badge className="bg-black/70 text-white text-[10px] md:text-xs">
-                              {index + 1}/{tip.ticketSnapshots.length}
-                            </Badge>
-                          </div>
+            {tip.ticketSnapshots && tip.ticketSnapshots.length > 0 && (
+              <Card className="mb-4 md:mb-6">
+                <CardHeader className="p-4 md:p-6">
+                  <CardTitle className="text-base md:text-lg lg:text-xl flex items-center gap-2">
+                    <TrendingUp className="h-4 w-4 md:h-5 md:w-5" />
+                    Ticket Snapshots ({tip.ticketSnapshots.length})
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-4 md:p-6 pt-0">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
+                    {tip.ticketSnapshots.map((snapshot, index) => (
+                      <div
+                        key={index}
+                        className="relative rounded-lg overflow-hidden border-2 border-border hover:border-primary transition-colors cursor-pointer"
+                        onClick={() => setSelectedImage(snapshot)}
+                      >
+                        <img
+                          src={snapshot}
+                          alt={`Ticket snapshot ${index + 1}`}
+                          className="w-full h-auto object-contain"
+                        />
+                        <div className="absolute top-2 right-2">
+                          <Badge className="bg-black/70 text-white text-[10px] md:text-xs">
+                            {index + 1}/{tip.ticketSnapshots.length}
+                          </Badge>
                         </div>
-                      ))}
-                    </div>
-                    <p className="text-xs md:text-sm text-muted-foreground mt-3 md:mt-4 text-center">
-                      Click on any image to view full size
-                    </p>
-                  </CardContent>
-                </Card>
-              )}
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-xs md:text-sm text-muted-foreground mt-3 md:mt-4 text-center">
+                    Click on any image to view full size
+                  </p>
+                </CardContent>
+              </Card>
+            )}
 
             {/* Metadata */}
             <Card>
@@ -434,27 +415,6 @@ export default function TipDetailPage() {
                 )}
               </CardContent>
             </Card>
-
-            {/* CTA Section */}
-            {tip.isVIP && !hasVipAccess && (
-              <Card className="mt-4 md:mt-6 border-2 border-primary">
-                <CardContent className="p-4 md:p-6 text-center">
-                  <h3 className="text-lg md:text-xl font-bold mb-2">
-                    Unlock Full Analysis & Ticket Snapshots
-                  </h3>
-                  <p className="text-xs md:text-sm text-muted-foreground mb-4">
-                    Get VIP access to view complete predictions with ticket
-                    snapshots and detailed analysis
-                  </p>
-                  <Link href="/vip">
-                    <Button size="sm" className="text-xs md:text-sm">
-                      <Lock className="h-3 w-3 md:h-4 md:w-4 mr-2" />
-                      Upgrade to VIP
-                    </Button>
-                  </Link>
-                </CardContent>
-              </Card>
-            )}
           </div>
         </div>
       </section>

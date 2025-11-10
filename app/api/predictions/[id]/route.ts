@@ -66,42 +66,6 @@ export async function GET(
       );
     }
 
-    // Check VIP access if needed
-    let hasVipAccess = false;
-    if (tip.isVIP) {
-      if (!auth.user || auth.user.guest) {
-        // Return limited info for non-authenticated or guest users
-        return NextResponse.json({
-          success: true,
-          data: {
-            prediction: {
-              ...tip,
-              content: "🔒 VIP content - Sign in and subscribe to unlock",
-              ticketSnapshots: [],
-            },
-            hasVipAccess: false,
-          },
-        });
-      }
-
-      // Check VIP subscription or tokens
-      hasVipAccess = await checkVipAccess(auth.user.id, id);
-
-      if (!hasVipAccess) {
-        return NextResponse.json({
-          success: true,
-          data: {
-            prediction: {
-              ...tip,
-              content: "🔒 VIP content - Upgrade to VIP to unlock",
-              ticketSnapshots: [],
-            },
-            hasVipAccess: false,
-          },
-        });
-      }
-    }
-
     // Increment view count
     await prisma.tip.update({
       where: { id },
@@ -118,7 +82,7 @@ export async function GET(
             payload: {
               tipId: id,
               isVIP: tip.isVIP,
-              hasAccess: hasVipAccess || !tip.isVIP,
+              hasAccess: true,
               timestamp: new Date().toISOString(),
             },
           },
@@ -132,7 +96,7 @@ export async function GET(
       success: true,
       data: {
         prediction: tip,
-        hasVipAccess: hasVipAccess || !tip.isVIP,
+        hasVipAccess: true,
       },
     });
   } catch (error) {
@@ -141,48 +105,5 @@ export async function GET(
       { success: false, error: "Internal server error" },
       { status: 500 }
     );
-  }
-}
-
-async function checkVipAccess(userId: string, tipId: string): Promise<boolean> {
-  try {
-    // Check active subscription
-    const activeSubscription = await prisma.subscription.findFirst({
-      where: {
-        userId,
-        status: "active",
-        currentPeriodEnd: { gte: new Date() },
-      },
-    });
-    if (activeSubscription) return true;
-
-    // Check general VIP tokens
-    const generalTokens = await prisma.vIPToken.findMany({
-      where: {
-        userId,
-        type: "general",
-        expiresAt: { gte: new Date() },
-      },
-    });
-    const generalToken = generalTokens.find(
-      (token: { used: number; quantity: number }) => token.used < token.quantity
-    );
-    if (generalToken) return true;
-
-    // Check specific tip token
-    const specificTokens = await prisma.vIPToken.findMany({
-      where: {
-        userId,
-        tipId,
-        expiresAt: { gte: new Date() },
-      },
-    });
-    const specificToken = specificTokens.find(
-      (token: { used: number; quantity: number }) => token.used < token.quantity
-    );
-    return !!specificToken;
-  } catch (error) {
-    console.error("Error checking VIP access:", error);
-    return false;
   }
 }

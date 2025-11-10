@@ -213,7 +213,7 @@ export default function DashboardPage() {
                 {predictions.map((pred) => (
                   <Link
                     key={pred.id}
-                    href={`/tips?id=${pred.id}`}
+                    href={`/tips/${pred.id}`}
                     className="block"
                   >
                     <Card className="hover:shadow-lg transition-all hover:border-primary/50">
