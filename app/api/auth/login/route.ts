@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { AuthService } from "@/lib/auth";
+import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/db";
 import { rateLimit } from "@/lib/redis";
 import { getClientIp } from "@/lib/utils";
@@ -33,16 +33,13 @@ export async function POST(request: NextRequest) {
     // Validate input
     const validatedData = loginSchema.parse(body);
 
-    // Authenticate user
-    const result = await AuthService.login({
-      email: validatedData.email,
-      password: validatedData.password,
-      rememberMe: validatedData.rememberMe,
-      ipAddress: ip,
-      userAgent: request.headers.get("user-agent") || undefined,
+    // Find user
+    const user = await prisma.user.findUnique({
+      where: { email: validatedData.email.toLowerCase() },
+      include: { profile: true },
     });
 
-    if (!result.success) {
+    if (!user || !user.passwordHash) {
       // Track failed login attempt
       try {
         await prisma.analyticsEvent.create({
@@ -50,7 +47,7 @@ export async function POST(request: NextRequest) {
             type: "login_failed",
             payload: {
               email: validatedData.email,
-              error: result.error,
+              error: "Invalid credentials",
               timestamp: new Date().toISOString(),
             },
             ipAddress: ip,
@@ -62,16 +59,98 @@ export async function POST(request: NextRequest) {
       }
 
       return NextResponse.json(
-        { success: false, error: result.error },
-        { status: result.error?.includes("locked") ? 423 : 401 }
+        { success: false, error: "Invalid email or password" },
+        { status: 401 }
       );
     }
+
+    // Check if account is locked
+    if (user.lockedUntil && user.lockedUntil > new Date()) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Account temporarily locked. Please try again later.",
+        },
+        { status: 423 }
+      );
+    }
+
+    // Check if account is soft deleted
+    if (user.deletedAt) {
+      return NextResponse.json(
+        { success: false, error: "Account not found" },
+        { status: 404 }
+      );
+    }
+
+    // Verify password
+    const isPasswordValid = await bcrypt.compare(
+      validatedData.password,
+      user.passwordHash
+    );
+
+    if (!isPasswordValid) {
+      // Increment failed attempts
+      const updatedUser = await prisma.user.update({
+        where: { id: user.id },
+        data: {
+          loginAttempts: { increment: 1 },
+          lockedUntil:
+            user.loginAttempts >= 4
+              ? new Date(Date.now() + 15 * 60 * 1000)
+              : undefined, // 15 min lock
+        },
+      });
+
+      // Track failed login attempt
+      try {
+        await prisma.analyticsEvent.create({
+          data: {
+            type: "login_failed",
+            payload: {
+              email: validatedData.email,
+              error: "Invalid password",
+              timestamp: new Date().toISOString(),
+            },
+            ipAddress: ip,
+            userAgent: request.headers.get("user-agent") || undefined,
+          },
+        });
+      } catch (error) {
+        console.error("Failed to track failed login:", error);
+      }
+
+      if (updatedUser.loginAttempts >= 5) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: "Account locked due to too many failed attempts",
+          },
+          { status: 423 }
+        );
+      }
+
+      return NextResponse.json(
+        { success: false, error: "Invalid email or password" },
+        { status: 401 }
+      );
+    }
+
+    // Update last login and reset failed attempts
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        lastLoginAt: new Date(),
+        loginAttempts: 0,
+        lockedUntil: null,
+      },
+    });
 
     // Track successful login analytics
     try {
       await prisma.analyticsEvent.create({
         data: {
-          userId: result.user?.id,
+          userId: user.id,
           type: "login_success",
           payload: {
             email: validatedData.email,
@@ -86,27 +165,19 @@ export async function POST(request: NextRequest) {
       console.error("Failed to track login analytics:", error);
     }
 
-    // Set HTTP-only cookie with the token
-    const response = NextResponse.json({
+    // Return success - NextAuth will handle session management
+    // Client should call signIn from next-auth/react with these credentials
+    return NextResponse.json({
       success: true,
-      user: result.user,
-      sessionId: result.sessionId,
+      user: {
+        id: user.id,
+        email: user.email,
+        displayName: user.displayName,
+        isAdmin: user.role === "ADMIN",
+        profile: user.profile,
+      },
+      message: "Login successful. Please sign in with NextAuth.",
     });
-
-    if (result.token) {
-      const maxAge = validatedData.rememberMe
-        ? 30 * 24 * 60 * 60
-        : 24 * 60 * 60; // 30 days or 24 hours
-      response.cookies.set("auth-token", result.token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
-        maxAge,
-        path: "/",
-      });
-    }
-
-    return response;
   } catch (error) {
     console.error("Login error:", error);
 

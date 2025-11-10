@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { AuthService } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { rateLimit } from "@/lib/redis";
 import { safeParseRequestJson, getClientIp } from "@/lib/utils";
@@ -38,20 +37,15 @@ export async function POST(request: NextRequest) {
     // Validate input (optional schema allows empty body)
     const validatedData = guestSchema.parse(body);
 
-    // Create guest session
-    const result = await AuthService.createGuestSession({
-      deviceId: validatedData?.deviceId,
-      platform: validatedData?.platform,
-      ipAddress: ip,
-      userAgent: request.headers.get("user-agent") || undefined,
+    // Create guest user in database (ephemeral, can be cleaned up periodically)
+    const guestName = `Guest ${Math.floor(1000 + Math.random() * 9000)}`;
+    const guestUser = await prisma.user.create({
+      data: {
+        guest: true,
+        displayName: guestName,
+        name: guestName,
+      },
     });
-
-    if (!result.success) {
-      return NextResponse.json(
-        { success: false, error: result.error },
-        { status: 500 }
-      );
-    }
 
     // Track guest session creation analytics
     try {
@@ -71,24 +65,17 @@ export async function POST(request: NextRequest) {
       console.error("Failed to track guest session analytics:", error);
     }
 
-    // Set HTTP-only cookie with the token
-    const response = NextResponse.json({
+    // Return guest user data
+    // Client should call signIn from next-auth/react with mode='guest'
+    return NextResponse.json({
       success: true,
-      user: result.user,
-      sessionId: result.sessionId,
+      user: {
+        id: guestUser.id,
+        guest: true,
+        displayName: guestUser.displayName,
+      },
+      message: "Guest user created. Please sign in with NextAuth.",
     });
-
-    if (result.token) {
-      response.cookies.set("auth-token", result.token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
-        maxAge: 24 * 60 * 60, // 24 hours for guest sessions
-        path: "/",
-      });
-    }
-
-    return response;
   } catch (error) {
     console.error("Guest session error:", error);
 

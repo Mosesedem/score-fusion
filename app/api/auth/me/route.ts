@@ -1,11 +1,13 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getAuthenticatedUser } from "@/lib/auth";
+import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
-    const auth = await getAuthenticatedUser(request);
+    // Get session from NextAuth
+    const session = await getServerSession(authOptions);
 
-    if (!auth.user) {
+    if (!session || !session.user) {
       return NextResponse.json(
         { success: false, error: "Not authenticated" },
         { status: 401 }
@@ -15,13 +17,12 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       success: true,
       user: {
-        id: auth.user.id,
-        email: auth.user.email,
-        displayName: auth.user.displayName,
-        isAdmin: auth.user.isAdmin,
-        guest: auth.user.guest,
-        role: auth.user.role,
-        createdAt: auth.user.createdAt,
+        id: session.user.id,
+        email: session.user.email,
+        displayName: session.user.displayName || session.user.name,
+        isAdmin: session.user.isAdmin,
+        guest: session.user.guest,
+        role: session.user.role,
       },
     });
   } catch (error) {

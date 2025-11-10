@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { AuthService } from "@/lib/auth";
+import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/db";
 import { rateLimit } from "@/lib/redis";
 import { EmailService } from "@/lib/email";
@@ -75,39 +75,83 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Create user
-    const result = await AuthService.signup({
-      email: validatedData.email,
-      password: validatedData.password,
-      displayName: validatedData.displayName,
-      country: validatedData.country,
-      dob: validatedData.dob,
-      consents: validatedData.consents,
+    // Check if user already exists
+    const existingUser = await prisma.user.findUnique({
+      where: { email: validatedData.email.toLowerCase() },
     });
 
-    if (!result.success) {
+    if (existingUser) {
       return NextResponse.json(
-        { success: false, error: result.error },
-        { status: result.error?.includes("already") ? 400 : 500 }
+        { success: false, error: "Email already registered" },
+        { status: 400 }
       );
     }
+
+    // Validate password strength
+    const passwordErrors: string[] = [];
+    if (validatedData.password.length < 8) {
+      passwordErrors.push("Password must be at least 8 characters long");
+    }
+    if (!/[A-Z]/.test(validatedData.password)) {
+      passwordErrors.push(
+        "Password must contain at least one uppercase letter"
+      );
+    }
+    if (!/[a-z]/.test(validatedData.password)) {
+      passwordErrors.push(
+        "Password must contain at least one lowercase letter"
+      );
+    }
+    if (!/\d/.test(validatedData.password)) {
+      passwordErrors.push("Password must contain at least one number");
+    }
+
+    if (passwordErrors.length > 0) {
+      return NextResponse.json(
+        { success: false, error: passwordErrors.join(", ") },
+        { status: 400 }
+      );
+    }
+
+    // Hash password
+    const passwordHash = await bcrypt.hash(validatedData.password, 12);
+
+    // Create user
+    const user = await prisma.user.create({
+      data: {
+        email: validatedData.email.toLowerCase(),
+        passwordHash,
+        displayName: validatedData.displayName,
+        name: validatedData.displayName,
+        profile: {
+          create: {
+            country: validatedData.country,
+            dob: validatedData.dob,
+            consents: validatedData.consents,
+          },
+        },
+      },
+      include: {
+        profile: true,
+      },
+    });
 
     let referralApplied = null;
 
     // Handle referral code if provided
-    if (validatedData.referralCode && result.user?.id) {
+    if (validatedData.referralCode && user?.id) {
       try {
         const referrer = await prisma.user.findUnique({
           where: { referralCode: validatedData.referralCode },
         });
 
-        if (referrer && referrer.id !== result.user.id) {
+        if (referrer && referrer.id !== user.id) {
           // Create referral record and award bonus
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           await prisma.$transaction(async (tx: any) => {
             // Update user with referrer
             await tx.user.update({
-              where: { id: result.user!.id },
+              where: { id: user.id },
               data: { referredBy: referrer.id },
             });
 
@@ -115,7 +159,7 @@ export async function POST(request: NextRequest) {
             const referral = await tx.referral.create({
               data: {
                 referrerId: referrer.id,
-                referredId: result.user!.id,
+                referredId: user.id,
                 referralCode: validatedData.referralCode!,
                 status: "confirmed",
                 completedAt: new Date(),
@@ -126,7 +170,7 @@ export async function POST(request: NextRequest) {
             // Create wallet for new user with welcome bonus
             await tx.wallet.create({
               data: {
-                userId: result.user!.id,
+                userId: user.id,
                 balance: 0,
                 tokens: 10, // Welcome bonus tokens
                 bonusTokens: 5, // Extra bonus for using referral
@@ -159,9 +203,7 @@ export async function POST(request: NextRequest) {
                 currency: "USD",
                 tokens: 50,
                 status: "confirmed",
-                description: `Referral signup bonus for ${
-                  result.user!.displayName
-                }`,
+                description: `Referral signup bonus for ${user.displayName}`,
                 confirmedAt: new Date(),
               },
             });
@@ -177,12 +219,12 @@ export async function POST(request: NextRequest) {
         console.error("Referral processing error:", error);
         // Don't fail signup if referral processing fails
       }
-    } else if (result.user?.id) {
+    } else if (user?.id) {
       // Create wallet for user without referral
       try {
         await prisma.wallet.create({
           data: {
-            userId: result.user.id,
+            userId: user.id,
             balance: 0,
             tokens: 5, // Basic welcome bonus
           },
@@ -197,7 +239,7 @@ export async function POST(request: NextRequest) {
     try {
       await prisma.analyticsEvent.create({
         data: {
-          userId: result.user?.id,
+          userId: user.id,
           type: "signup",
           payload: {
             email: validatedData.email,
@@ -216,37 +258,29 @@ export async function POST(request: NextRequest) {
     }
 
     // Send welcome email
-    if (result.user?.email && result.user?.displayName) {
+    if (user.email && user.displayName) {
       try {
-        await EmailService.sendWelcomeEmail(
-          result.user.email,
-          result.user.displayName
-        );
+        await EmailService.sendWelcomeEmail(user.email, user.displayName);
       } catch (emailError) {
         console.error("Failed to send welcome email:", emailError);
         // Don't fail signup if email fails
       }
     }
 
-    // Set HTTP-only cookie with the token
-    const response = NextResponse.json({
+    // Return success - NextAuth will handle session management
+    // Client should call signIn from next-auth/react with these credentials
+    return NextResponse.json({
       success: true,
-      user: result.user,
-      sessionId: result.sessionId,
+      user: {
+        id: user.id,
+        email: user.email,
+        displayName: user.displayName,
+        isAdmin: user.role === "ADMIN",
+        profile: user.profile,
+      },
       referralApplied,
+      message: "Signup successful. Please sign in with NextAuth.",
     });
-
-    if (result.token) {
-      response.cookies.set("auth-token", result.token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
-        maxAge: 7 * 24 * 60 * 60, // 7 days
-        path: "/",
-      });
-    }
-
-    return response;
   } catch (error) {
     console.error("Signup error:", error);
 
