@@ -1,12 +1,13 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { TrendingUp, Lock, Calendar, Target } from "lucide-react";
+import { useApiClient } from "@/lib/api-client";
 
 interface Tip {
   id: string;
@@ -42,35 +43,54 @@ interface Tip {
   authorName?: string;
 }
 
+interface PredictionsApiResponse {
+  success: boolean;
+  data: {
+    predictions: Tip[];
+    pagination: {
+      page: number;
+      limit: number;
+      total: number;
+      hasMore: boolean;
+      totalPages: number;
+    };
+  };
+}
+
 export default function TipsPage() {
   const [tips, setTips] = useState<Tip[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"all" | "free" | "vip">("all");
+  const api = useApiClient();
 
   useEffect(() => {
-    fetchTips();
-  }, []);
-
-  const fetchTips = async () => {
-    try {
-      const res = await fetch("/api/predictions");
-      if (res.ok) {
-        const data = await res.json();
-        setTips(data.data?.predictions || []);
+    const fetchTips = async () => {
+      try {
+        setLoading(true);
+        const response = await api.get<PredictionsApiResponse>("/predictions");
+        if (response.success) {
+          setTips(response.data?.predictions || []);
+        }
+      } catch (error) {
+        console.error("Failed to fetch predictions:", error);
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error("Failed to fetch predictions:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
 
-  const filteredTips = tips.filter((tip) => {
-    if (filter === "all") return true;
-    if (filter === "free") return !tip.isVIP;
-    if (filter === "vip") return tip.isVIP;
-    return true;
-  });
+    fetchTips();
+  }, [api]);
+
+  const filteredTips = useMemo(
+    () =>
+      tips.filter((tip) => {
+        if (filter === "all") return true;
+        if (filter === "free") return !tip.isVIP;
+        if (filter === "vip") return tip.isVIP;
+        return true;
+      }),
+    [tips, filter]
+  );
 
   return (
     <div className="min-h-screen bg-background">

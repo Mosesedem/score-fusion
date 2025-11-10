@@ -1,3 +1,6 @@
+import { useSession } from "next-auth/react";
+import { useMemo } from "react";
+
 // API Response types
 export interface ApiResponse<T> {
   success: boolean;
@@ -17,9 +20,11 @@ export interface PaginationMeta {
 // API Client utility
 class ApiClient {
   private baseUrl: string;
+  private authToken: string | null;
 
-  constructor(baseUrl: string = "/api") {
+  constructor(baseUrl: string = "/api", authToken: string | null = null) {
     this.baseUrl = baseUrl;
+    this.authToken = authToken;
   }
 
   private async request<T>(
@@ -27,21 +32,31 @@ class ApiClient {
     options: RequestInit = {}
   ): Promise<ApiResponse<T>> {
     try {
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+        ...options.headers,
+      };
+
+      if (this.authToken) {
+        headers["Authorization"] = `Bearer ${this.authToken}`;
+      }
+
       const response = await fetch(`${this.baseUrl}${endpoint}`, {
         ...options,
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-          ...options.headers,
-        },
+        headers,
       });
+
+      if (response.status === 204) {
+        // Handle no content
+        return { success: true };
+      }
 
       const data = await response.json();
 
       if (!response.ok) {
         return {
           success: false,
-          error: data.error || "An error occurred",
+          error: data.error || `Request failed with status ${response.status}`,
         };
       }
 
@@ -59,14 +74,14 @@ class ApiClient {
     return this.request<T>(endpoint, { method: "GET" });
   }
 
-  async post<T>(endpoint: string, body?: any): Promise<ApiResponse<T>> {
+  async post<T>(endpoint: string, body?: unknown): Promise<ApiResponse<T>> {
     return this.request<T>(endpoint, {
       method: "POST",
       body: JSON.stringify(body),
     });
   }
 
-  async put<T>(endpoint: string, body?: any): Promise<ApiResponse<T>> {
+  async put<T>(endpoint: string, body?: unknown): Promise<ApiResponse<T>> {
     return this.request<T>(endpoint, {
       method: "PUT",
       body: JSON.stringify(body),
@@ -79,6 +94,18 @@ class ApiClient {
 }
 
 export const api = new ApiClient();
+
+export function useApiClient() {
+  const { data: session } = useSession();
+  const token = (session as { accessToken?: string })?.accessToken;
+
+  return useMemo(() => {
+    if (token) {
+      return new ApiClient("/api", token);
+    }
+    return api; // Fallback to the unauthenticated client
+  }, [token]);
+}
 
 // Tips API
 export interface Tip {
@@ -291,7 +318,7 @@ export interface ReferralData {
 export const referralApi = {
   getData: () => api.get<ReferralData>("/referral"),
   applyCode: (referralCode: string) =>
-    api.post<any>("/referral", { referralCode }),
+    api.post<unknown>("/referral", { referralCode }),
 };
 
 // Earnings API

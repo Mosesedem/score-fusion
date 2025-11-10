@@ -1,16 +1,18 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
 
+import { useApiClient } from "@/lib/api-client";
 import { useAuth } from "@/contexts/auth-context";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Crown, Lock, Star, TrendingUp, CheckCircle } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 
 export default function VIPAreaPage() {
   const { user } = useAuth();
+  const api = useApiClient();
   const [hasVIPAccess, setHasVIPAccess] = useState(false);
   const [loading, setLoading] = useState(true);
   const [tokenCode, setTokenCode] = useState("");
@@ -34,37 +36,12 @@ export default function VIPAreaPage() {
   >([]);
   const [loadingPredictions, setLoadingPredictions] = useState(false);
 
-  useEffect(() => {
-    checkVIPAccess();
-  }, [user]);
-
-  useEffect(() => {
-    if (hasVIPAccess) {
-      fetchVIPPredictions();
-    }
-  }, [hasVIPAccess]);
-
-  const fetchVIPPredictions = async () => {
-    setLoadingPredictions(true);
-    try {
-      const res = await fetch("/api/predictions?vip=true");
-      if (res.ok) {
-        const data = await res.json();
-        setVipPredictions(data.data?.predictions || []);
-      }
-    } catch (error) {
-      console.error("Failed to fetch VIP predictions:", error);
-    } finally {
-      setLoadingPredictions(false);
-    }
-  };
-
-  const checkVIPAccess = async () => {
+  const checkVIPAccess = useCallback(async () => {
     try {
       // Check if user has active subscription or valid token
-      const res = await fetch("/api/vip/status");
-      if (res.ok) {
-        const data = await res.json();
+      const res = await api.get("/vip/status");
+      if (res.success) {
+        const data = res.data as { hasAccess: boolean };
         setHasVIPAccess(data.hasAccess);
       }
     } catch {
@@ -72,26 +49,47 @@ export default function VIPAreaPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [api]);
+
+  const fetchVIPPredictions = useCallback(async () => {
+    setLoadingPredictions(true);
+    try {
+      const res = await api.get("/predictions?vip=true");
+      if (res.success) {
+        const data = res.data as { predictions: typeof vipPredictions };
+        setVipPredictions(data.predictions || []);
+      }
+    } catch (error) {
+      console.error("Failed to fetch VIP predictions:", error);
+    } finally {
+      setLoadingPredictions(false);
+    }
+  }, [api]);
+
+  useEffect(() => {
+    checkVIPAccess();
+  }, [user, checkVIPAccess]);
+
+  useEffect(() => {
+    if (hasVIPAccess) {
+      fetchVIPPredictions();
+    }
+  }, [hasVIPAccess, fetchVIPPredictions]);
 
   const handleTokenRedeem = async (e: React.FormEvent) => {
     e.preventDefault();
     setTokenError("");
 
     try {
-      const res = await fetch("/api/vip/tokens/redeem", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code: tokenCode }),
+      const res = await api.post("/vip/tokens/redeem", {
+        token: tokenCode,
       });
 
-      const data = await res.json();
-
-      if (res.ok) {
+      if (res.success) {
         setHasVIPAccess(true);
         setTokenCode("");
       } else {
-        setTokenError(data.error || "Invalid token code");
+        setTokenError(res.error || "Invalid token code");
       }
     } catch {
       setTokenError("Failed to redeem token. Please try again.");

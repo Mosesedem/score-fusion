@@ -17,6 +17,7 @@ interface ExtendedUser {
 declare module "next-auth" {
   interface Session {
     user: ExtendedUser & { displayName?: string | null };
+    accessToken?: string;
   }
   interface User extends ExtendedUser {
     // augmentation: ensure isAdmin & guest propagate
@@ -31,6 +32,7 @@ declare module "next-auth/jwt" {
     guest?: boolean;
     displayName?: string | null;
     role?: string;
+    accessToken?: string;
   }
 }
 
@@ -108,7 +110,10 @@ const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, account }) {
+      if (account) {
+        token.accessToken = account.access_token;
+      }
       if (user) {
         token.isAdmin = (user as ExtendedUser).isAdmin ?? false;
         token.guest = (user as ExtendedUser).guest ?? false;
@@ -118,6 +123,7 @@ const authOptions: NextAuthOptions = {
       return token;
     },
     async session({ session, token }) {
+      session.accessToken = token.accessToken;
       if (session.user) {
         session.user.id = (token.sub as string) || session.user.id;
         session.user.displayName =

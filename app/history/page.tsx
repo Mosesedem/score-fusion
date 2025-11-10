@@ -1,12 +1,13 @@
 "use client";
 
-import { useAuth } from "@/contexts/auth-context";
+import { useSession } from "next-auth/react";
+import { useApiClient } from "@/lib/api-client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Trophy, Calendar, TrendingUp, Lock } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 
 interface Bet {
   id: string;
@@ -39,59 +40,57 @@ interface Tip {
 }
 
 export default function HistoryPage() {
-  const { user } = useAuth();
+  const { data: session } = useSession();
+  const api = useApiClient();
   const [bets, setBets] = useState<Bet[]>([]);
   const [vipPredictions, setVipPredictions] = useState<Tip[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"bets" | "predictions">("bets");
 
-  useEffect(() => {
-    if (user && !user.guest) {
-      fetchBets();
-      fetchVIPHistory();
-    } else {
-      setLoading(false);
-    }
-  }, [user]);
-
-  const fetchBets = async () => {
+  const fetchBets = useCallback(async () => {
     try {
-      const res = await fetch("/api/bets");
-      if (res.ok) {
-        const data = await res.json();
-        setBets(data.bets || []);
-      }
+      const data = await api.get<{ bets: Bet[] }>("/bets");
+      setBets(data.bets || []);
     } catch (error) {
       console.error("Failed to fetch bets:", error);
     }
-  };
+  }, [api]);
 
-  const fetchVIPHistory = async () => {
+  const fetchVIPHistory = useCallback(async () => {
     try {
+      setLoading(true);
       // Fetch VIP predictions that have ended (older than 2 hours from match date)
-      const res = await fetch("/api/predictions?vip=true");
-      if (res.ok) {
-        const data = await res.json();
-        const now = new Date();
-        const twoHoursAgo = new Date(now.getTime() - 2 * 60 * 60 * 1000);
+      const data = await api.get<{ data: { predictions: Tip[] } }>(
+        "/predictions?vip=true"
+      );
+      const now = new Date();
+      const twoHoursAgo = new Date(now.getTime() - 2 * 60 * 60 * 1000);
 
-        // Filter VIP predictions that are older than 2 hours from match date
-        const historicalVIP = (data.data?.predictions || []).filter(
-          (tip: Tip) => {
-            if (!tip.matchDate) return false;
-            const matchDate = new Date(tip.matchDate);
-            return matchDate < twoHoursAgo;
-          }
-        );
+      // Filter VIP predictions that are older than 2 hours from match date
+      const historicalVIP = (data.data?.predictions || []).filter(
+        (tip: Tip) => {
+          if (!tip.matchDate) return false;
+          const matchDate = new Date(tip.matchDate);
+          return matchDate < twoHoursAgo;
+        }
+      );
 
-        setVipPredictions(historicalVIP);
-      }
+      setVipPredictions(historicalVIP);
     } catch (error) {
       console.error("Failed to fetch VIP history:", error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [api]);
+
+  useEffect(() => {
+    if (session) {
+      fetchBets();
+      fetchVIPHistory();
+    } else {
+      setLoading(false);
+    }
+  }, [session, fetchBets, fetchVIPHistory]);
 
   const getResultBadge = (result?: string) => {
     if (!result) return null;
@@ -117,15 +116,15 @@ export default function HistoryPage() {
       <div className="container mx-auto px-3 md:px-4 py-4 md:py-8">
         <div className="max-w-6xl mx-auto">
           <h1 className="text-2xl md:text-3xl font-bold mb-1 md:mb-2">
-            {user && !user.guest ? "Your History" : "Betting History"}
+            {session ? "Your History" : "Betting History"}
           </h1>
           <p className="text-xs md:text-sm text-muted-foreground mb-4 md:mb-8">
-            {user && !user.guest
+            {session
               ? "Track all your bets and view completed VIP predictions"
               : "Track all your bets and their outcomes"}
           </p>
 
-          {!user && (
+          {!session && (
             <Card className="mb-4 md:mb-8 border-2 border-primary">
               <CardContent className="p-4 md:p-6 lg:p-8 text-center">
                 <h3 className="text-base md:text-lg lg:text-xl font-bold mb-2">
@@ -143,7 +142,7 @@ export default function HistoryPage() {
             </Card>
           )}
 
-          {user && !user.guest && (
+          {session && (
             <>
               {/* Tabs */}
               <div className="flex gap-2 mb-4 md:mb-6 border-b border-border">
@@ -269,7 +268,7 @@ export default function HistoryPage() {
           )}
 
           {/* VIP Predictions History Tab */}
-          {activeTab === "predictions" && user && !user.guest && (
+          {activeTab === "predictions" && session && (
             <Card>
               <CardHeader className="p-3 md:p-4 lg:p-6">
                 <CardTitle className="text-base md:text-lg flex items-center gap-2">

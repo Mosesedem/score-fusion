@@ -1,5 +1,6 @@
 "use client";
 
+import { useApiClient } from "@/lib/api-client";
 import { useAuth } from "@/contexts/auth-context";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Trophy, TrendingUp, Wallet, Crown, Activity } from "lucide-react";
@@ -50,6 +51,7 @@ interface VIPStatus {
 
 export default function DashboardPage() {
   const { user } = useAuth();
+  const api = useApiClient();
   const [predictions, setPredictions] = useState<Prediction[]>([]);
   const [liveMatches, setLiveMatches] = useState<Match[]>([]);
   const [isVIP, setIsVIP] = useState(false);
@@ -60,39 +62,43 @@ export default function DashboardPage() {
       try {
         setLoading(true);
 
+        let vipStatus = false;
         // Fetch VIP status if user is logged in and not a guest
         if (user && !user.guest) {
-          const vipRes = await fetch("/api/vip/status");
-          const vipData: VIPStatus = await vipRes.json();
-          if (vipData.success) {
+          const vipRes = await api.get("/vip/status");
+          if (vipRes.success) {
+            const vipData = vipRes.data as VIPStatus;
             setIsVIP(vipData.hasAccess);
+            vipStatus = vipData.hasAccess;
           }
         }
 
         // Fetch predictions - VIP if user has access, otherwise free
-        const predictionsRes = await fetch(
-          `/api/predictions?vip=${isVIP}&limit=3`
+        const predictionsRes = await api.get(
+          `/predictions?vip=${vipStatus}&limit=3`
         );
-        const predictionsData = await predictionsRes.json();
 
-        if (predictionsData.success) {
-          setPredictions(predictionsData.data.predictions);
-        } else if (isVIP && !user?.guest) {
+        if (predictionsRes.success) {
+          const predictionsData = predictionsRes.data as {
+            predictions: Prediction[];
+          };
+          setPredictions(predictionsData.predictions);
+        } else if (vipStatus && !user?.guest) {
           // If VIP predictions fail, fallback to free predictions
-          const freeRes = await fetch("/api/predictions?vip=false&limit=3");
-          const freeData = await freeRes.json();
-          if (freeData.success) {
-            setPredictions(freeData.data.predictions);
+          const freeRes = await api.get("/predictions?vip=false&limit=3");
+          if (freeRes.success) {
+            const freeData = freeRes.data as { predictions: Prediction[] };
+            setPredictions(freeData.predictions);
           }
         }
 
         // Fetch live matches
-        const matchesRes = await fetch(
-          "/api/livescores/matches?status=live&limit=5"
+        const matchesRes = await api.get(
+          "/livescores/matches?status=live&limit=5"
         );
-        const matchesData = await matchesRes.json();
-        if (matchesData.success) {
-          setLiveMatches(matchesData.data.matches);
+        if (matchesRes.success) {
+          const matchesData = matchesRes.data as { matches: Match[] };
+          setLiveMatches(matchesData.matches);
         }
       } catch (error) {
         console.error("Error fetching dashboard data:", error);
@@ -102,7 +108,7 @@ export default function DashboardPage() {
     }
 
     fetchDashboardData();
-  }, [user, isVIP]);
+  }, [user, api]);
 
   return (
     <div className="min-h-screen bg-background">
