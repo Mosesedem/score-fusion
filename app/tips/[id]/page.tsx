@@ -155,11 +155,11 @@ export default function TipDetailPage() {
             {/* Title and Badges */}
             <div className="mb-4 md:mb-6">
               <div className="flex flex-wrap items-center gap-1.5 md:gap-2 mb-2 md:mb-3">
-                <Badge className="bg-secondary text-[10px] md:text-xs px-1.5 md:px-2 py-0.5">
+                <Badge className=" text-[10px] md:text-xs px-1.5 md:px-2 py-0.5">
                   {tip.sport}
                 </Badge>
                 {tip.league && (
-                  <Badge className="bg-secondary text-[10px] md:text-xs px-1.5 md:px-2 py-0.5">
+                  <Badge className=" text-[10px] md:text-xs px-1.5 md:px-2 py-0.5">
                     {tip.league}
                   </Badge>
                 )}
@@ -405,7 +405,7 @@ export default function TipDetailPage() {
                       {tip.tags.map((tag, index) => (
                         <Badge
                           key={index}
-                          className="bg-secondary text-[10px] md:text-xs px-1.5 md:px-2 py-0.5"
+                          className=" text-[10px] md:text-xs px-1.5 md:px-2 py-0.5"
                         >
                           {tag}
                         </Badge>
