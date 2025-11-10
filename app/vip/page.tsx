@@ -252,7 +252,12 @@ export default function VIPAreaPage() {
                       <p className="text-sm md:text-base text-muted-foreground mb-4">
                         Create an account to access VIP features
                       </p>
-                      <Button className="h-10">Get Started</Button>
+                      <Button
+                        className="h-10"
+                        onClick={() => (window.location.href = "/login")}
+                      >
+                        Get Started
+                      </Button>
                     </CardContent>
                   </Card>
                 )}
