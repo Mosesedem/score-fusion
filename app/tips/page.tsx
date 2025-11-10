@@ -61,6 +61,7 @@ export default function TipsPage() {
   const [tips, setTips] = useState<Tip[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"all" | "free" | "vip">("all");
+  const [hasVIPAccess, setHasVIPAccess] = useState(false);
   const api = useApiClient();
 
   useEffect(() => {
@@ -68,8 +69,8 @@ export default function TipsPage() {
       try {
         setLoading(true);
         const response = await api.get<PredictionsApiResponse>("/predictions");
-        if (response.success) {
-          setTips(response.data?.predictions || []);
+        if (response.success && response.data) {
+          setTips(response.data.data.predictions || []);
         }
       } catch (error) {
         console.error("Failed to fetch predictions:", error);
@@ -79,6 +80,22 @@ export default function TipsPage() {
     };
 
     fetchTips();
+  }, [api]);
+
+  useEffect(() => {
+    const checkVIPAccess = async () => {
+      try {
+        const res = await api.get("/vip/status");
+        if (res.success) {
+          const data = res.data as { hasAccess: boolean };
+          setHasVIPAccess(data.hasAccess);
+        }
+      } catch (error) {
+        console.error("Failed to check VIP access:", error);
+      }
+    };
+
+    checkVIPAccess();
   }, [api]);
 
   const filteredTips = useMemo(
@@ -340,7 +357,7 @@ export default function TipsPage() {
                             Unlock Full Analysis
                           </>
                         ) : (
-                          "View Full Analysis"
+                          "View Details"
                         )}
                       </Button>
                     </Link>
@@ -354,7 +371,9 @@ export default function TipsPage() {
             <Card>
               <CardContent className="p-6 md:p-8 lg:p-12 text-center">
                 <p className="text-muted-foreground mb-4 text-xs md:text-sm lg:text-base">
-                  No predictions available at the moment. Check back soon!
+                  No{" "}
+                  {filter === "all" ? "" : filter === "free" ? "free" : "VIP"}{" "}
+                  predictions available at the moment. Check back soon!
                 </p>
                 <Link href="/">
                   <Button size="sm">Go Home</Button>
@@ -366,23 +385,25 @@ export default function TipsPage() {
       </section>
 
       {/* CTA Section */}
-      <section className="border-t border-border bg-secondary py-6 md:py-8 lg:py-12">
-        <div className="container mx-auto px-3 md:px-4 text-center">
-          <h2 className="text-xl md:text-2xl lg:text-3xl font-bold mb-2 md:mb-3 lg:mb-4">
-            Want Premium Predictions?
-          </h2>
-          <p className="text-sm md:text-base lg:text-xl text-muted-foreground mb-4 md:mb-6 px-2">
-            Upgrade to VIP for exclusive expert analysis, ticket snapshots, and
-            premium predictions
-          </p>
-          <Link href="/vip">
-            <Button size="sm" className="text-xs md:text-sm">
-              <Lock className="h-3 w-3 md:h-4 md:w-4 mr-2" />
-              Get VIP Access
-            </Button>
-          </Link>
-        </div>
-      </section>
+      {!hasVIPAccess && (
+        <section className="border-t border-border bg-secondary py-6 md:py-8 lg:py-12">
+          <div className="container mx-auto px-3 md:px-4 text-center">
+            <h2 className="text-xl md:text-2xl lg:text-3xl font-bold mb-2 md:mb-3 lg:mb-4">
+              Want Premium Predictions?
+            </h2>
+            <p className="text-sm md:text-base lg:text-xl text-muted-foreground mb-4 md:mb-6 px-2">
+              Upgrade to VIP for exclusive expert analysis, ticket snapshots,
+              and premium predictions
+            </p>
+            <Link href="/vip">
+              <Button size="sm" className="text-xs md:text-sm">
+                <Lock className="h-3 w-3 md:h-4 md:w-4 mr-2" />
+                Get VIP Access
+              </Button>
+            </Link>
+          </div>
+        </section>
+      )}
     </div>
   );
 }

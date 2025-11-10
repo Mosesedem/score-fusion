@@ -45,12 +45,14 @@ export default function HistoryPage() {
   const [bets, setBets] = useState<Bet[]>([]);
   const [vipPredictions, setVipPredictions] = useState<Tip[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"bets" | "predictions">("bets");
+  const [activeTab, setActiveTab] = useState<"bets" | "predictions">(
+    "predictions"
+  );
 
   const fetchBets = useCallback(async () => {
     try {
-      const data = await api.get<{ bets: Bet[] }>("/bets");
-      setBets(data.bets || []);
+      const response = await api.get<{ bets: Bet[] }>("/bets");
+      setBets(response.data?.bets || []);
     } catch (error) {
       console.error("Failed to fetch bets:", error);
     }
@@ -60,14 +62,14 @@ export default function HistoryPage() {
     try {
       setLoading(true);
       // Fetch VIP predictions that have ended (older than 2 hours from match date)
-      const data = await api.get<{ data: { predictions: Tip[] } }>(
+      const response = await api.get<{ predictions: Tip[] }>(
         "/predictions?vip=true"
       );
       const now = new Date();
       const twoHoursAgo = new Date(now.getTime() - 2 * 60 * 60 * 1000);
 
       // Filter VIP predictions that are older than 2 hours from match date
-      const historicalVIP = (data.data?.predictions || []).filter(
+      const historicalVIP = (response.data?.predictions || []).filter(
         (tip: Tip) => {
           if (!tip.matchDate) return false;
           const matchDate = new Date(tip.matchDate);
@@ -151,6 +153,7 @@ export default function HistoryPage() {
                   onClick={() => setActiveTab("bets")}
                   className="text-xs md:text-sm rounded-b-none"
                   size="sm"
+                  disabled
                 >
                   My Bets ({bets.length})
                 </Button>
@@ -185,7 +188,7 @@ export default function HistoryPage() {
                         key={bet.id}
                         className="border-2 border-border rounded-lg p-3 md:p-4 hover:border-primary transition-colors"
                       >
-                        <div className="flex items-start justify-between gap-2 md:gap-4">
+                        <div className="flex items-start justify-between gap-2 md:gap-4 mb-3">
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-1.5 md:gap-2 mb-1.5 md:mb-2 flex-wrap">
                               <Badge className="bg-secondary text-[10px] md:text-xs px-1.5 md:px-2 py-0.5">
@@ -200,11 +203,9 @@ export default function HistoryPage() {
                               {bet.result &&
                                 getResultBadge(bet.result.toLowerCase())}
                             </div>
-                            <Link href={`/tips/${bet.tip.id}`}>
-                              <h4 className="font-bold text-sm md:text-base mb-1 md:mb-2 hover:text-primary line-clamp-2">
-                                {bet.tip.title}
-                              </h4>
-                            </Link>
+                            <h4 className="font-bold text-sm md:text-base mb-1 md:mb-2 line-clamp-2">
+                              {bet.tip.title}
+                            </h4>
                             <div className="flex items-center gap-1 text-[10px] md:text-xs text-muted-foreground">
                               <Calendar className="h-2.5 w-2.5 md:h-3 md:w-3" />
                               <span>
@@ -248,6 +249,15 @@ export default function HistoryPage() {
                             )}
                           </div>
                         </div>
+                        <Link href={`/tips/${bet.tip.id}`}>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="w-full text-[10px] md:text-xs"
+                          >
+                            View Details
+                          </Button>
+                        </Link>
                       </div>
                     ))}
                   </div>
@@ -292,7 +302,7 @@ export default function HistoryPage() {
                         key={tip.id}
                         className="border-2 border-primary/50 rounded-lg p-3 md:p-4 hover:border-primary transition-colors"
                       >
-                        <div className="flex items-start justify-between gap-2 md:gap-4">
+                        <div className="flex items-start justify-between gap-2 md:gap-4 mb-3">
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-1.5 md:gap-2 mb-1.5 md:mb-2 flex-wrap">
                               <Badge className="bg-secondary text-[10px] md:text-xs px-1.5 md:px-2 py-0.5">
@@ -305,11 +315,9 @@ export default function HistoryPage() {
                               )}
                               {tip.result && getResultBadge(tip.result)}
                             </div>
-                            <Link href={`/tips/${tip.id}`}>
-                              <h4 className="font-bold text-sm md:text-base mb-1 md:mb-2 hover:text-primary line-clamp-2">
-                                {tip.title}
-                              </h4>
-                            </Link>
+                            <h4 className="font-bold text-sm md:text-base mb-1 md:mb-2 line-clamp-2">
+                              {tip.title}
+                            </h4>
                             <div className="flex items-center gap-1 text-[10px] md:text-xs text-muted-foreground mb-1">
                               <Calendar className="h-2.5 w-2.5 md:h-3 md:w-3" />
                               <span>
@@ -347,10 +355,10 @@ export default function HistoryPage() {
                           <Button
                             variant="outline"
                             size="sm"
-                            className="w-full mt-2 md:mt-3 text-[10px] md:text-xs"
+                            className="w-full text-[10px] md:text-xs"
                           >
                             <TrendingUp className="h-3 w-3 md:h-4 md:w-4 mr-1.5 md:mr-2" />
-                            View Full Analysis
+                            View Details
                           </Button>
                         </Link>
                       </div>

@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Crown, Lock, Star, TrendingUp, CheckCircle } from "lucide-react";
 import { useEffect, useState, useCallback } from "react";
+import Link from "next/link";
 
 export default function VIPAreaPage() {
   const { user } = useAuth();
@@ -337,7 +338,32 @@ export default function VIPAreaPage() {
                 {vipPredictions.map((prediction) => (
                   <Card key={prediction.id} className="border-2 border-primary">
                     <CardContent className="p-4">
-                      <h3 className="font-bold mb-2">{prediction.title}</h3>
+                      <div className="flex items-center gap-1.5 md:gap-2 mb-2 flex-wrap">
+                        <Badge className="bg-secondary text-[10px] md:text-xs px-1.5 md:px-2 py-0.5">
+                          {prediction.sport}
+                        </Badge>
+                        {prediction.league && (
+                          <Badge className="bg-secondary text-[10px] md:text-xs px-1.5 md:px-2 py-0.5">
+                            {prediction.league}
+                          </Badge>
+                        )}
+                        {prediction.result && (
+                          <Badge
+                            className={`text-[10px] md:text-xs px-1.5 md:px-2 py-0.5 ${
+                              prediction.result === "won"
+                                ? "bg-green-500 text-white"
+                                : prediction.result === "lost"
+                                ? "bg-red-500 text-white"
+                                : "bg-gray-500 text-white"
+                            }`}
+                          >
+                            {prediction.result.toUpperCase()}
+                          </Badge>
+                        )}
+                      </div>
+                      <h3 className="font-bold text-sm md:text-base mb-3 line-clamp-2">
+                        {prediction.title}
+                      </h3>
                       {(prediction.homeTeam || prediction.awayTeam) && (
                         <div className="flex items-center justify-between mb-3 p-2 bg-secondary rounded">
                           <div className="text-center flex-1">
@@ -345,14 +371,14 @@ export default function VIPAreaPage() {
                               <img
                                 src={prediction.homeTeam.logoUrl}
                                 alt={prediction.homeTeam.name}
-                                className="w-8 h-8 mx-auto mb-1"
+                                className="w-8 h-8 md:w-10 md:h-10 mx-auto mb-1 object-contain"
                               />
                             )}
-                            <p className="text-xs font-medium">
+                            <p className="text-[10px] md:text-xs font-medium line-clamp-1">
                               {prediction.homeTeam?.name}
                             </p>
                           </div>
-                          <div className="px-3 font-bold text-muted-foreground">
+                          <div className="px-3 font-bold text-muted-foreground text-xs md:text-sm">
                             VS
                           </div>
                           <div className="text-center flex-1">
@@ -360,59 +386,56 @@ export default function VIPAreaPage() {
                               <img
                                 src={prediction.awayTeam.logoUrl}
                                 alt={prediction.awayTeam.name}
-                                className="w-8 h-8 mx-auto mb-1"
+                                className="w-8 h-8 md:w-10 md:h-10 mx-auto mb-1 object-contain"
                               />
                             )}
-                            <p className="text-xs font-medium">
+                            <p className="text-[10px] md:text-xs font-medium line-clamp-1">
                               {prediction.awayTeam?.name}
                             </p>
                           </div>
                         </div>
                       )}
-                      <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
+                      <p className="text-xs md:text-sm text-muted-foreground mb-3 line-clamp-2">
                         {prediction.summary || prediction.content}
                       </p>
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-center justify-between mb-3">
                         {prediction.odds && (
                           <div>
-                            <div className="text-xl font-bold text-primary">
+                            <div className="text-lg md:text-xl font-bold text-primary">
                               {prediction.odds}
                             </div>
-                            <div className="text-xs text-muted-foreground">
+                            <div className="text-[10px] md:text-xs text-muted-foreground">
                               Odds
                             </div>
                           </div>
                         )}
                         {prediction.predictedOutcome && (
                           <div className="text-right">
-                            <div className="text-sm font-bold">
+                            <div className="text-xs md:text-sm font-bold line-clamp-1">
                               {prediction.predictedOutcome}
                             </div>
-                            <div className="text-xs text-muted-foreground">
+                            <div className="text-[10px] md:text-xs text-muted-foreground">
                               Prediction
                             </div>
                           </div>
                         )}
                       </div>
                       {prediction.ticketSnapshots.length > 0 && (
-                        <div className="mt-3 text-xs text-muted-foreground">
+                        <div className="mb-3 text-[10px] md:text-xs text-muted-foreground">
                           📊 {prediction.ticketSnapshots.length} ticket
                           snapshot(s)
                         </div>
                       )}
-                      {prediction.result && (
-                        <Badge
-                          className={`mt-3 ${
-                            prediction.result === "won"
-                              ? "bg-green-500"
-                              : prediction.result === "lost"
-                              ? "bg-red-500"
-                              : "bg-gray-500"
-                          }`}
+                      <Link href={`/tips/${prediction.id}`}>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full text-[10px] md:text-xs"
                         >
-                          {prediction.result.toUpperCase()}
-                        </Badge>
-                      )}
+                          <TrendingUp className="h-3 w-3 md:h-4 md:w-4 mr-1.5 md:mr-2" />
+                          View Details
+                        </Button>
+                      </Link>
                     </CardContent>
                   </Card>
                 ))}
