@@ -290,7 +290,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-export async function POST(request: NextRequest) {
+export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
     // Check admin authentication
     const { error, session } = await requireAdmin();
@@ -311,19 +311,19 @@ export async function POST(request: NextRequest) {
     const { action, userId, data } = body;
 
     if (action === "ban" && userId) {
-      return await banUser(userId, data.reason, session.user.id);
+      return banUser(userId, data.reason, session.user.id);
     }
 
     if (action === "unban" && userId) {
-      return await unbanUser(userId, session.user.id);
+      return unbanUser(userId, session.user.id);
     }
 
     if (action === "update_wallet" && userId) {
-      return await updateUserWallet(userId, data, session.user.id);
+      return updateUserWallet(userId, data, session.user.id);
     }
 
     if (action === "self_exclude" && userId) {
-      return await setSelfExclusion(userId, data.days, session.user.id);
+      return setSelfExclusion(userId, data.days, session.user.id);
     }
 
     return NextResponse.json(
@@ -709,7 +709,11 @@ function calculateWinRate(bets: any[]): number {
   return (wonBets / bets.length) * 100;
 }
 
-async function banUser(userId: string, reason: string, adminId: string) {
+async function banUser(
+  userId: string,
+  reason: string,
+  adminId: string
+): Promise<NextResponse> {
   interface UserUpdateData {
     lockedUntil: Date;
     loginAttempts: number;
@@ -727,7 +731,7 @@ async function banUser(userId: string, reason: string, adminId: string) {
     details: AuditLogDetails;
   }
 
-  const result = await prisma.$transaction(async (tx: any) => {
+  await prisma.$transaction(async (tx: any) => {
     // Lock user account
     await tx.user.update({
       where: { id: userId },
@@ -754,13 +758,16 @@ async function banUser(userId: string, reason: string, adminId: string) {
     });
   });
 
-  return {
+  return NextResponse.json({
     success: true,
     message: "User banned successfully",
-  };
+  });
 }
 
-async function unbanUser(userId: string, adminId: string) {
+async function unbanUser(
+  userId: string,
+  adminId: string
+): Promise<NextResponse> {
   interface UserUnbanUpdateData {
     lockedUntil: null;
     loginAttempts: number;
@@ -798,17 +805,17 @@ async function unbanUser(userId: string, adminId: string) {
     });
   });
 
-  return {
+  return NextResponse.json({
     success: true,
     message: "User unbanned successfully",
-  };
+  });
 }
 
 async function updateUserWallet(
   userId: string,
   adjustment: any,
   adminId: string
-) {
+): Promise<NextResponse> {
   const { amount, reason, type } = adjustment;
 
   interface Wallet {
@@ -888,13 +895,17 @@ async function updateUserWallet(
     });
   });
 
-  return {
+  return NextResponse.json({
     success: true,
     message: "Wallet adjusted successfully",
-  };
+  });
 }
 
-async function setSelfExclusion(userId: string, days: number, adminId: string) {
+async function setSelfExclusion(
+  userId: string,
+  days: number,
+  adminId: string
+): Promise<NextResponse> {
   const exclusionDate = new Date();
   exclusionDate.setDate(exclusionDate.getDate() + days);
 
@@ -939,8 +950,8 @@ async function setSelfExclusion(userId: string, days: number, adminId: string) {
     });
   });
 
-  return {
+  return NextResponse.json({
     success: true,
     message: `Self-exclusion set for ${days} days`,
-  };
+  });
 }

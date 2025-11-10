@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useAuth } from "@/contexts/auth-context";
@@ -16,8 +16,9 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Icon } from "@/components/logo";
+import { Loader2 } from "lucide-react";
 
-export default function SignupPage() {
+function SignupForm() {
   const { signup } = useAuth();
   const searchParams = useSearchParams();
   const referralCode = searchParams.get("ref");
@@ -269,5 +270,25 @@ export default function SignupPage() {
         </CardFooter>
       </Card>
     </div>
+  );
+}
+
+export default function SignupPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="container mx-auto flex min-h-screen items-center justify-center px-4 py-8">
+          <Card className="w-full max-w-md">
+            <CardContent className="p-8">
+              <div className="flex items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      }
+    >
+      <SignupForm />
+    </Suspense>
   );
 }
