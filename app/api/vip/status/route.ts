@@ -1,20 +1,23 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { getAuthenticatedUser } from "@/lib/auth";
+import { getCurrentSession, getUserInfo } from "@/lib/session";
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   console.log("=== VIP STATUS CHECK START ===");
   try {
-    // Get authenticated user
-    const auth = await getAuthenticatedUser(request);
+    // Get authenticated user from NextAuth session
+    const session = await getCurrentSession();
+    const userInfo = getUserInfo(session);
+
     console.log("Auth result:", {
-      hasUser: !!auth.user,
-      userId: auth.user?.id,
-      userEmail: auth.user?.email,
-      isGuest: auth.user?.guest,
+      hasSession: !!session,
+      userId: session?.user?.id,
+      userEmail: session?.user?.email,
+      isGuest: session?.user?.guest,
+      userInfo,
     });
 
-    if (!auth.user) {
+    if (!session || !session.user) {
       console.log("❌ No authenticated user - returning hasAccess: false");
       return NextResponse.json({
         success: false,
@@ -25,7 +28,7 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    if (auth.user.guest) {
+    if (session.user.guest) {
       console.log("❌ Guest user - returning hasAccess: false");
       return NextResponse.json({
         success: true,
@@ -37,12 +40,12 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    console.log("Checking VIP access for user:", auth.user.id);
+    console.log("Checking VIP access for user:", session.user.id);
 
     // Check for active subscription
     const activeSubscription = await prisma.subscription.findFirst({
       where: {
-        userId: auth.user.id,
+        userId: session.user.id,
         status: "active",
         currentPeriodEnd: { gte: new Date() },
       },
@@ -60,7 +63,7 @@ export async function GET(request: NextRequest) {
     // Note: Prisma doesn't support direct field-to-field comparison, so we fetch and filter
     const validTokens = await prisma.vIPToken.findMany({
       where: {
-        userId: auth.user.id,
+        userId: session.user.id,
         expiresAt: { gte: new Date() },
       },
       orderBy: { expiresAt: "desc" },

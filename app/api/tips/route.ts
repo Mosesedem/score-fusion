@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
-import { getAuthenticatedUser } from "@/lib/auth";
+import { getCurrentSession } from "@/lib/session";
 import { cacheHelpers } from "@/lib/redis";
 
 // Query schema
@@ -46,18 +46,18 @@ export async function GET(request: NextRequest) {
     }
 
     // Get authenticated user (optional)
-    const auth = await getAuthenticatedUser(request);
+    const session = await getCurrentSession();
 
     // Check VIP access for VIP tips
     if (validatedQuery.vip) {
-      if (!auth.user) {
+      if (!session || !session.user) {
         return NextResponse.json(
           { success: false, error: "Authentication required for VIP content" },
           { status: 401 }
         );
       }
 
-      if (auth.user.guest) {
+      if (session.user.guest) {
         return NextResponse.json(
           {
             success: false,
@@ -68,7 +68,7 @@ export async function GET(request: NextRequest) {
       }
 
       // Check if user has active subscription or valid VIP tokens
-      const hasVipAccess = await checkVipAccess(auth.user.id);
+      const hasVipAccess = await checkVipAccess(session.user.id);
       if (!hasVipAccess) {
         return NextResponse.json(
           { success: false, error: "VIP subscription required" },
@@ -79,11 +79,12 @@ export async function GET(request: NextRequest) {
 
     // For guest users, limit tip views
     let tipViewLimit = null;
-    if (auth.user?.guest) {
+    if (session?.user?.guest) {
       tipViewLimit = 10; // Limit to 10 tips per session for guests
     }
 
     // Build where clause
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const where: any = {
       status: "published",
       publishAt: { lte: new Date() },
@@ -184,14 +185,14 @@ export async function GET(request: NextRequest) {
     ]);
 
     // Track tip views for analytics
-    if (auth.user && tips.length > 0) {
+    if (session?.user && tips.length > 0) {
       try {
         await prisma.analyticsEvent.create({
           data: {
-            userId: auth.user.guest ? undefined : auth.user.id,
+            userId: session.user.guest ? undefined : session.user.id,
             type: "tips_viewed",
             payload: {
-              tipIds: tips.map((t) => t.id),
+              tipIds: tips.map((t: { id: string }) => t.id),
               filters: validatedQuery,
               page: validatedQuery.page,
               timestamp: new Date().toISOString(),

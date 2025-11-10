@@ -110,7 +110,9 @@ async function listUsers() {
         user.vipTokens.forEach((token) => {
           const available = token.quantity - token.used;
           console.log(
-            `   - ${token.type} (${available}/${token.quantity} uses, expires: ${token.expiresAt.toISOString()})`
+            `   - ${token.type} (${available}/${
+              token.quantity
+            } uses, expires: ${token.expiresAt.toISOString()})`
           );
         });
       });

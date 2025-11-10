@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
-import { getAuthenticatedUser } from "@/lib/auth";
+import { getCurrentSession } from "@/lib/session";
 import { cacheHelpers } from "@/lib/redis";
 
 // Public predictions (tips) query schema
@@ -42,16 +42,16 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    const auth = await getAuthenticatedUser(request);
+    const session = await getCurrentSession();
 
     if (validatedQuery.vip) {
-      if (!auth.user) {
+      if (!session || !session.user) {
         return NextResponse.json(
           { success: false, error: "Authentication required for VIP content" },
           { status: 401 }
         );
       }
-      if (auth.user.guest) {
+      if (session.user.guest) {
         return NextResponse.json(
           {
             success: false,
@@ -60,7 +60,7 @@ export async function GET(request: NextRequest) {
           { status: 403 }
         );
       }
-      const hasVipAccess = await checkVipAccess(auth.user.id);
+      const hasVipAccess = await checkVipAccess(session.user.id);
       if (!hasVipAccess) {
         return NextResponse.json(
           { success: false, error: "VIP subscription required" },
@@ -70,7 +70,7 @@ export async function GET(request: NextRequest) {
     }
 
     let tipViewLimit: number | null = null;
-    if (auth.user?.guest) {
+    if (session?.user?.guest) {
       tipViewLimit = 10;
     }
 
@@ -98,7 +98,7 @@ export async function GET(request: NextRequest) {
 
     // For VIP predictions, filter based on match date
     // VIP users with access can see all, but frontend will separate current vs history
-    if (validatedQuery.vip && !auth.user) {
+    if (validatedQuery.vip && (!session || !session.user)) {
       // Non-authenticated users shouldn't see VIP content
       // This is already handled by the auth check above, but adding safeguard
       const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
@@ -180,11 +180,11 @@ export async function GET(request: NextRequest) {
       prisma.tip.count({ where }),
     ]);
 
-    if (auth.user && tips.length > 0) {
+    if (session?.user && tips.length > 0) {
       try {
         await prisma.analyticsEvent.create({
           data: {
-            userId: auth.user.guest ? undefined : auth.user.id,
+            userId: session.user.guest ? undefined : session.user.id,
             type: "predictions_viewed",
             payload: {
               tipIds: tips.map((t: { id: string }) => t.id),

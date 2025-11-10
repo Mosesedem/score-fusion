@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
-import { getAuthenticatedUser } from "@/lib/auth";
+import { getCurrentSession } from "@/lib/session";
 import { rateLimit } from "@/lib/redis";
 
 // Validation schema
@@ -28,10 +28,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get authenticated user
-    const auth = await getAuthenticatedUser(request);
+    // Get authenticated user from NextAuth session
+    const session = await getCurrentSession();
 
-    if (!auth.user || auth.user.guest) {
+    if (!session || !session.user || session.user.guest) {
       return NextResponse.json(
         { success: false, error: "Authentication required" },
         { status: 401 }
@@ -101,7 +101,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Check if token is tied to a different user
-        if (vipToken.userId && vipToken.userId !== auth.user.id) {
+        if (vipToken.userId && vipToken.userId !== session.user.id) {
           throw new Error("Token is already assigned to another user");
         }
 
@@ -114,7 +114,7 @@ export async function POST(request: NextRequest) {
         const updatedToken: UpdatedToken = await tx.vIPToken.update({
           where: { id: vipToken.id },
           data: {
-            userId: auth.user.id, // Assign to user if not already assigned
+            userId: session.user.id, // Assign to user if not already assigned
             used: vipToken.used + 1,
             usedAt: new Date(),
           },
@@ -128,7 +128,7 @@ export async function POST(request: NextRequest) {
     try {
       await prisma.analyticsEvent.create({
         data: {
-          userId: auth.user.id,
+          userId: session.user.id,
           type: "vip_token_redeemed",
           payload: {
             tokenId: result.id,
@@ -147,7 +147,7 @@ export async function POST(request: NextRequest) {
     // Clear user-specific caches
     try {
       const { cacheHelpers } = await import("@/lib/redis");
-      await cacheHelpers.clearPattern(`vip:entitlements:${auth.user.id}:*`);
+      await cacheHelpers.clearPattern(`vip:entitlements:${session.user.id}:*`);
     } catch (error) {
       console.error("Failed to clear cache:", error);
     }
@@ -184,19 +184,19 @@ export async function POST(request: NextRequest) {
 }
 
 // GET endpoint to check user's VIP entitlements
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
-    // Get authenticated user
-    const auth = await getAuthenticatedUser(request);
+    // Get authenticated user from NextAuth session
+    const session = await getCurrentSession();
 
-    if (!auth.user || auth.user.guest) {
+    if (!session || !session.user || session.user.guest) {
       return NextResponse.json(
         { success: false, error: "Authentication required" },
         { status: 401 }
       );
     }
 
-    const userId = auth.user.id;
+    const userId = session.user.id;
 
     // Check cache first
     const { cacheHelpers } = await import("@/lib/redis");

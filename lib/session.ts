@@ -192,3 +192,29 @@ export function getUserInfo(session: AuthSession | null) {
     displayName: session.user.displayName || session.user.name,
   };
 }
+
+/**
+ * Helper function to replace getAuthenticatedUser from old auth system
+ * Returns session data in format similar to old auth system for easier migration
+ *
+ * @deprecated Use getCurrentSession() directly instead
+ */
+export async function getAuthenticatedUserFromSession() {
+  const session = await getCurrentSession();
+
+  if (!session || !session.user) {
+    return { user: null, error: "Authentication required" };
+  }
+
+  return {
+    user: {
+      id: session.user.id,
+      email: session.user.email,
+      displayName: session.user.displayName || session.user.name,
+      isAdmin: session.user.isAdmin || session.user.role === "ADMIN",
+      guest: session.user.guest || false,
+    },
+    session,
+    error: undefined,
+  };
+}
