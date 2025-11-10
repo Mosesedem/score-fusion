@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+// import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 
 export async function GET() {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getServerSession();
 
     if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -30,7 +30,7 @@ export async function GET() {
       activeSubscriptions,
     ] = await Promise.all([
       prisma.user.count(),
-      prisma.prediction.count(),
+      prisma.tip.count(),
       prisma.tip.count(),
       prisma.subscription.count(),
       prisma.subscription.count({
@@ -53,7 +53,7 @@ export async function GET() {
             },
           },
         }),
-        prisma.prediction.count({
+        prisma.tip.count({
           where: {
             createdAt: {
               gte: sevenDaysAgo,
