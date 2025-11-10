@@ -259,13 +259,15 @@ async function checkVipAccess(userId: string): Promise<boolean> {
     }
 
     // Check for valid VIP tokens
-    const validToken = await prisma.vIPToken.findFirst({
+    const validTokens = await prisma.vIPToken.findMany({
       where: {
         userId,
         expiresAt: { gte: new Date() },
-        OR: [{ used: 0 }, { used: { lt: prisma.vIPToken.fields.quantity } }],
       },
     });
+    const validToken = validTokens.find(
+      (token: { used: number; quantity: number }) => token.used < token.quantity
+    );
 
     return !!validToken;
   } catch (error) {

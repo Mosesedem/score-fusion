@@ -157,25 +157,29 @@ async function checkVipAccess(userId: string, tipId: string): Promise<boolean> {
     if (activeSubscription) return true;
 
     // Check general VIP tokens
-    const generalToken = await prisma.vIPToken.findFirst({
+    const generalTokens = await prisma.vIPToken.findMany({
       where: {
         userId,
         type: "general",
         expiresAt: { gte: new Date() },
-        used: { lt: prisma.vIPToken.fields.quantity },
       },
     });
+    const generalToken = generalTokens.find(
+      (token: { used: number; quantity: number }) => token.used < token.quantity
+    );
     if (generalToken) return true;
 
     // Check specific tip token
-    const specificToken = await prisma.vIPToken.findFirst({
+    const specificTokens = await prisma.vIPToken.findMany({
       where: {
         userId,
         tipId,
         expiresAt: { gte: new Date() },
-        used: { lt: prisma.vIPToken.fields.quantity },
       },
     });
+    const specificToken = specificTokens.find(
+      (token: { used: number; quantity: number }) => token.used < token.quantity
+    );
     return !!specificToken;
   } catch (error) {
     console.error("Error checking VIP access:", error);

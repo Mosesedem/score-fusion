@@ -37,19 +37,46 @@ export default function VIPAreaPage() {
   const [loadingPredictions, setLoadingPredictions] = useState(false);
 
   const checkVIPAccess = useCallback(async () => {
+    console.log("🔍 [VIP Page] Starting VIP access check...");
+    console.log("🔍 [VIP Page] Current user:", user);
+
     try {
       // Check if user has active subscription or valid token
+      console.log("🔍 [VIP Page] Calling /vip/status endpoint...");
       const res = await api.get("/vip/status");
+
+      console.log("🔍 [VIP Page] API Response:", {
+        success: res.success,
+        fullResponse: res,
+        hasData: !!res.data,
+        dataKeys: res.data ? Object.keys(res.data) : [],
+      });
+
       if (res.success) {
         const data = res.data as { hasAccess: boolean };
+        console.log("🔍 [VIP Page] Parsed data:", data);
+        console.log("🔍 [VIP Page] hasAccess value:", data.hasAccess);
+
         setHasVIPAccess(data.hasAccess);
+
+        if (data.hasAccess) {
+          console.log("✅ [VIP Page] VIP ACCESS GRANTED!");
+        } else {
+          console.log("❌ [VIP Page] VIP ACCESS DENIED");
+        }
+      } else {
+        console.log("❌ [VIP Page] API call failed:", res.error);
       }
-    } catch {
-      // Silently handle errors
+    } catch (error) {
+      console.error("❌ [VIP Page] Error checking VIP access:", error);
     } finally {
       setLoading(false);
+      console.log(
+        "🔍 [VIP Page] VIP access check complete. hasVIPAccess =",
+        hasVIPAccess
+      );
     }
-  }, [api]);
+  }, [api, user, hasVIPAccess]);
 
   const fetchVIPPredictions = useCallback(async () => {
     setLoadingPredictions(true);
@@ -67,14 +94,25 @@ export default function VIPAreaPage() {
   }, [api]);
 
   useEffect(() => {
+    console.log("🔄 [VIP Page] User effect triggered. User:", user);
     checkVIPAccess();
   }, [user, checkVIPAccess]);
 
   useEffect(() => {
+    console.log("🔄 [VIP Page] hasVIPAccess changed to:", hasVIPAccess);
     if (hasVIPAccess) {
+      console.log("🔄 [VIP Page] Fetching VIP predictions...");
       fetchVIPPredictions();
     }
   }, [hasVIPAccess, fetchVIPPredictions]);
+
+  // Add logging on every render
+  console.log("🎨 [VIP Page] RENDER - State:", {
+    hasVIPAccess,
+    loading,
+    user: user?.email || "no user",
+    isGuest: user?.guest,
+  });
 
   const handleTokenRedeem = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -97,6 +135,7 @@ export default function VIPAreaPage() {
   };
 
   if (loading) {
+    console.log("⏳ [VIP Page] Rendering LOADING state");
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-primary text-xl">Loading...</div>
@@ -105,6 +144,9 @@ export default function VIPAreaPage() {
   }
 
   if (!hasVIPAccess) {
+    console.log(
+      "🚫 [VIP Page] Rendering ACCESS DENIED state (hasVIPAccess is false)"
+    );
     return (
       <div className="min-h-screen bg-background">
         <div className="container mx-auto px-4 py-8 md:py-12">
@@ -254,6 +296,7 @@ export default function VIPAreaPage() {
   }
 
   // VIP content (shown when user has access)
+  console.log("✅ [VIP Page] Rendering VIP CONTENT (hasVIPAccess is TRUE)");
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">

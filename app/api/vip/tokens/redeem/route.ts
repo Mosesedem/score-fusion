@@ -218,11 +218,10 @@ export async function GET(request: NextRequest) {
     });
 
     // Get available VIP tokens
-    const availableTokens = await prisma.vIPToken.findMany({
+    const allTokens = await prisma.vIPToken.findMany({
       where: {
         userId,
         expiresAt: { gte: new Date() },
-        OR: [{ used: 0 }, { used: { lt: prisma.vIPToken.fields.quantity } }],
       },
       include: {
         tip: {
@@ -236,6 +235,11 @@ export async function GET(request: NextRequest) {
       },
       orderBy: { expiresAt: "asc" },
     });
+
+    // Filter tokens where used < quantity
+    const availableTokens = allTokens.filter(
+      (token: { used: number; quantity: number }) => token.used < token.quantity
+    );
 
     const hasActiveSubscription = activeSubscriptions.length > 0;
     const hasAvailableTokens = availableTokens.length > 0;

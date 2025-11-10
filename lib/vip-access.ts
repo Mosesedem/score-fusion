@@ -55,15 +55,19 @@ export async function checkVIPAccess(userId: string): Promise<VIPAccessResult> {
     }
 
     // Check for valid general VIP tokens
-    const validGeneralToken = await prisma.vIPToken.findFirst({
+    // Note: Prisma doesn't support direct field-to-field comparison, so we fetch and filter
+    const generalTokens = await prisma.vIPToken.findMany({
       where: {
         userId,
         type: "general", // Only general tokens for overall VIP access
         expiresAt: { gte: new Date() },
-        used: { lt: prisma.vIPToken.fields.quantity },
       },
       orderBy: { expiresAt: "desc" },
     });
+
+    const validGeneralToken = generalTokens.find(
+      (token: { used: number; quantity: number }) => token.used < token.quantity
+    );
 
     if (validGeneralToken) {
       return {
@@ -112,15 +116,18 @@ export async function checkTipAccess(
     }
 
     // If no general access, check for specific tip token
-    const specificToken = await prisma.vIPToken.findFirst({
+    const specificTokens = await prisma.vIPToken.findMany({
       where: {
         userId,
         tipId,
         expiresAt: { gte: new Date() },
-        used: { lt: prisma.vIPToken.fields.quantity },
       },
       orderBy: { expiresAt: "desc" },
     });
+
+    const specificToken = specificTokens.find(
+      (token: { used: number; quantity: number }) => token.used < token.quantity
+    );
 
     if (specificToken) {
       return {
@@ -179,7 +186,7 @@ export async function hasTipAccess(
  */
 export async function getVIPEntitlements(userId: string) {
   try {
-    const [activeSubscriptions, availableTokens] = await Promise.all([
+    const [activeSubscriptions, allTokens] = await Promise.all([
       // Active subscriptions
       prisma.subscription.findMany({
         where: {
@@ -194,7 +201,6 @@ export async function getVIPEntitlements(userId: string) {
         where: {
           userId,
           expiresAt: { gte: new Date() },
-          used: { lt: prisma.vIPToken.fields.quantity },
         },
         include: {
           tip: {
@@ -209,6 +215,11 @@ export async function getVIPEntitlements(userId: string) {
         orderBy: { expiresAt: "asc" },
       }),
     ]);
+
+    // Filter tokens where used < quantity
+    const availableTokens = allTokens.filter(
+      (token: { used: number; quantity: number }) => token.used < token.quantity
+    );
 
     const hasActiveSubscription = activeSubscriptions.length > 0;
     const hasAvailableTokens = availableTokens.length > 0;

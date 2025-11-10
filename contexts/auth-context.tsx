@@ -61,9 +61,19 @@ export function useAuth() {
   };
 
   const user: User | null = useMemo(() => {
-    if (status !== "authenticated" || !session?.user) return null;
+    console.log("🔐 [Auth Context] Computing user from session:", {
+      status,
+      hasSession: !!session,
+      sessionUser: session?.user,
+    });
+    
+    if (status !== "authenticated" || !session?.user) {
+      console.log("🔐 [Auth Context] No authenticated user");
+      return null;
+    }
+    
     const u = session.user as unknown as SessionUser;
-    return {
+    const computedUser = {
       id: u.id,
       email: u.email || undefined,
       displayName: u.displayName || u.name || null,
@@ -71,6 +81,9 @@ export function useAuth() {
       guest: u.guest ?? false,
       role: u.role,
     };
+    
+    console.log("🔐 [Auth Context] Computed user:", computedUser);
+    return computedUser;
   }, [session, status]);
 
   const login = useCallback(
