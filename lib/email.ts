@@ -304,6 +304,113 @@ export class EmailService {
     return this.sendEmail({ to, subject, html });
   }
 
+  // Password change confirmation email
+  static async sendPasswordChangeConfirmation(to: string, displayName: string) {
+    const subject = "Your Password Has Been Changed";
+
+    const html = `
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>${subject}</title>
+      </head>
+      <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f8fafc; color: #1e293b;">
+        <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f8fafc; padding: 40px 20px;">
+          <tr>
+            <td align="center">
+              <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
+                <!-- Header -->
+                <tr>
+                  <td style="background: linear-gradient(135deg, ${PRIMARY_COLOR} 0%, #059669 100%); padding: 40px; text-align: center;">
+                    <h1 style="margin: 0; color: #ffffff; font-size: 32px; font-weight: 700; letter-spacing: -0.5px;">
+                      ${FROM_NAME}
+                    </h1>
+                  </td>
+                </tr>
+                
+                <!-- Content -->
+                <tr>
+                  <td style="padding: 40px;">
+                    <div style="text-align: center; margin-bottom: 24px;">
+                      <div style="display: inline-block; width: 64px; height: 64px; background-color: #d1fae5; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                        <span style="font-size: 32px;">✓</span>
+                      </div>
+                    </div>
+                    
+                    <h2 style="margin: 0 0 20px; color: ${DARK_BG}; font-size: 24px; font-weight: 600; text-align: center;">
+                      Password Successfully Changed
+                    </h2>
+                    
+                    <p style="margin: 0 0 16px; color: #475569; font-size: 16px; line-height: 1.6;">
+                      Hi ${displayName},
+                    </p>
+                    
+                    <p style="margin: 0 0 24px; color: #475569; font-size: 16px; line-height: 1.6;">
+                      Your password has been successfully changed. You can continue to use your account with your new password.
+                    </p>
+                    
+                    <!-- Security Notice -->
+                    <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 24px;">
+                      <tr>
+                        <td style="padding: 16px; background-color: #fef3c7; border-left: 4px solid #f59e0b; border-radius: 4px;">
+                          <p style="margin: 0 0 8px; color: #92400e; font-size: 14px; font-weight: 600;">
+                            Didn't make this change?
+                          </p>
+                          <p style="margin: 0; color: #92400e; font-size: 14px; line-height: 1.5;">
+                            If you didn't change your password, please contact our support team immediately to secure your account.
+                          </p>
+                        </td>
+                      </tr>
+                    </table>
+                    
+                    <!-- CTA Button -->
+                    <table width="100%" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td align="center">
+                          <a href="${
+                            process.env.NEXT_PUBLIC_APP_URL ||
+                            "https://getscorefusion.com"
+                          }/dashboard" 
+                             style="display: inline-block; padding: 14px 32px; background-color: ${PRIMARY_COLOR}; color: #ffffff; text-decoration: none; border-radius: 8px; font-size: 16px; font-weight: 600;">
+                            Go to Dashboard
+                          </a>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                
+                <!-- Footer -->
+                <tr>
+                  <td style="background-color: #f8fafc; padding: 32px 40px; text-align: center; border-top: 1px solid #e2e8f0;">
+                    <p style="margin: 0 0 8px; color: #64748b; font-size: 14px;">
+                      © ${new Date().getFullYear()} ${FROM_NAME}. All rights reserved.
+                    </p>
+                    <p style="margin: 0; color: #94a3b8; font-size: 12px;">
+                      <a href="${
+                        process.env.NEXT_PUBLIC_APP_URL ||
+                        "https://getscorefusion.com"
+                      }/privacy" style="color: #64748b; text-decoration: none; margin: 0 8px;">Privacy Policy</a> | 
+                      <a href="${
+                        process.env.NEXT_PUBLIC_APP_URL ||
+                        "https://getscorefusion.com"
+                      }/terms" style="color: #64748b; text-decoration: none; margin: 0 8px;">Terms of Service</a>
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+      </body>
+      </html>
+    `;
+
+    return this.sendEmail({ to, subject, html });
+  }
+
   // Password reset confirmation email
   static async sendPasswordResetConfirmation(to: string, displayName: string) {
     const subject = "Your Password Has Been Reset";
