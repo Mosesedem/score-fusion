@@ -1,3 +1,4 @@
+/* eslint-disable react/no-unescaped-entities */
 "use client";
 
 import { useState, useEffect } from "react";
@@ -14,13 +15,21 @@ import {
   Crown,
   Target,
   CheckCircle,
+  Star,
+  CreditCard,
 } from "lucide-react";
 import Footer from "@/components/footer";
 import Image from "next/image";
+import { useApiClient } from "@/lib/api-client";
+
 interface Match {
   id: string;
-  homeTeam: string;
-  awayTeam: string;
+  homeTeam:
+    | string
+    | { id: string; name: string; shortName: string; logoUrl: string };
+  awayTeam:
+    | string
+    | { id: string; name: string; shortName: string; logoUrl: string };
   homeTeamScore: number | null;
   awayTeamScore: number | null;
   status: string;
@@ -33,20 +42,89 @@ interface Tip {
   summary?: string;
   content: string;
   odds?: number;
+  oddsSource?: string;
+  sport: string;
+  league?: string;
+  matchDate?: string;
+  homeTeam?: {
+    id: string;
+    name: string;
+    shortName?: string;
+    logoUrl?: string;
+  };
+  awayTeam?: {
+    id: string;
+    name: string;
+    shortName?: string;
+    logoUrl?: string;
+  };
+  predictionType?: string;
+  predictedOutcome?: string;
+  ticketSnapshots: string[];
+  isVIP: boolean;
+  featured: boolean;
+  status: string;
+  result?: string;
   successRate?: number;
+  createdAt: string;
+  authorName?: string;
+}
+
+interface PredictionsApiResponse {
+  success: boolean;
+  data: {
+    predictions: Tip[];
+    pagination: {
+      page: number;
+      limit: number;
+      total: number;
+      hasMore: boolean;
+      totalPages: number;
+    };
+  };
+}
+
+interface Review {
+  id: string;
+  author: string;
+  content: string;
+  rating: number;
+  date: string;
 }
 
 export default function Home() {
   const router = useRouter();
   const { user, isLoading } = useAuth();
+  const api = useApiClient();
   const [liveMatches, setLiveMatches] = useState<Match[]>([]);
   const [featuredTips, setFeaturedTips] = useState<Tip[]>([]);
+  const [predictions, setPredictions] = useState<Tip[]>([]);
+  const [reviews, setReviews] = useState<Review[]>([]);
   const [stats, setStats] = useState({
     activeUsers: 0,
     todayWins: 0,
     successRate: 0,
   });
   const [loading, setLoading] = useState(true);
+  const [currentSlide, setCurrentSlide] = useState(0);
+
+  const promoSlides = [
+    {
+      img: "/images/1.png",
+      alt: "Win with expert tips",
+      caption: "Unlock VIP Predictions",
+    },
+    {
+      img: "/images/1.png",
+      alt: "Live scores update",
+      caption: "Real-time Match Updates",
+    },
+    {
+      img: "/images/1.png",
+      alt: "High odds betting",
+      caption: "Boost Your Wins Today",
+    },
+  ];
 
   // Redirect authenticated users to dashboard
   useEffect(() => {
@@ -79,6 +157,46 @@ export default function Home() {
           }
         }
 
+        // Fetch predictions (free tips)
+        const predictionsResponse = await api.get<PredictionsApiResponse>(
+          "/predictions"
+        );
+        if (
+          predictionsResponse.success &&
+          predictionsResponse.data?.data?.predictions
+        ) {
+          const freePredictions =
+            predictionsResponse.data.data.predictions.filter(
+              (tip: Tip) => !tip.isVIP
+            );
+          setPredictions(freePredictions.slice(0, 5));
+        }
+
+        // Fetch reviews (mock)
+        setReviews([
+          {
+            id: "1",
+            author: "John D.",
+            content: "Amazing tips! Won 5/6 this week.",
+            rating: 5,
+            date: "Nov 10, 2025",
+          },
+          {
+            id: "2",
+            author: "Sarah K.",
+            content: "Live scores are spot on. Great app!",
+            rating: 4,
+            date: "Nov 8, 2025",
+          },
+          {
+            id: "3",
+            author: "Mike R.",
+            content: "VIP predictions are worth every penny.",
+            rating: 5,
+            date: "Nov 5, 2025",
+          },
+        ]);
+
         // Fetch platform stats (you can create a dedicated endpoint for this)
         // For now, we'll use mock data but structured for real data
         setStats({
@@ -107,7 +225,15 @@ export default function Home() {
         .catch(console.error);
     }, 30000);
 
-    return () => clearInterval(interval);
+    // Auto-slide carousel
+    const slideInterval = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % promoSlides.length);
+    }, 5000);
+
+    return () => {
+      clearInterval(interval);
+      clearInterval(slideInterval);
+    };
   }, []);
 
   // Show nothing while checking auth to prevent flash
@@ -149,6 +275,34 @@ export default function Home() {
                 </Button>
               </Link>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Image Carousel - Promotional Banners */}
+      <section className="border-b border-border bg-secondary">
+        <div className="relative container mx-auto px-4 py-6 md:py-8 overflow-hidden">
+          <div className="relative h-48 md:h-64 w-full rounded-lg">
+            {promoSlides.map((slide, index) => (
+              <div
+                key={index}
+                className={`absolute inset-0 transition-opacity duration-500 ${
+                  index === currentSlide ? "opacity-100" : "opacity-0"
+                }`}
+              >
+                <Image
+                  src={slide.img}
+                  alt={slide.alt}
+                  fill
+                  className="object-cover rounded-lg"
+                />
+                <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+                  <h3 className="text-2xl md:text-3xl font-bold text-white text-center px-4">
+                    {slide.caption}
+                  </h3>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </section>
@@ -224,7 +378,9 @@ export default function Home() {
                           <div className="flex-1 min-w-0">
                             <div className="flex justify-between items-center mb-2">
                               <span className="font-medium text-sm md:text-base truncate pr-2">
-                                {match.homeTeam}
+                                {typeof match.homeTeam === "object"
+                                  ? match.homeTeam.name
+                                  : match.homeTeam}
                               </span>
                               <span className="text-xl md:text-2xl font-bold shrink-0">
                                 {match.homeTeamScore ?? 0}
@@ -232,7 +388,9 @@ export default function Home() {
                             </div>
                             <div className="flex justify-between items-center">
                               <span className="font-medium text-sm md:text-base truncate pr-2">
-                                {match.awayTeam}
+                                {typeof match.awayTeam === "object"
+                                  ? match.awayTeam.name
+                                  : match.awayTeam}
                               </span>
                               <span className="text-xl md:text-2xl font-bold shrink-0">
                                 {match.awayTeamScore ?? 0}
@@ -343,6 +501,113 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Today's Predictions Table */}
+      <section className="py-8 md:py-12 border-t border-border bg-secondary">
+        <div className="container mx-auto px-4">
+          <div className="flex items-center justify-between mb-4 md:mb-6">
+            <h2 className="text-xl md:text-2xl font-bold flex items-center gap-2">
+              <Target className="h-5 w-5 md:h-6 md:w-6 text-primary" />
+              Today&apos;s Predictions
+            </h2>
+            <Link href="/tips">
+              <Button variant="outline" size="sm">
+                View All
+              </Button>
+            </Link>
+          </div>
+          <Card>
+            <CardContent className="p-0 overflow-x-auto">
+              <table className="w-full min-w-[600px]">
+                <thead>
+                  <tr className="border-b border-border">
+                    <th className="text-left p-4 font-medium">Time</th>
+                    <th className="text-left p-4 font-medium">Match</th>
+                    <th className="text-left p-4 font-medium">Prediction</th>
+                    <th className="text-left p-4 font-medium">Odds</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {predictions.map((pred) => (
+                    <tr
+                      key={pred.id}
+                      className="border-b border-border hover:bg-accent/50"
+                    >
+                      <td className="p-4 text-sm">
+                        {pred.matchDate
+                          ? new Date(pred.matchDate).toLocaleTimeString([], {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })
+                          : new Date(pred.createdAt).toLocaleDateString()}
+                      </td>
+                      <td className="p-4 text-sm">
+                        <div className="font-medium">
+                          {pred.homeTeam?.name || "TBD"}
+                        </div>
+                        <div className="text-muted-foreground">
+                          vs {pred.awayTeam?.name || "TBD"}
+                        </div>
+                      </td>
+                      <td className="p-4 text-sm font-semibold text-primary">
+                        {pred.predictedOutcome || pred.title}
+                      </td>
+                      <td className="p-4 text-sm">
+                        {pred.odds ? Number(pred.odds).toFixed(2) : "N/A"}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </CardContent>
+          </Card>
+        </div>
+      </section>
+
+      {/* Reviews Section */}
+      <section className="py-8 md:py-12 border-t border-border">
+        <div className="container mx-auto px-4">
+          <h2 className="text-2xl md:text-3xl font-bold text-center mb-8 md:mb-12">
+            What Our Members Say
+          </h2>
+          <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+            {reviews.map((review) => (
+              <Card key={review.id}>
+                <CardContent className="pt-6 p-4 md:p-6">
+                  <div className="flex items-center mb-3">
+                    <div className="flex">
+                      {[...Array(5)].map((_, i) => (
+                        <Star
+                          key={i}
+                          className={`h-4 w-4 ${
+                            i < review.rating
+                              ? "text-yellow-400 fill-yellow-400"
+                              : "text-muted-foreground"
+                          }`}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    "{review.content}"
+                  </p>
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium">{review.author}</span>
+                    <span className="text-xs text-muted-foreground">
+                      {review.date}
+                    </span>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+          <div className="text-center mt-8">
+            <Link href="#">
+              <Button variant="outline">Leave a Review</Button>
+            </Link>
+          </div>
+        </div>
+      </section>
+
       {/* Features */}
       <section className="py-8 md:py-12 border-t border-border bg-secondary">
         <div className="container mx-auto px-4">
@@ -391,16 +656,93 @@ export default function Home() {
 
             <Card>
               <CardHeader className="p-4 md:p-6">
-                <Crown className="h-7 w-7 md:h-8 md:w-8 text-primary mb-2" />
+                <Target className="h-7 w-7 md:h-8 md:w-8 text-primary mb-2" />
                 <CardTitle className="text-base md:text-lg">
-                  VIP Access
+                  VIP Updates
                 </CardTitle>
               </CardHeader>
               <CardContent className="text-muted-foreground text-xs md:text-sm p-4 md:p-6 pt-0">
-                Premium tips, advanced analytics, and priority support for
-                members
+                Exclusive correct score predictions and draw alerts with
+                real-time updates for VIP members
               </CardContent>
             </Card>
+          </div>
+        </div>
+      </section>
+
+      {/* Top Betting Sites */}
+      <section className="py-8 md:py-12 border-t border-border bg-secondary">
+        <div className="container mx-auto px-4">
+          <h2 className="text-xl md:text-2xl font-bold text-center mb-6 md:mb-8">
+            Top Betting Sites
+          </h2>
+          <div className="grid md:grid-cols-3 gap-6">
+            {[1, 2, 3].map((i) => (
+              <Card key={i}>
+                <CardHeader className="pb-2">
+                  <div className="flex items-center gap-3">
+                    <Image
+                      src={`/images/bet-site${i}.png`}
+                      alt={`Betting Site ${i}`}
+                      width={40}
+                      height={40}
+                      className="rounded"
+                    />
+                    <CardTitle className="text-base">Bet365</CardTitle>
+                  </div>
+                </CardHeader>
+                <CardContent className="pt-0 space-y-2 text-sm">
+                  <div>
+                    <strong>Bonus:</strong> 100% up to $100
+                  </div>
+                  <div>
+                    <strong>Markets:</strong> Football, Tennis, Basketball
+                  </div>
+                  <div>
+                    <strong>Features:</strong> Live Streaming, Cash Out
+                  </div>
+                  <Button variant="outline" size="sm" className="w-full mt-3">
+                    Visit Site
+                  </Button>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Security & Trust */}
+      <section className="py-8 md:py-12 border-t border-border">
+        <div className="container mx-auto px-4">
+          <h2 className="text-xl md:text-2xl font-bold text-center mb-6 md:mb-8">
+            Secure & Trusted
+          </h2>
+          <div className="grid md:grid-cols-2 gap-6 text-center">
+            <div>
+              <h3 className="font-semibold mb-4">Trusted By</h3>
+              <div className="flex flex-wrap justify-center gap-4">
+                {["egba", "ibia", "ecogra"].map((logo) => (
+                  <Image
+                    key={logo}
+                    src={`/images/trust-${logo}.png`}
+                    alt={logo}
+                    width={80}
+                    height={40}
+                    className="opacity-70"
+                  />
+                ))}
+              </div>
+            </div>
+            <div>
+              <h3 className="font-semibold mb-4">Secure Payments</h3>
+              <div className="flex flex-wrap justify-center gap-4">
+                {["visa", "mastercard", "paypal"].map((icon) => (
+                  <div key={icon} className="p-2 border rounded">
+                    <CreditCard className="h-6 w-6 text-primary" />
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       </section>

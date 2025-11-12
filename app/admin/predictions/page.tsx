@@ -49,6 +49,7 @@ interface Tip {
   confidenceLevel?: number;
   ticketSnapshots: string[];
   isVIP: boolean;
+  category: "tip" | "update";
   featured: boolean;
   status: string;
   result?: string;
@@ -98,6 +99,7 @@ export default function AdminPredictionsPage() {
     predictedOutcome: "",
     ticketSnapshots: [] as string[],
     isVIP: false,
+    category: "tip" as "tip" | "update",
     featured: false,
     status: "published" as "draft" | "scheduled" | "published" | "archived",
     publishAt: "",
@@ -455,6 +457,7 @@ export default function AdminPredictionsPage() {
           .map((t) => t.trim())
           .filter(Boolean),
         result: formData.result,
+        category: formData.category,
       };
 
       const res = await fetch(url, {
@@ -495,6 +498,7 @@ export default function AdminPredictionsPage() {
       predictedOutcome: "",
       ticketSnapshots: [],
       isVIP: false,
+      category: "tip",
       featured: false,
       status: "published",
       publishAt: "",
@@ -525,6 +529,7 @@ export default function AdminPredictionsPage() {
       predictedOutcome: tip.predictedOutcome || "",
       ticketSnapshots: tip.ticketSnapshots || [],
       isVIP: tip.isVIP,
+      category: tip.category,
       featured: tip.featured,
       status: tip.status as "draft" | "scheduled" | "published" | "archived",
       publishAt: tip.publishAt,
@@ -587,6 +592,7 @@ export default function AdminPredictionsPage() {
           predictedOutcome: currentTip.predictedOutcome,
           ticketSnapshots: currentTip.ticketSnapshots,
           isVIP: currentTip.isVIP,
+          category: currentTip.category,
           featured: currentTip.featured,
           status: currentTip.status,
           publishAt: currentTip.publishAt,
@@ -1338,6 +1344,26 @@ export default function AdminPredictionsPage() {
                     </div>
 
                     <div className="flex items-center gap-2">
+                      <Label htmlFor="category" className="text-sm">
+                        Category:
+                      </Label>
+                      <select
+                        id="category"
+                        className="px-2 py-1 bg-background border-2 border-border text-foreground rounded text-sm"
+                        value={formData.category}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            category: e.target.value as "tip" | "update",
+                          })
+                        }
+                      >
+                        <option value="tip">Tip</option>
+                        <option value="update">VIP Update</option>
+                      </select>
+                    </div>
+
+                    <div className="flex items-center gap-2">
                       <input
                         type="checkbox"
                         id="featured"
@@ -1401,6 +1427,11 @@ export default function AdminPredictionsPage() {
                       {tip.isVIP && (
                         <Badge className="bg-primary text-primary-foreground">
                           VIP
+                        </Badge>
+                      )}
+                      {tip.category === "update" && (
+                        <Badge className="bg-purple-500 text-white">
+                          UPDATE
                         </Badge>
                       )}
                       {tip.featured && (

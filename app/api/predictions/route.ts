@@ -13,6 +13,7 @@ const predictionsQuerySchema = z.object({
     .string()
     .transform((val) => val === "true")
     .default("false"),
+  category: z.enum(["tip", "update"]).optional(),
   featured: z
     .string()
     .transform((val) => val === "true")
@@ -80,6 +81,7 @@ export async function GET(request: NextRequest) {
       sport?: { mode: "insensitive"; equals: string };
       featured?: boolean;
       isVIP: boolean;
+      category?: "tip" | "update";
       OR?: Array<
         | { title: { mode: "insensitive"; contains: string } }
         | { content: { mode: "insensitive"; contains: string } }
@@ -108,8 +110,8 @@ export async function GET(request: NextRequest) {
     if (validatedQuery.sport) {
       where.sport = { mode: "insensitive", equals: validatedQuery.sport };
     }
-    if (validatedQuery.featured !== undefined) {
-      where.featured = validatedQuery.featured;
+    if (validatedQuery.category) {
+      where.category = validatedQuery.category;
     }
     // isVIP already set in initial object
 
@@ -165,6 +167,7 @@ export async function GET(request: NextRequest) {
           ticketSnapshots: true,
           publishAt: true,
           isVIP: true,
+          category: true,
           featured: true,
           authorName: true,
           status: true,

@@ -112,6 +112,7 @@ model Tip {
   ticketSnapshots  String[] // URLs to betting ticket images
   publishAt        DateTime
   isVIP            Boolean           @default(false)
+  category         TipCategory       @default(tip) // tip, update
   featured         Boolean           @default(false)
   authorId         String?
   authorName       String?
@@ -131,6 +132,7 @@ model Tip {
   @@index([isVIP, publishAt])
   @@index([featured, publishAt])
   @@index([sport, publishAt])
+  @@index([category, isVIP, publishAt])
   @@map("tips")
 }
 
@@ -161,6 +163,11 @@ enum PredictionType {
 enum OddsSource {
   manual
   api_auto
+}
+
+enum TipCategory {
+  tip
+  update
 }
 
 model TipResult {

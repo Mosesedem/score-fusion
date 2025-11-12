@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { TrendingUp, Lock, Calendar, Target } from "lucide-react";
-import { useApiClient } from "@/lib/api-client";
+import { useApiClient, ApiResponse } from "@/lib/api-client";
 
 interface Tip {
   id: string;
@@ -43,17 +43,14 @@ interface Tip {
   authorName?: string;
 }
 
-interface PredictionsApiResponse {
-  success: boolean;
-  data: {
-    predictions: Tip[];
-    pagination: {
-      page: number;
-      limit: number;
-      total: number;
-      hasMore: boolean;
-      totalPages: number;
-    };
+interface PredictionsData {
+  predictions: Tip[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    hasMore: boolean;
+    totalPages: number;
   };
 }
 
@@ -68,9 +65,9 @@ export default function TipsPage() {
     const fetchTips = async () => {
       try {
         setLoading(true);
-        const response = await api.get<PredictionsApiResponse>("/predictions");
+        const response = await api.get<PredictionsData>("/predictions");
         if (response.success && response.data) {
-          setTips(response.data.data.predictions || []);
+          setTips(response.data.predictions || []);
         }
       } catch (error) {
         console.error("Failed to fetch predictions:", error);

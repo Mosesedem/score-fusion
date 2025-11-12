@@ -33,7 +33,7 @@ export function FollowUsDialog({ open, onOpenChange }: FollowUsDialogProps) {
         <div className="space-y-3 py-4">
           {/* WhatsApp */}
           <a
-            href="https://wa.me/YOUR_WHATSAPP_NUMBER"
+            href="https://api.whatsapp.com/send?phone=84589950720&text=Hello%2C%20I%20would%20like%20to%20join%20the%20Score%20Fusion%20community!"
             target="_blank"
             rel="noopener noreferrer"
             className="block"
@@ -54,7 +54,7 @@ export function FollowUsDialog({ open, onOpenChange }: FollowUsDialogProps) {
 
           {/* Telegram */}
           <a
-            href="https://t.me/YOUR_TELEGRAM_CHANNEL"
+            href="https://t.me/+QysfcefOapnhAbKA"
             target="_blank"
             rel="noopener noreferrer"
             className="block"

@@ -405,6 +405,10 @@ export default function DashboardPage() {
                     </li>
                     <li className="flex items-center gap-2">
                       <div className="h-1.5 w-1.5 bg-primary rounded-full" />
+                      <span>VIP Updates & correct scores</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <div className="h-1.5 w-1.5 bg-primary rounded-full" />
                       <span>Winning ticket proof</span>
                     </li>
                   </ul>

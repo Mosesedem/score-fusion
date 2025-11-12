@@ -7,7 +7,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Crown, Lock, Star, TrendingUp, CheckCircle } from "lucide-react";
+import {
+  Crown,
+  Lock,
+  Star,
+  TrendingUp,
+  CheckCircle,
+  Target,
+} from "lucide-react";
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 
@@ -33,9 +40,29 @@ export default function VIPAreaPage() {
       ticketSnapshots: string[];
       result?: string;
       createdAt: string;
+      category: "tip" | "update";
+    }>
+  >([]);
+  const [vipUpdates, setVipUpdates] = useState<
+    Array<{
+      id: string;
+      title: string;
+      summary?: string;
+      content: string;
+      odds?: number;
+      sport: string;
+      league?: string;
+      homeTeam?: { name: string; logoUrl?: string };
+      awayTeam?: { name: string; logoUrl?: string };
+      predictedOutcome?: string;
+      ticketSnapshots: string[];
+      result?: string;
+      createdAt: string;
+      category: "tip" | "update";
     }>
   >([]);
   const [loadingPredictions, setLoadingPredictions] = useState(false);
+  const [loadingUpdates, setLoadingUpdates] = useState(false);
 
   const checkVIPAccess = useCallback(async () => {
     console.log("🔍 [VIP Page] Starting VIP access check...");
@@ -81,16 +108,25 @@ export default function VIPAreaPage() {
 
   const fetchVIPPredictions = useCallback(async () => {
     setLoadingPredictions(true);
+    setLoadingUpdates(true);
     try {
       const res = await api.get("/predictions?vip=true");
       if (res.success) {
         const data = res.data as { predictions: typeof vipPredictions };
-        setVipPredictions(data.predictions || []);
+        const predictions = data.predictions || [];
+
+        // Separate tips and updates
+        const tips = predictions.filter((p) => p.category === "tip");
+        const updates = predictions.filter((p) => p.category === "update");
+
+        setVipPredictions(tips);
+        setVipUpdates(updates);
       }
     } catch (error) {
       console.error("Failed to fetch VIP predictions:", error);
     } finally {
       setLoadingPredictions(false);
+      setLoadingUpdates(false);
     }
   }, [api]);
 
@@ -161,7 +197,8 @@ export default function VIPAreaPage() {
                   VIP Access Required
                 </CardTitle>
                 <p className="text-sm md:text-base text-muted-foreground">
-                  Unlock premium betting tips with proven success rates
+                  Unlock premium betting tips and exclusive correct score
+                  predictions with proven success rates
                 </p>
               </CardHeader>
               <CardContent className="space-y-4 md:space-y-6 p-4 md:p-6">
@@ -169,10 +206,10 @@ export default function VIPAreaPage() {
                   <div className="p-3 md:p-4 border border-border">
                     <Crown className="h-6 w-6 md:h-8 md:w-8 text-primary mx-auto mb-2" />
                     <h3 className="font-bold text-sm md:text-base mb-1">
-                      Exclusive Tips
+                      VIP Tips & Updates
                     </h3>
                     <p className="text-xs md:text-sm text-muted-foreground">
-                      Premium predictions from expert analysts
+                      Premium predictions and exclusive correct score updates
                     </p>
                   </div>
                   <div className="p-3 md:p-4 border border-border">
@@ -209,7 +246,8 @@ export default function VIPAreaPage() {
                           $29.99/mo
                         </p>
                         <ul className="text-xs md:text-sm space-y-1">
-                          <li>✓ All VIP tips</li>
+                          <li>✓ All VIP tips & updates</li>
+                          <li>✓ Correct score predictions</li>
                           <li>✓ Priority support</li>
                           <li>✓ Cancel anytime</li>
                         </ul>
@@ -231,7 +269,8 @@ export default function VIPAreaPage() {
                           Save $110 per year
                         </p>
                         <ul className="text-xs md:text-sm space-y-1">
-                          <li>✓ All VIP tips</li>
+                          <li>✓ All VIP tips & updates</li>
+                          <li>✓ Correct score predictions</li>
                           <li>✓ Priority support</li>
                           <li>✓ 2 months free</li>
                         </ul>
@@ -449,14 +488,154 @@ export default function VIPAreaPage() {
           </CardContent>
         </Card>
 
+        {/* VIP Updates Section */}
+        <Card className="mt-8">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Target className="h-5 w-5 text-purple-500" />
+              VIP Updates
+            </CardTitle>
+            <p className="text-sm text-muted-foreground mt-2">
+              Exclusive correct score predictions and draw alerts with real-time
+              updates
+            </p>
+          </CardHeader>
+          <CardContent>
+            {loadingUpdates ? (
+              <div className="text-center py-12 text-muted-foreground">
+                <Target className="h-16 w-16 mx-auto mb-4 opacity-50 animate-pulse" />
+                <p className="text-lg">Loading VIP updates...</p>
+              </div>
+            ) : vipUpdates.length > 0 ? (
+              <div className="grid gap-4 md:grid-cols-2">
+                {vipUpdates.map((update) => (
+                  <Card key={update.id} className="border-2 border-purple-500">
+                    <CardContent className="p-4">
+                      <div className="flex items-center gap-1.5 md:gap-2 mb-2 flex-wrap">
+                        <Badge className="bg-purple-500 text-white text-[10px] md:text-xs px-1.5 md:px-2 py-0.5">
+                          UPDATE
+                        </Badge>
+                        <Badge className=" text-[10px] md:text-xs px-1.5 md:px-2 py-0.5">
+                          {update.sport}
+                        </Badge>
+                        {update.league && (
+                          <Badge className=" text-[10px] md:text-xs px-1.5 md:px-2 py-0.5">
+                            {update.league}
+                          </Badge>
+                        )}
+                        {update.result && (
+                          <Badge
+                            className={`text-[10px] md:text-xs px-1.5 md:px-2 py-0.5 ${
+                              update.result === "won"
+                                ? "bg-green-500 text-white"
+                                : update.result === "lost"
+                                ? "bg-red-500 text-white"
+                                : "bg-gray-500 text-white"
+                            }`}
+                          >
+                            {update.result.toUpperCase()}
+                          </Badge>
+                        )}
+                      </div>
+                      <h3 className="font-bold text-sm md:text-base mb-3 line-clamp-2">
+                        {update.title}
+                      </h3>
+                      {(update.homeTeam || update.awayTeam) && (
+                        <div className="flex items-center justify-between mb-3 p-2 bg-secondary rounded">
+                          <div className="text-center flex-1">
+                            {update.homeTeam?.logoUrl && (
+                              <img
+                                src={update.homeTeam.logoUrl}
+                                alt={update.homeTeam.name}
+                                className="w-8 h-8 md:w-10 md:h-10 mx-auto mb-1 object-contain"
+                              />
+                            )}
+                            <p className="text-[10px] md:text-xs font-medium line-clamp-1">
+                              {update.homeTeam?.name}
+                            </p>
+                          </div>
+                          <div className="px-3 font-bold text-muted-foreground text-xs md:text-sm">
+                            VS
+                          </div>
+                          <div className="text-center flex-1">
+                            {update.awayTeam?.logoUrl && (
+                              <img
+                                src={update.awayTeam.logoUrl}
+                                alt={update.awayTeam.name}
+                                className="w-8 h-8 md:w-10 md:h-10 mx-auto mb-1 object-contain"
+                              />
+                            )}
+                            <p className="text-[10px] md:text-xs font-medium line-clamp-1">
+                              {update.awayTeam?.name}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                      <p className="text-xs md:text-sm text-muted-foreground mb-3 line-clamp-2">
+                        {update.summary || update.content}
+                      </p>
+                      <div className="flex items-center justify-between mb-3">
+                        {update.odds && (
+                          <div>
+                            <div className="text-lg md:text-xl font-bold text-primary">
+                              {update.odds}
+                            </div>
+                            <div className="text-[10px] md:text-xs text-muted-foreground">
+                              Odds
+                            </div>
+                          </div>
+                        )}
+                        {update.predictedOutcome && (
+                          <div className="text-right">
+                            <div className="text-xs md:text-sm font-bold line-clamp-1">
+                              {update.predictedOutcome}
+                            </div>
+                            <div className="text-[10px] md:text-xs text-muted-foreground">
+                              Prediction
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                      {update.ticketSnapshots.length > 0 && (
+                        <div className="mb-3 text-[10px] md:text-xs text-muted-foreground">
+                          📊 {update.ticketSnapshots.length} ticket snapshot(s)
+                        </div>
+                      )}
+                      <Link href={`/tips/${update.id}`}>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full text-[10px] md:text-xs"
+                        >
+                          <Target className="h-3 w-3 md:h-4 md:w-4 mr-1.5 md:mr-2" />
+                          View Update
+                        </Button>
+                      </Link>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12 text-muted-foreground">
+                <Target className="h-16 w-16 mx-auto mb-4 opacity-50" />
+                <p className="text-lg">No VIP updates available yet</p>
+                <p className="text-sm mt-2">
+                  Check back soon for exclusive correct score predictions and
+                  draw alerts
+                </p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
         <div className="mt-8 grid md:grid-cols-3 gap-6">
           <Card>
             <CardContent className="p-6 text-center">
-              <Star className="h-12 w-12 text-primary mx-auto mb-4" />
-              <h3 className="font-bold mb-2">Expert Analysis</h3>
+              <Target className="h-12 w-12 text-primary mx-auto mb-4" />
+              <h3 className="font-bold mb-2">VIP Updates</h3>
               <p className="text-sm text-muted-foreground">
-                In-depth analysis from professional sports analysts with years
-                of experience
+                Exclusive correct score predictions and draw alerts with
+                real-time updates
               </p>
             </CardContent>
           </Card>
