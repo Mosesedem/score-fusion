@@ -2,6 +2,7 @@
 import bcrypt from "bcryptjs";
 import { SignJWT, jwtVerify } from "jose";
 import { prisma } from "./db";
+import { getAuthenticatedUserFromSession } from "./session";
 import { sessionStore, rateLimit } from "./redis";
 import { v4 as uuidv4 } from "uuid";
 
@@ -457,6 +458,11 @@ export async function getAuthenticatedUser(request: Request): Promise<{
     // Get token from Authorization header
     const authHeader = request.headers.get("authorization");
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      // Fallback to NextAuth session
+      const sessionResult = await getAuthenticatedUserFromSession();
+      if (sessionResult.user) {
+        return sessionResult;
+      }
       return { error: "No authorization header" };
     }
 

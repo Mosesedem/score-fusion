@@ -274,6 +274,15 @@ export default function Home() {
                   View Free Tips
                 </Button>
               </Link>
+              <Link href="/subscriptions" className="w-full sm:w-auto">
+                <Button
+                  size="lg"
+                  variant="secondary"
+                  className="w-full sm:w-auto"
+                >
+                  See VIP Plans
+                </Button>
+              </Link>
             </div>
           </div>
         </div>
@@ -338,6 +347,55 @@ export default function Home() {
                 Success Rate
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* VIP Subscription Spotlight */}
+      <section className="py-8 md:py-12 border-t border-border">
+        <div className="container mx-auto px-4">
+          <div className="max-w-5xl mx-auto text-center mb-6 md:mb-10">
+            <h2 className="text-2xl md:text-3xl font-bold mb-2">Unlock VIP Access</h2>
+            <p className="text-sm md:text-base text-muted-foreground">
+              Get exclusive correct score predictions, winning tickets, and premium insights
+            </p>
+          </div>
+          <div className="grid md:grid-cols-3 gap-4 md:gap-6 max-w-5xl mx-auto">
+            <Card className="border-2">
+              <CardHeader className="text-center pb-2">
+                <CardTitle className="text-lg font-bold">Weekly</CardTitle>
+              </CardHeader>
+              <CardContent className="text-center space-y-2">
+                <div className="text-3xl font-bold text-primary">$9.99</div>
+                <div className="text-xs text-muted-foreground">per week</div>
+                <div className="text-xs">VIP tips • Correct scores • Priority support</div>
+              </CardContent>
+            </Card>
+            <Card className="border-primary border-2 ring-2 ring-primary/20">
+              <CardHeader className="text-center pb-2">
+                <CardTitle className="text-lg font-bold">Monthly</CardTitle>
+              </CardHeader>
+              <CardContent className="text-center space-y-2">
+                <div className="text-3xl font-bold text-primary">$14.99</div>
+                <div className="text-xs text-muted-foreground">per month</div>
+                <div className="text-xs">Most Popular • Telegram group • Cancel anytime</div>
+              </CardContent>
+            </Card>
+            <Card className="border-2">
+              <CardHeader className="text-center pb-2">
+                <CardTitle className="text-lg font-bold">Yearly</CardTitle>
+              </CardHeader>
+              <CardContent className="text-center space-y-2">
+                <div className="text-3xl font-bold text-primary">$124.99</div>
+                <div className="text-xs text-muted-foreground">per year</div>
+                <div className="text-xs">Save big • Exclusive webinars • 4 months free</div>
+              </CardContent>
+            </Card>
+          </div>
+          <div className="text-center mt-6 md:mt-8">
+            <Link href="/subscriptions">
+              <Button size="lg" className="px-8">Explore Full Plans</Button>
+            </Link>
           </div>
         </div>
       </section>
@@ -470,7 +528,10 @@ export default function Home() {
                         </div>
                         <div className="flex items-center justify-between">
                           <span className="text-lg md:text-xl font-bold text-primary">
-                            {tip.odds ? tip.odds.toFixed(2) : "N/A"}
+                            Odds:{" "}
+                            {Number(tip.odds)
+                              ? Number(tip.odds).toFixed(2)
+                              : "N/A"}
                           </span>
                           <Link href={`/tips/${tip.id}`}>
                             <Button

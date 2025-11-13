@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/contexts/auth-context";
@@ -25,14 +25,6 @@ export const metadata: Metadata = {
   title: "ScoreFusion - Premium Betting Tips & Predictions",
   description:
     "Get exclusive betting tips, VIP predictions, and earn rewards with ScoreFusion. Join thousands of winners today!",
-  viewport: {
-    width: "device-width",
-    initialScale: 1,
-    maximumScale: 5,
-    userScalable: true,
-    viewportFit: "cover",
-  },
-  themeColor: "#ca8a04",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
@@ -41,6 +33,15 @@ export const metadata: Metadata = {
   formatDetection: {
     telephone: false,
   },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+  userScalable: true,
+  viewportFit: "cover",
+  themeColor: "#ca8a04",
 };
 
 export default function RootLayout({

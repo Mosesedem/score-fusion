@@ -83,6 +83,7 @@ export default function DashboardPage() {
     joinedDaysAgo: 0,
   });
   const [showWelcomeTooltip, setShowWelcomeTooltip] = useState(false);
+  const [derivedWinRate, setDerivedWinRate] = useState<number | null>(null);
 
   useEffect(() => {
     async function fetchDashboardData() {
@@ -128,13 +129,39 @@ export default function DashboardPage() {
           setLiveMatches(matchesData.matches);
         }
 
-        // Fetch user statistics
+        // Fetch user statistics and compute derived win rate with fallbacks
+        let winRateCandidate: number | null = null;
         if (user && !user.guest) {
           const statsRes = await api.get("/user/stats");
           if (statsRes.success) {
-            setUserStats(statsRes.data as UserStats);
+            const s = statsRes.data as UserStats;
+            setUserStats(s);
+            if (s && typeof s.winRate === "number" && s.winRate > 0) {
+              winRateCandidate = s.winRate;
+            } else if (
+              s &&
+              typeof s.correctPredictions === "number" &&
+              typeof s.totalTipsViewed === "number" &&
+              s.totalTipsViewed > 0
+            ) {
+              const calc = (s.correctPredictions / s.totalTipsViewed) * 100;
+              if (calc > 0) winRateCandidate = calc;
+            }
+          }
+
+          if (winRateCandidate === null) {
+            const betsRes = await api.get("/bets?limit=1");
+            if (betsRes.success) {
+              const stats = (betsRes.data as any)?.statistics;
+              const wr = typeof stats?.winRate === "number" ? stats.winRate : null;
+              if (wr && wr > 0) {
+                winRateCandidate = wr;
+              }
+            }
           }
         }
+
+        setDerivedWinRate(winRateCandidate && winRateCandidate > 0 ? winRateCandidate : null);
 
         // Show welcome tooltip for new users
         if (user && !user.guest) {
@@ -172,12 +199,12 @@ export default function DashboardPage() {
               <CardContent className="p-3 sm:p-4">
                 <div className="flex items-start justify-between mb-2">
                   <Trophy className="h-4 w-4 sm:h-5 sm:w-5 text-amber-500" />
-                  {userStats.winRate > 60 && (
+                  {derivedWinRate !== null && derivedWinRate > 60 && (
                     <div className="absolute -top-1 -right-1 h-3 w-3 bg-green-500 rounded-full animate-pulse" />
                   )}
                 </div>
                 <div className="text-xl sm:text-2xl font-bold mb-0.5">
-                  {userStats.winRate.toFixed(1)}%
+                  {derivedWinRate !== null ? `${derivedWinRate.toFixed(1)}%` : "—"}
                 </div>
                 <p className="text-[10px] sm:text-xs text-muted-foreground">
                   Win Rate
