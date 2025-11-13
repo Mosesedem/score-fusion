@@ -19,6 +19,7 @@ import {
   Trophy,
   UserCog,
   CreditCard,
+  BookOpen,
 } from "lucide-react";
 
 const adminItems = [
@@ -30,6 +31,7 @@ const adminItems = [
   { href: "/admin/teams", label: "Teams", icon: Shield },
   { href: "/admin/vip-tokens", label: "VIP Tokens", icon: Crown },
   { href: "/admin/feature-flags", label: "Feature Flags", icon: Flag },
+  { href: "/admin/how-to", label: "How-To Guide", icon: BookOpen },
   // { href: "/admin/analytics", label: "Analytics", icon: BarChart3 },
 ];
 

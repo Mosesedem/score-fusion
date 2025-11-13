@@ -112,6 +112,7 @@ export default function AdminPredictionsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [filterResult, setFilterResult] = useState<string>("all");
+  const [filterCategory, setFilterCategory] = useState<string>("all");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
@@ -639,7 +640,9 @@ export default function AdminPredictionsPage() {
 
     const matchesResult = filterResult === "all" || tip.result === filterResult;
 
-    return matchesSearch && matchesStatus && matchesResult;
+    const matchesCategory = filterCategory === "all" || tip.category === filterCategory;
+
+    return matchesSearch && matchesStatus && matchesResult && matchesCategory;
   });
 
   // Pagination logic
@@ -709,6 +712,18 @@ export default function AdminPredictionsPage() {
                 <option value="won">Won</option>
                 <option value="lost">Lost</option>
                 <option value="void">Void</option>
+              </select>
+              <select
+                value={filterCategory}
+                onChange={(e) => {
+                  setFilterCategory(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="px-3 py-2 bg-background border-2 border-border text-foreground rounded-md"
+              >
+                <option value="all">All Categories</option>
+                <option value="tip">Tips</option>
+                <option value="update">Updates</option>
               </select>
             </div>
             <div className="mt-2 text-sm text-muted-foreground">

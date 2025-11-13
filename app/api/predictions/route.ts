@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { getCurrentSession } from "@/lib/session";
 import { cacheHelpers } from "@/lib/redis";
+import { hasVIPAccess } from "@/lib/vip-access";
 
 // Public predictions (tips) query schema
 const predictionsQuerySchema = z.object({
@@ -61,8 +62,8 @@ export async function GET(request: NextRequest) {
           { status: 403 }
         );
       }
-      const hasVipAccess = await checkVipAccess(session.user.id);
-      if (!hasVipAccess) {
+      const vipAccess = await hasVIPAccess(session.user.id);
+      if (!vipAccess) {
         return NextResponse.json(
           { success: false, error: "VIP subscription required" },
           { status: 403 }
@@ -238,29 +239,3 @@ export async function GET(request: NextRequest) {
   }
 }
 
-async function checkVipAccess(userId: string): Promise<boolean> {
-  try {
-    const activeSubscription = await prisma.subscription.findFirst({
-      where: {
-        userId,
-        status: "active",
-        currentPeriodEnd: { gte: new Date() },
-      },
-    });
-    if (activeSubscription) return true;
-
-    const validTokens = await prisma.vIPToken.findMany({
-      where: {
-        userId,
-        expiresAt: { gte: new Date() },
-      },
-    });
-    const validToken = validTokens.find(
-      (token: { used: number; quantity: number }) => token.used < token.quantity
-    );
-    return !!validToken;
-  } catch (error) {
-    console.error("Error checking VIP access:", error);
-    return false;
-  }
-}

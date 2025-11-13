@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { getCurrentSession } from "@/lib/session";
 import { cacheHelpers } from "@/lib/redis";
+import { hasVIPAccess } from "@/lib/vip-access";
 
 // Query schema
 const tipsQuerySchema = z.object({
@@ -13,6 +14,7 @@ const tipsQuerySchema = z.object({
     .string()
     .transform((val) => val === "true")
     .default("false"),
+  category: z.enum(["tip", "update"]).optional(),
   featured: z
     .string()
     .transform((val) => val === "true")
@@ -68,8 +70,8 @@ export async function GET(request: NextRequest) {
       }
 
       // Check if user has active subscription or valid VIP tokens
-      const hasVipAccess = await checkVipAccess(session.user.id);
-      if (!hasVipAccess) {
+      const vipAccess = await hasVIPAccess(session.user.id);
+      if (!vipAccess) {
         return NextResponse.json(
           { success: false, error: "VIP subscription required" },
           { status: 403 }
@@ -102,6 +104,10 @@ export async function GET(request: NextRequest) {
       where.isVIP = true;
     } else {
       where.isVIP = false;
+    }
+
+    if (validatedQuery.category) {
+      where.category = validatedQuery.category;
     }
 
     if (validatedQuery.search) {
@@ -177,6 +183,7 @@ export async function GET(request: NextRequest) {
           viewCount: true,
           successRate: true,
           result: true,
+          category: true,
           createdAt: true,
           updatedAt: true,
         },
@@ -243,36 +250,3 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// Helper function to check VIP access
-async function checkVipAccess(userId: string): Promise<boolean> {
-  try {
-    // Check for active subscription
-    const activeSubscription = await prisma.subscription.findFirst({
-      where: {
-        userId,
-        status: "active",
-        currentPeriodEnd: { gte: new Date() },
-      },
-    });
-
-    if (activeSubscription) {
-      return true;
-    }
-
-    // Check for valid VIP tokens
-    const validTokens = await prisma.vIPToken.findMany({
-      where: {
-        userId,
-        expiresAt: { gte: new Date() },
-      },
-    });
-    const validToken = validTokens.find(
-      (token: { used: number; quantity: number }) => token.used < token.quantity
-    );
-
-    return !!validToken;
-  } catch (error) {
-    console.error("Error checking VIP access:", error);
-    return false;
-  }
-}

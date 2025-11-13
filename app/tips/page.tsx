@@ -39,6 +39,7 @@ interface Tip {
   status: string;
   result?: string;
   successRate?: number;
+  category?: string;
   createdAt: string;
   authorName?: string;
 }
@@ -56,8 +57,10 @@ interface PredictionsData {
 
 export default function TipsPage() {
   const [tips, setTips] = useState<Tip[]>([]);
+  const [historyTips, setHistoryTips] = useState<Tip[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"all" | "free" | "vip">("all");
+  const [viewMode, setViewMode] = useState<"current" | "history">("current");
   const [hasVIPAccess, setHasVIPAccess] = useState(false);
   const api = useApiClient();
 
@@ -67,7 +70,26 @@ export default function TipsPage() {
         setLoading(true);
         const response = await api.get<PredictionsData>("/predictions");
         if (response.success && response.data) {
-          setTips(response.data.predictions || []);
+          const allPredictions = response.data.predictions || [];
+          
+          // Separate current from history based on match date and result
+          const now = new Date();
+          const twoHoursAgo = new Date(now.getTime() - 2 * 60 * 60 * 1000);
+          
+          const currentPredictions = allPredictions.filter((p) => {
+            if (!p.matchDate) return true; // No match date, show as current
+            const matchDate = new Date(p.matchDate);
+            return matchDate >= twoHoursAgo && (!p.result || p.result === "pending");
+          });
+          
+          const historyPredictions = allPredictions.filter((p) => {
+            if (!p.matchDate) return false;
+            const matchDate = new Date(p.matchDate);
+            return matchDate < twoHoursAgo || (p.result && p.result !== "pending");
+          });
+          
+          setTips(currentPredictions);
+          setHistoryTips(historyPredictions);
         }
       } catch (error) {
         console.error("Failed to fetch predictions:", error);
@@ -96,14 +118,16 @@ export default function TipsPage() {
   }, [api]);
 
   const filteredTips = useMemo(
-    () =>
-      tips.filter((tip) => {
+    () => {
+      const tipsToFilter = viewMode === "current" ? tips : historyTips;
+      return tipsToFilter.filter((tip) => {
         if (filter === "all") return true;
         if (filter === "free") return !tip.isVIP;
         if (filter === "vip") return tip.isVIP;
         return true;
-      }),
-    [tips, filter]
+      });
+    },
+    [tips, historyTips, filter, viewMode]
   );
 
   return (
@@ -148,7 +172,7 @@ export default function TipsPage() {
             <div className="text-center">
               <TrendingUp className="h-4 w-4 md:h-5 md:w-5 lg:h-6 lg:w-6 text-primary mx-auto mb-1 md:mb-2" />
               <div className="text-base md:text-lg lg:text-xl font-bold">
-                {tips.filter((t) => t.result === "won").length}
+                {historyTips.filter((t) => t.result === "won").length}
               </div>
               <div className="text-[10px] md:text-xs lg:text-sm text-muted-foreground">
                 Winning Predictions
@@ -161,6 +185,26 @@ export default function TipsPage() {
       {/* Tips List */}
       <section className="py-4 md:py-8 lg:py-12">
         <div className="container mx-auto px-3 md:px-4">
+          {/* View Mode Tabs */}
+          <div className="flex gap-1.5 md:gap-2 mb-4 md:mb-6">
+            <Button
+              variant={viewMode === "current" ? "default" : "outline"}
+              onClick={() => setViewMode("current")}
+              className="text-xs md:text-sm"
+              size="sm"
+            >
+              Current Predictions ({tips.length})
+            </Button>
+            <Button
+              variant={viewMode === "history" ? "default" : "outline"}
+              onClick={() => setViewMode("history")}
+              className="text-xs md:text-sm"
+              size="sm"
+            >
+              History ({historyTips.length})
+            </Button>
+          </div>
+          
           {/* Filters */}
           <div className="flex flex-wrap gap-1.5 md:gap-2 mb-4 md:mb-6 lg:mb-8">
             <Button
@@ -196,6 +240,25 @@ export default function TipsPage() {
                 Loading predictions...
               </p>
             </div>
+          ) : viewMode === "current" && tips.length === 0 ? (
+            <Card>
+              <CardContent className="p-6 md:p-8 lg:p-12 text-center">
+                <p className="text-muted-foreground mb-4 text-xs md:text-sm lg:text-base">
+                  No current predictions available at the moment. Check back soon or view our history!
+                </p>
+                <Button size="sm" onClick={() => setViewMode("history")}>
+                  View History
+                </Button>
+              </CardContent>
+            </Card>
+          ) : viewMode === "history" && historyTips.length === 0 ? (
+            <Card>
+              <CardContent className="p-6 md:p-8 lg:p-12 text-center">
+                <p className="text-muted-foreground mb-4 text-xs md:text-sm lg:text-base">
+                  No historical predictions yet. Check back after some predictions are completed!
+                </p>
+              </CardContent>
+            </Card>
           ) : (
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 md:gap-4 lg:gap-6">
               {filteredTips.map((tip) => (
@@ -364,17 +427,17 @@ export default function TipsPage() {
             </div>
           )}
 
-          {!loading && filteredTips.length === 0 && (
+          {!loading && filteredTips.length === 0 && (viewMode === "current" ? tips.length > 0 : historyTips.length > 0) && (
             <Card>
               <CardContent className="p-6 md:p-8 lg:p-12 text-center">
                 <p className="text-muted-foreground mb-4 text-xs md:text-sm lg:text-base">
                   No{" "}
                   {filter === "all" ? "" : filter === "free" ? "free" : "VIP"}{" "}
-                  predictions available at the moment. Check back soon!
+                  predictions match your filter.
                 </p>
-                <Link href="/">
-                  <Button size="sm">Go Home</Button>
-                </Link>
+                <Button size="sm" onClick={() => setFilter("all")}>
+                  Clear Filter
+                </Button>
               </CardContent>
             </Card>
           )}

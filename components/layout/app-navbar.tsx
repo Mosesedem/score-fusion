@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -27,11 +27,38 @@ import {
   Activity,
 } from "lucide-react";
 import { Icon } from "@/components/logo";
+import { NotificationSystem } from "@/components/notification-system";
+import { useApiClient } from "@/lib/api-client";
 
 export function AppNavbar() {
   const { user, logout } = useAuth();
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const api = useApiClient();
+  const [isVIP, setIsVIP] = useState(false);
+
+  useEffect(() => {
+    let ignore = false;
+    const fetchVIP = async () => {
+      try {
+        if (user && !user.guest) {
+          const res = await api.get("/vip/status");
+          if (!ignore) {
+            const has = res.success && (res.data as any)?.hasAccess;
+            setIsVIP(!!has);
+          }
+        } else if (!ignore) {
+          setIsVIP(false);
+        }
+      } catch {
+        if (!ignore) setIsVIP(false);
+      }
+    };
+    fetchVIP();
+    return () => {
+      ignore = true;
+    };
+  }, [user, api]);
 
   // Don't show regular navbar on admin routes - admin has its own navbar
   const isAdminRoute = pathname?.startsWith("/admin");
@@ -100,6 +127,10 @@ export function AppNavbar() {
 
           {/* Right side - Auth & Mobile Menu */}
           <div className="flex items-center gap-2">
+            {/* Notifications for logged in users */}
+            {user && !user.guest && (
+              <NotificationSystem user={user} isVIP={isVIP} />
+            )}
             {/* Desktop Auth */}
             <div className="hidden md:flex items-center gap-2">
               {!user ? (

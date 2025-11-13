@@ -39,6 +39,7 @@ export default function VIPAreaPage() {
       predictedOutcome?: string;
       ticketSnapshots: string[];
       result?: string;
+      matchDate?: string;
       createdAt: string;
       category: "tip" | "update";
     }>
@@ -57,10 +58,13 @@ export default function VIPAreaPage() {
       predictedOutcome?: string;
       ticketSnapshots: string[];
       result?: string;
+      matchDate?: string;
       createdAt: string;
       category: "tip" | "update";
     }>
   >([]);
+  const [historyPredictions, setHistoryPredictions] = useState<typeof vipPredictions>([]);
+  const [historyUpdates, setHistoryUpdates] = useState<typeof vipUpdates>([]);
   const [loadingPredictions, setLoadingPredictions] = useState(false);
   const [loadingUpdates, setLoadingUpdates] = useState(false);
 
@@ -119,8 +123,38 @@ export default function VIPAreaPage() {
         const tips = predictions.filter((p) => p.category === "tip");
         const updates = predictions.filter((p) => p.category === "update");
 
-        setVipPredictions(tips);
-        setVipUpdates(updates);
+        // Separate current from history based on match date and result
+        const now = new Date();
+        const twoHoursAgo = new Date(now.getTime() - 2 * 60 * 60 * 1000);
+
+        const currentTips = tips.filter((p) => {
+          if (!p.matchDate) return true; // No match date, show as current
+          const matchDate = new Date(p.matchDate);
+          return matchDate >= twoHoursAgo && p.result === "pending";
+        });
+
+        const historyTips = tips.filter((p) => {
+          if (!p.matchDate) return false;
+          const matchDate = new Date(p.matchDate);
+          return matchDate < twoHoursAgo || p.result !== "pending";
+        });
+
+        const currentUpdates = updates.filter((p) => {
+          if (!p.matchDate) return true;
+          const matchDate = new Date(p.matchDate);
+          return matchDate >= twoHoursAgo && p.result === "pending";
+        });
+
+        const historyUpdates = updates.filter((p) => {
+          if (!p.matchDate) return false;
+          const matchDate = new Date(p.matchDate);
+          return matchDate < twoHoursAgo || p.result !== "pending";
+        });
+
+        setVipPredictions(currentTips);
+        setVipUpdates(currentUpdates);
+        setHistoryPredictions(historyTips);
+        setHistoryUpdates(historyUpdates);
       }
     } catch (error) {
       console.error("Failed to fetch VIP predictions:", error);
@@ -357,10 +391,9 @@ export default function VIPAreaPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Premium Predictions</CardTitle>
+            <CardTitle>Current VIP Predictions</CardTitle>
             <p className="text-sm text-muted-foreground mt-2">
-              Access our exclusive VIP predictions with detailed analysis, team
-              insights, and winning ticket snapshots
+              Active VIP predictions with detailed analysis, team insights, and winning ticket snapshots
             </p>
           </CardHeader>
           <CardContent>
@@ -627,6 +660,148 @@ export default function VIPAreaPage() {
             )}
           </CardContent>
         </Card>
+
+        {/* History Section */}
+        {(historyPredictions.length > 0 || historyUpdates.length > 0) && (
+          <Card className="mt-8">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <CheckCircle className="h-5 w-5 text-green-500" />
+                Past Results & History
+              </CardTitle>
+              <p className="text-sm text-muted-foreground mt-2">
+                View our track record and past predictions with results
+              </p>
+            </CardHeader>
+            <CardContent>
+              {historyPredictions.length > 0 && (
+                <div className="mb-6">
+                  <h3 className="font-bold text-base mb-4">Past VIP Tips</h3>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    {historyPredictions.map((prediction) => (
+                      <Card key={prediction.id} className="border-2 border-border">
+                        <CardContent className="p-4">
+                          <div className="flex items-center gap-1.5 md:gap-2 mb-2 flex-wrap">
+                            <Badge className="text-[10px] md:text-xs px-1.5 md:px-2 py-0.5">
+                              {prediction.sport}
+                            </Badge>
+                            {prediction.league && (
+                              <Badge className="text-[10px] md:text-xs px-1.5 md:px-2 py-0.5">
+                                {prediction.league}
+                              </Badge>
+                            )}
+                            {prediction.result && (
+                              <Badge
+                                className={`text-[10px] md:text-xs px-1.5 md:px-2 py-0.5 ${
+                                  prediction.result === "won"
+                                    ? "bg-green-500 text-white"
+                                    : prediction.result === "lost"
+                                    ? "bg-red-500 text-white"
+                                    : "bg-gray-500 text-white"
+                                }`}
+                              >
+                                {prediction.result.toUpperCase()}
+                              </Badge>
+                            )}
+                          </div>
+                          <h3 className="font-bold text-sm md:text-base mb-3 line-clamp-2">
+                            {prediction.title}
+                          </h3>
+                          {(prediction.homeTeam || prediction.awayTeam) && (
+                            <div className="flex items-center justify-between mb-3 p-2 bg-secondary rounded">
+                              <div className="text-center flex-1">
+                                {prediction.homeTeam?.logoUrl && (
+                                  <img
+                                    src={prediction.homeTeam.logoUrl}
+                                    alt={prediction.homeTeam.name}
+                                    className="w-8 h-8 md:w-10 md:h-10 mx-auto mb-1 object-contain"
+                                  />
+                                )}
+                                <p className="text-[10px] md:text-xs font-medium line-clamp-1">
+                                  {prediction.homeTeam?.name}
+                                </p>
+                              </div>
+                              <div className="px-3 font-bold text-muted-foreground text-xs md:text-sm">
+                                VS
+                              </div>
+                              <div className="text-center flex-1">
+                                {prediction.awayTeam?.logoUrl && (
+                                  <img
+                                    src={prediction.awayTeam.logoUrl}
+                                    alt={prediction.awayTeam.name}
+                                    className="w-8 h-8 md:w-10 md:h-10 mx-auto mb-1 object-contain"
+                                  />
+                                )}
+                                <p className="text-[10px] md:text-xs font-medium line-clamp-1">
+                                  {prediction.awayTeam?.name}
+                                </p>
+                              </div>
+                            </div>
+                          )}
+                          <Link href={`/tips/${prediction.id}`}>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="w-full text-[10px] md:text-xs"
+                            >
+                              View Details
+                            </Button>
+                          </Link>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {historyUpdates.length > 0 && (
+                <div>
+                  <h3 className="font-bold text-base mb-4">Past VIP Updates</h3>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    {historyUpdates.map((update) => (
+                      <Card key={update.id} className="border-2 border-border">
+                        <CardContent className="p-4">
+                          <div className="flex items-center gap-1.5 md:gap-2 mb-2 flex-wrap">
+                            <Badge className="bg-purple-500 text-white text-[10px] md:text-xs px-1.5 md:px-2 py-0.5">
+                              UPDATE
+                            </Badge>
+                            <Badge className="text-[10px] md:text-xs px-1.5 md:px-2 py-0.5">
+                              {update.sport}
+                            </Badge>
+                            {update.result && (
+                              <Badge
+                                className={`text-[10px] md:text-xs px-1.5 md:px-2 py-0.5 ${
+                                  update.result === "won"
+                                    ? "bg-green-500 text-white"
+                                    : update.result === "lost"
+                                    ? "bg-red-500 text-white"
+                                    : "bg-gray-500 text-white"
+                                }`}
+                              >
+                                {update.result.toUpperCase()}
+                              </Badge>
+                            )}
+                          </div>
+                          <h3 className="font-bold text-sm md:text-base mb-3 line-clamp-2">
+                            {update.title}
+                          </h3>
+                          <Link href={`/tips/${update.id}`}>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="w-full text-[10px] md:text-xs"
+                            >
+                              View Details
+                            </Button>
+                          </Link>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
         <div className="mt-8 grid md:grid-cols-3 gap-6">
           <Card>
