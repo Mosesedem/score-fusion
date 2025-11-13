@@ -110,19 +110,19 @@ export default function Home() {
 
   const promoSlides = [
     {
-      img: "/images/1.png",
+      img: "/images/do.gif",
       alt: "Win with expert tips",
-      caption: "Unlock VIP Predictions",
+      caption: "",
     },
     {
-      img: "/images/1.png",
+      img: "/images/do.gif",
       alt: "Live scores update",
-      caption: "Real-time Match Updates",
+      caption: "",
     },
     {
-      img: "/images/1.png",
+      img: "/images/do.gif",
       alt: "High odds betting",
-      caption: "Boost Your Wins Today",
+      caption: "",
     },
   ];
 
@@ -355,9 +355,12 @@ export default function Home() {
       <section className="py-8 md:py-12 border-t border-border">
         <div className="container mx-auto px-4">
           <div className="max-w-5xl mx-auto text-center mb-6 md:mb-10">
-            <h2 className="text-2xl md:text-3xl font-bold mb-2">Unlock VIP Access</h2>
+            <h2 className="text-2xl md:text-3xl font-bold mb-2">
+              Unlock VIP Access
+            </h2>
             <p className="text-sm md:text-base text-muted-foreground">
-              Get exclusive correct score predictions, winning tickets, and premium insights
+              Get exclusive correct score predictions, winning tickets, and
+              premium insights
             </p>
           </div>
           <div className="grid md:grid-cols-3 gap-4 md:gap-6 max-w-5xl mx-auto">
@@ -368,7 +371,9 @@ export default function Home() {
               <CardContent className="text-center space-y-2">
                 <div className="text-3xl font-bold text-primary">$9.99</div>
                 <div className="text-xs text-muted-foreground">per week</div>
-                <div className="text-xs">VIP tips • Correct scores • Priority support</div>
+                <div className="text-xs">
+                  VIP tips • Correct scores • Priority support
+                </div>
               </CardContent>
             </Card>
             <Card className="border-primary border-2 ring-2 ring-primary/20">
@@ -378,7 +383,9 @@ export default function Home() {
               <CardContent className="text-center space-y-2">
                 <div className="text-3xl font-bold text-primary">$14.99</div>
                 <div className="text-xs text-muted-foreground">per month</div>
-                <div className="text-xs">Most Popular • Telegram group • Cancel anytime</div>
+                <div className="text-xs">
+                  Most Popular • Telegram group • Cancel anytime
+                </div>
               </CardContent>
             </Card>
             <Card className="border-2">
@@ -388,13 +395,17 @@ export default function Home() {
               <CardContent className="text-center space-y-2">
                 <div className="text-3xl font-bold text-primary">$124.99</div>
                 <div className="text-xs text-muted-foreground">per year</div>
-                <div className="text-xs">Save big • Exclusive webinars • 4 months free</div>
+                <div className="text-xs">
+                  Save big • Exclusive webinars • 4 months free
+                </div>
               </CardContent>
             </Card>
           </div>
           <div className="text-center mt-6 md:mt-8">
             <Link href="/subscriptions">
-              <Button size="lg" className="px-8">Explore Full Plans</Button>
+              <Button size="lg" className="px-8">
+                Explore Full Plans
+              </Button>
             </Link>
           </div>
         </div>
