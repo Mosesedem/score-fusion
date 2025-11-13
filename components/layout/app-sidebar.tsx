@@ -68,7 +68,8 @@ export function AppSidebar() {
         if (user && !user.guest) {
           const res = await api.get("/vip/status");
           if (!ignore) {
-            const has = res.success && (res.data as any)?.hasAccess;
+            const has =
+              res.success && (res.data as { hasAccess: boolean })?.hasAccess;
             setIsVIP(!!has);
           }
         } else if (!ignore) {
@@ -170,59 +171,73 @@ export function AppSidebar() {
           <div className="flex items-center justify-around">
             {/* Dashboard */}
             <Link href="/dashboard" onClick={closeSheet}>
-              <button className={`p-3 rounded-xl transition-all ${
-                pathname === "/dashboard" 
-                  ? "bg-primary text-primary-foreground" 
-                  : "hover:bg-accent"
-              }`}>
+              <button
+                className={`p-3 rounded-xl transition-all ${
+                  pathname === "/dashboard"
+                    ? "bg-primary text-primary-foreground"
+                    : "hover:bg-accent"
+                }`}
+              >
                 <LayoutDashboard className="h-6 w-6" />
               </button>
             </Link>
-            
+
             {/* Tips */}
             <Link href="/tips" onClick={closeSheet}>
-              <button className={`p-3 rounded-xl transition-all ${
-                pathname === "/tips" 
-                  ? "bg-primary text-primary-foreground" 
-                  : "hover:bg-accent"
-              }`}>
+              <button
+                className={`p-3 rounded-xl transition-all ${
+                  pathname === "/tips"
+                    ? "bg-primary text-primary-foreground"
+                    : "hover:bg-accent"
+                }`}
+              >
                 <TrendingUp className="h-6 w-6" />
               </button>
             </Link>
-            
+
             {/* Live Scores */}
             <Link href="/livescores" onClick={closeSheet}>
-              <button className={`p-3 rounded-xl transition-all ${
-                pathname === "/livescores" 
-                  ? "bg-primary text-primary-foreground" 
-                  : "hover:bg-accent"
-              }`}>
+              <button
+                className={`p-3 rounded-xl transition-all ${
+                  pathname === "/livescores"
+                    ? "bg-primary text-primary-foreground"
+                    : "hover:bg-accent"
+                }`}
+              >
                 <Activity className="h-6 w-6" />
               </button>
             </Link>
-            
+
             {/* VIP/Subscriptions */}
             <Link href={isVIP ? "/vip" : "/subscriptions"} onClick={closeSheet}>
-              <button className={`p-3 rounded-xl transition-all relative ${
-                pathname === "/subscriptions" || pathname === "/vip"
-                  ? "bg-primary text-primary-foreground" 
-                  : "hover:bg-accent"
-              }`}>
+              <button
+                className={`p-3 rounded-xl transition-all relative ${
+                  pathname === "/subscriptions" || pathname === "/vip"
+                    ? "bg-primary text-primary-foreground"
+                    : "hover:bg-accent"
+                }`}
+              >
                 <CreditCard className="h-6 w-6" />
                 {!user?.guest && !isVIP && (
                   <div className="absolute -top-1 -right-1 h-3 w-3 bg-amber-500 rounded-full animate-pulse" />
                 )}
               </button>
             </Link>
-            
+
             {/* Menu Button */}
             <button
               onClick={toggleSheet}
               className={`p-3 rounded-xl transition-all ${
-                isOpen ? "bg-primary text-primary-foreground" : "hover:bg-accent"
+                isOpen
+                  ? "bg-primary text-primary-foreground"
+                  : "hover:bg-accent"
               }`}
             >
-              {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+              {isOpen ? (
+                <X className="h-6 w-6" />
+              ) : (
+                <Menu className="h-6 w-6" />
+              )}
             </button>
           </div>
         </div>

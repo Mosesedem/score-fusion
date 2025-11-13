@@ -157,6 +157,7 @@ export async function GET(request: NextRequest) {
           matchDate: true,
           homeTeamId: true,
           awayTeamId: true,
+          category: true,
           homeTeam: {
             select: { id: true, name: true, shortName: true, logoUrl: true },
           },
@@ -168,7 +169,6 @@ export async function GET(request: NextRequest) {
           ticketSnapshots: true,
           publishAt: true,
           isVIP: true,
-          category: true,
           featured: true,
           authorName: true,
           status: true,
@@ -238,4 +238,3 @@ export async function GET(request: NextRequest) {
     );
   }
 }
-

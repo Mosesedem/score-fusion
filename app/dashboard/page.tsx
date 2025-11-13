@@ -1,3 +1,4 @@
+/* eslint-disable react/no-unescaped-entities */
 "use client";
 
 import { useApiClient } from "@/lib/api-client";
@@ -370,7 +371,7 @@ export default function DashboardPage() {
                           )}
                           {pred.odds && (
                             <div className="px-2 py-1 bg-primary/10 text-primary rounded font-bold text-xs sm:text-sm">
-                              {pred.odds}
+                              Odds: {pred.odds}
                             </div>
                           )}
                           {pred.isVIP && (
