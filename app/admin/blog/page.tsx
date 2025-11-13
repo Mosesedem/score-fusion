@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
+import dynamic from "next/dynamic";
 import { useAuth } from "@/contexts/auth-context";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,6 +19,14 @@ import {
   Upload,
   X,
 } from "lucide-react";
+
+// Dynamically import MDEditor to avoid SSR issues
+const MDEditor = dynamic(() => import("@uiw/react-md-editor"), {
+  ssr: false,
+  loading: () => (
+    <div className="min-h-[400px] bg-muted rounded-md animate-pulse" />
+  ),
+});
 
 interface BlogPost {
   id: string;
@@ -57,6 +66,9 @@ export default function AdminBlogPage() {
   // Image upload states
   const [uploadingHeader, setUploadingHeader] = useState(false);
   const [uploadingImages, setUploadingImages] = useState(false);
+  const [editorPreview, setEditorPreview] = useState<
+    "edit" | "live" | "preview"
+  >("edit");
 
   // Search and pagination states
   const [searchQuery, setSearchQuery] = useState("");
@@ -427,44 +439,110 @@ export default function AdminBlogPage() {
 
                 <div>
                   <Label htmlFor="excerpt">Excerpt *</Label>
-                  <textarea
-                    id="excerpt"
-                    value={formData.excerpt}
-                    onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
-                      setFormData({ ...formData, excerpt: e.target.value })
-                    }
-                    placeholder="Short description for preview"
-                    rows={3}
-                    className={`w-full px-3 py-2 bg-background border-2 border-border text-foreground rounded-md ${
-                      errors.excerpt ? "border-destructive" : ""
-                    }`}
-                  />
-                  {errors.excerpt && (
-                    <p className="text-xs text-destructive mt-1">
-                      {errors.excerpt}
-                    </p>
-                  )}
+                  <div className="mt-2">
+                    <textarea
+                      id="excerpt"
+                      value={formData.excerpt}
+                      onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                        setFormData({ ...formData, excerpt: e.target.value })
+                      }
+                      placeholder="Short description for preview (150-200 characters recommended)"
+                      rows={4}
+                      maxLength={300}
+                      className={`w-full px-3 py-2 bg-background border-2 border-border text-foreground rounded-md resize-none ${
+                        errors.excerpt ? "border-destructive" : ""
+                      }`}
+                    />
+                    <div className="flex justify-between items-center mt-1">
+                      {errors.excerpt && (
+                        <p className="text-xs text-destructive">
+                          {errors.excerpt}
+                        </p>
+                      )}
+                      <p className="text-xs text-muted-foreground ml-auto">
+                        {formData.excerpt.length}/300 characters
+                      </p>
+                    </div>
+                  </div>
                 </div>
 
                 <div>
-                  <Label htmlFor="content">Content *</Label>
-                  <textarea
-                    id="content"
-                    value={formData.content}
-                    onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
-                      setFormData({ ...formData, content: e.target.value })
-                    }
-                    placeholder="Full blog post content (supports markdown)"
-                    rows={15}
-                    className={`w-full px-3 py-2 bg-background border-2 border-border text-foreground rounded-md ${
-                      errors.content ? "border-destructive" : ""
-                    }`}
-                  />
-                  {errors.content && (
-                    <p className="text-xs text-destructive mt-1">
-                      {errors.content}
-                    </p>
-                  )}
+                  <div className="flex items-center justify-between mb-2">
+                    <Label htmlFor="content">Content *</Label>
+                    <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        variant={
+                          editorPreview === "edit" ? "default" : "outline"
+                        }
+                        size="sm"
+                        onClick={() => setEditorPreview("edit")}
+                      >
+                        Edit
+                      </Button>
+                      <Button
+                        type="button"
+                        variant={
+                          editorPreview === "live" ? "default" : "outline"
+                        }
+                        size="sm"
+                        onClick={() => setEditorPreview("live")}
+                      >
+                        Live Preview
+                      </Button>
+                      <Button
+                        type="button"
+                        variant={
+                          editorPreview === "preview" ? "default" : "outline"
+                        }
+                        size="sm"
+                        onClick={() => setEditorPreview("preview")}
+                      >
+                        Preview Only
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="mt-2">
+                    <MDEditor
+                      value={formData.content}
+                      onChange={(value) =>
+                        setFormData({ ...formData, content: value || "" })
+                      }
+                      preview={editorPreview}
+                      hideToolbar={false}
+                      visibleDragbar={false}
+                      data-color-mode="light"
+                      textareaProps={{
+                        placeholder:
+                          "Write your blog post content here... (supports markdown)",
+                      }}
+                      className={`${
+                        errors.content
+                          ? "border border-destructive rounded-md"
+                          : ""
+                      }`}
+                      height={400}
+                    />
+                    {errors.content && (
+                      <p className="text-xs text-destructive mt-1">
+                        {errors.content}
+                      </p>
+                    )}
+                    <div className="mt-2 text-xs text-muted-foreground">
+                      <p className="mb-1">
+                        <strong>Markdown shortcuts:</strong> Use the toolbar
+                        above or type directly:
+                      </p>
+                      <div className="grid grid-cols-2 gap-2 text-xs">
+                        <span>**bold**</span>
+                        <span>*italic*</span>
+                        <span>[link](url)</span>
+                        <span>![image](url)</span>
+                        <span># Heading</span>
+                        <span>- List item</span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
                 <div className="grid md:grid-cols-2 gap-4">

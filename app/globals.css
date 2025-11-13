@@ -179,3 +179,97 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Markdown Editor Styles */
+.w-md-editor {
+  @apply border-2 border-border rounded-md;
+  background-color: hsl(var(--background)) !important;
+}
+
+.w-md-editor-text-pre,
+.w-md-editor-text-pre > code,
+.w-md-editor-text-pre > .w-md-editor-text {
+  color: hsl(var(--foreground)) !important;
+  background-color: hsl(var(--background)) !important;
+}
+
+.w-md-editor-text-pre {
+  @apply font-mono;
+}
+
+.w-md-editor-bar {
+  background-color: hsl(var(--muted)) !important;
+  border-bottom: 1px solid hsl(var(--border)) !important;
+}
+
+.w-md-editor-bar svg {
+  fill: hsl(var(--foreground)) !important;
+}
+
+.w-md-editor-bar > button:hover {
+  background-color: hsl(var(--accent)) !important;
+}
+
+.w-md-editor-bar > button.active {
+  background-color: hsl(var(--primary)) !important;
+  color: hsl(var(--primary-foreground)) !important;
+}
+
+.w-md-editor-text {
+  background-color: hsl(var(--background)) !important;
+  color: hsl(var(--foreground)) !important;
+}
+
+.w-md-editor-text:focus {
+  outline: none !important;
+}
+
+.w-md-editor-preview {
+  background-color: hsl(var(--background)) !important;
+  color: hsl(var(--foreground)) !important;
+}
+
+.w-md-editor-preview h1,
+.w-md-editor-preview h2,
+.w-md-editor-preview h3,
+.w-md-editor-preview h4,
+.w-md-editor-preview h5,
+.w-md-editor-preview h6 {
+  color: hsl(var(--foreground)) !important;
+}
+
+.w-md-editor-preview p {
+  color: hsl(var(--foreground)) !important;
+}
+
+.w-md-editor-preview code {
+  background-color: hsl(var(--muted)) !important;
+  color: hsl(var(--foreground)) !important;
+}
+
+.w-md-editor-preview pre {
+  background-color: hsl(var(--muted)) !important;
+  border: 1px solid hsl(var(--border)) !important;
+}
+
+.w-md-editor-preview blockquote {
+  border-left-color: hsl(var(--primary)) !important;
+  color: hsl(var(--muted-foreground)) !important;
+}
+
+.w-md-editor-preview a {
+  color: hsl(var(--primary)) !important;
+}
+
+.w-md-editor-preview table {
+  border-color: hsl(var(--border)) !important;
+}
+
+.w-md-editor-preview th,
+.w-md-editor-preview td {
+  border-color: hsl(var(--border)) !important;
+}
+
+.w-md-editor-preview img {
+  @apply rounded-lg shadow-md;
+}
