@@ -2,19 +2,56 @@
 /* @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"); */
 
 :root {
-  --background: #000000;
-  --foreground: #ffffff;
-  --primary: #ca8a04;
-  --primary-foreground: #000000;
-  --secondary: #1e1e1e;
-  --secondary-foreground: #ffffff;
-  --accent: #262626;
-  --muted: #525252;
-  --muted-foreground: #a3a3a3;
-  --border: #262626;
-  --card: #1e1e1e;
-  --card-foreground: #ffffff;
-  --destructive: #dc2626;
+  /* Light theme (default) */
+  --background: #ffffff;
+  --foreground: #1a1a1a; /* Darker for better readability */
+  --primary: #f59e0b; /* Orange for primary */
+  --primary-foreground: #ffffff;
+  --secondary: #e5e7eb; /* Lighter gray for better contrast */
+  --secondary-foreground: #2d3748; /* Darker for readability */
+  --accent: #edf2f7; /* Softer light gray */
+  --muted: #718096; /* Slightly darker muted text */
+  --muted-foreground: #4a5568; /* Darker for improved readability */
+  --border: #d1d5db; /* More visible border */
+  --card: #ffffff;
+  --card-foreground: #1a1a1a; /* Darker for readability */
+  --destructive: #e53e3e; /* Softer red for destructive */
+  --destructive-foreground: #ffffff;
+}
+
+[data-theme="light"] {
+  /* Explicit light */
+  --background: #ffffff;
+  --foreground: #1a1a1a; /* Darker for better readability */
+  --primary: #f59e0b; /* Orange for primary */
+  --primary-foreground: #ffffff;
+  --secondary: #e5e7eb; /* Lighter gray for better contrast */
+  --secondary-foreground: #2d3748; /* Darker for readability */
+  --accent: #edf2f7; /* Softer light gray */
+  --muted: #718096; /* Slightly darker muted text */
+  --muted-foreground: #4a5568; /* Darker for improved readability */
+  --border: #d1d5db; /* More visible border */
+  --card: #ffffff;
+  --card-foreground: #1a1a1a; /* Darker for readability */
+  --destructive: #e53e3e; /* Softer red for destructive */
+  --destructive-foreground: #ffffff;
+}
+
+[data-theme="dark"] {
+  /* Dark theme */
+  --background: #121212;
+  --foreground: #f1f5f9; /* Lighter for better readability */
+  --primary: #f59e0b; /* Orange for primary */
+  --primary-foreground: #ffffff;
+  --secondary: #2d3748; /* Darker gray for contrast */
+  --secondary-foreground: #e2e8f0; /* Lighter for readability */
+  --accent: #4a5568; /* Stronger accent for visibility */
+  --muted: #68758a; /* Lighter muted for contrast */
+  --muted-foreground: #cbd5e1; /* Lighter for improved readability */
+  --border: #4a5568; /* More visible border */
+  --card: #1f2937;
+  --card-foreground: #f1f5f9; /* Lighter for readability */
+  --destructive: #f87171; /* Lighter red for destructive */
   --destructive-foreground: #ffffff;
 }
 

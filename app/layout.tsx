@@ -6,6 +6,7 @@ import { AppNavbar } from "@/components/layout/app-navbar";
 import { Toaster } from "@/components/ui/toaster";
 import AuthShell from "@/components/layout/auth-shell";
 import { FollowUsFloatingButton } from "@/components/follow-us-dialog";
+import { ThemeProvider } from "@/contexts/theme-context";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -51,17 +52,17 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        <AuthProvider>
-          <AppNavbar />
-          <FollowUsFloatingButton />
-          <AuthShell>
-            <main className="min-h-screen pt-16">{children}</main>
-          </AuthShell>
-          <Toaster />
-        </AuthProvider>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+        <ThemeProvider>
+          <AuthProvider>
+            <AppNavbar />
+            <FollowUsFloatingButton />
+            <AuthShell>
+              <main className="min-h-screen pt-16">{children}</main>
+            </AuthShell>
+            <Toaster />
+          </AuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

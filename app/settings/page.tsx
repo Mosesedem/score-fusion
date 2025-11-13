@@ -7,10 +7,12 @@ import { Button } from "@/components/ui/button";
 import { Settings as SettingsIcon, Bell, Moon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { useTheme } from "@/contexts/theme-context";
 
 export default function SettingsPage() {
   const { user, isLoading } = useAuth();
   const router = useRouter();
+  const { theme, toggleTheme } = useTheme();
 
   useEffect(() => {
     if (!isLoading && (!user || user.guest)) {
@@ -87,9 +89,14 @@ export default function SettingsPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-muted-foreground">
-                  Dark mode is currently enabled
-                </p>
+                <div className="flex items-center justify-between gap-4">
+                  <p className="text-muted-foreground">
+                    Current theme: <span className="capitalize">{theme}</span>
+                  </p>
+                  <Button variant="outline" size="sm" onClick={toggleTheme}>
+                    Switch to {theme === "dark" ? "Light" : "Dark"} Mode
+                  </Button>
+                </div>
               </CardContent>
             </Card>
 

@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { User, LogOut, Shield, BarChart3 } from "lucide-react";
 import { Icon } from "@/components/logo";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export function AdminNavbar() {
   const { user, logout } = useAuth();
@@ -45,6 +46,7 @@ export function AdminNavbar() {
 
           {/* Right side - User Menu */}
           <div className="flex items-center gap-2">
+            <ThemeToggle />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="sm" className="gap-2">

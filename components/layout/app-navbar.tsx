@@ -29,6 +29,7 @@ import {
 import { Icon } from "@/components/logo";
 import { NotificationSystem } from "@/components/notification-system";
 import { useApiClient } from "@/lib/api-client";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export function AppNavbar() {
   const { user, logout } = useAuth();
@@ -131,6 +132,7 @@ export function AppNavbar() {
             {user && !user.guest && (
               <NotificationSystem user={user} isVIP={isVIP} />
             )}
+            <ThemeToggle />
             {/* Desktop Auth */}
             <div className="hidden md:flex items-center gap-2">
               {!user ? (
