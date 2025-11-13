@@ -25,6 +25,7 @@ import {
   HelpCircle,
   Mail,
   Activity,
+  BookOpen,
 } from "lucide-react";
 import { Icon } from "@/components/logo";
 import { NotificationSystem } from "@/components/notification-system";
@@ -45,7 +46,8 @@ export function AppNavbar() {
         if (user && !user.guest) {
           const res = await api.get("/vip/status");
           if (!ignore) {
-            const has = res.success && (res.data as any)?.hasAccess;
+            const has =
+              res.success && (res.data as { hasAccess: boolean })?.hasAccess;
             setIsVIP(!!has);
           }
         } else if (!ignore) {
@@ -75,6 +77,7 @@ export function AppNavbar() {
     { href: "/", label: "Home", icon: Home },
     { href: "/tips", label: "Tips", icon: TrendingUp },
     { href: "/livescores", label: "Live Scores", icon: Activity },
+    { href: "/blog", label: "Blog", icon: BookOpen },
     { href: "/analytics", label: "Analytics", icon: BarChart3 },
     { href: "/help", label: "Help", icon: HelpCircle },
     { href: "/contact", label: "Contact", icon: Mail },

@@ -660,3 +660,33 @@ model VerificationToken {
   @@unique([identifier, token])
   @@map("verification_tokens")
 }
+
+// =============================
+// Blog System Models
+// =============================
+
+model Blog {
+  id          String     @id @default(uuid())
+  title       String
+  slug        String     @unique
+  content     String     @db.Text // markdown content
+  excerpt     String? // short description for previews
+  headerImage String? // URL for header/featured image
+  images      String[]   @default([]) // Array of image URLs used in content
+  authorId    String?
+  authorName  String?
+  publishedAt DateTime?
+  status      BlogStatus @default(draft) // draft, published, archived
+  tags        String[]
+  viewCount   Int        @default(0)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@map("blogs")
+}
+
+enum BlogStatus {
+  draft
+  published
+  archived
+}

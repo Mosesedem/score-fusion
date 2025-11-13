@@ -28,6 +28,7 @@ const adminItems = [
   { href: "/admin/subscriptions", label: "Subscriptions", icon: CreditCard },
   { href: "/admin/tips", label: "Tips Management", icon: TrendingUp },
   { href: "/admin/predictions", label: "Predictions", icon: Trophy },
+  { href: "/admin/blog", label: "Blog", icon: BookOpen },
   { href: "/admin/teams", label: "Teams", icon: Shield },
   { href: "/admin/vip-tokens", label: "VIP Tokens", icon: Crown },
   { href: "/admin/feature-flags", label: "Feature Flags", icon: Flag },
