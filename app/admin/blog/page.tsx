@@ -209,7 +209,10 @@ export default function AdminBlogPage() {
   const uploadImage = async (file: File): Promise<string | null> => {
     const formDataUpload = new FormData();
     formDataUpload.append("file", file);
-    formDataUpload.append("upload_preset", "blog_images"); // You'll need to configure this in Cloudinary
+    formDataUpload.append(
+      "upload_preset",
+      process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || "scorefusion"
+    );
 
     try {
       const res = await fetch(
