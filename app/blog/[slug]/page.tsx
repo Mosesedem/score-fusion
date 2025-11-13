@@ -256,7 +256,7 @@ export default function BlogPostPage() {
                       if (!src) return null;
                       return (
                         <Image
-                          src={src}
+                          src={src.toString()}
                           alt={alt || ""}
                           width={800}
                           height={400}

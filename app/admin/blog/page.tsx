@@ -8,7 +8,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Edit, Trash2, Eye, Calendar, User, Upload, X } from "lucide-react";
+import {
+  Plus,
+  Edit,
+  Trash2,
+  Eye,
+  Calendar,
+  User,
+  Upload,
+  X,
+} from "lucide-react";
 
 interface BlogPost {
   id: string;
@@ -224,7 +233,9 @@ export default function AdminBlogPage() {
     }
   };
 
-  const handleHeaderImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleHeaderImageUpload = async (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
