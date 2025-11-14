@@ -168,7 +168,7 @@ export function AppSidebar() {
 
       {/* Mobile - App-Style Control Bar */}
       <div className="lg:hidden fixed bottom-4 left-4 right-4 z-50">
-        <div className="bg-background/95 backdrop-blur border border-border rounded-2xl shadow-2xl p-2">
+        <div className="bg-background/95 backdrop-blur border border-primary rounded-2xl shadow-2xl p-2">
           <div className="flex items-center justify-around">
             {/* Dashboard */}
             <Link href="/dashboard" onClick={closeSheet}>
