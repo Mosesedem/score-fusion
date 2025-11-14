@@ -8,8 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, User, Eye, Tag, ArrowLeft, Share2 } from "lucide-react";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
+import { renderCustomMarkdown } from "@/lib/markdown-renderer";
 
 interface BlogPost {
   id: string;
@@ -191,83 +190,7 @@ export default function BlogPostPage() {
           <Card>
             <CardContent className="p-8">
               <div className="prose prose-lg max-w-none dark:prose-invert">
-                <ReactMarkdown
-                  remarkPlugins={[remarkGfm]}
-                  components={{
-                    h1: ({ children }) => (
-                      <h1 className="text-3xl font-bold mb-4 text-foreground">
-                        {children}
-                      </h1>
-                    ),
-                    h2: ({ children }) => (
-                      <h2 className="text-2xl font-bold mb-3 text-foreground">
-                        {children}
-                      </h2>
-                    ),
-                    h3: ({ children }) => (
-                      <h3 className="text-xl font-bold mb-2 text-foreground">
-                        {children}
-                      </h3>
-                    ),
-                    p: ({ children }) => (
-                      <p className="mb-4 text-foreground leading-relaxed">
-                        {children}
-                      </p>
-                    ),
-                    ul: ({ children }) => (
-                      <ul className="mb-4 ml-6 list-disc text-foreground">
-                        {children}
-                      </ul>
-                    ),
-                    ol: ({ children }) => (
-                      <ol className="mb-4 ml-6 list-decimal text-foreground">
-                        {children}
-                      </ol>
-                    ),
-                    li: ({ children }) => (
-                      <li className="mb-1 text-foreground">{children}</li>
-                    ),
-                    blockquote: ({ children }) => (
-                      <blockquote className="border-l-4 border-primary pl-4 italic text-muted-foreground my-4">
-                        {children}
-                      </blockquote>
-                    ),
-                    code: ({ children }) => (
-                      <code className="bg-muted px-2 py-1 rounded text-sm font-mono">
-                        {children}
-                      </code>
-                    ),
-                    pre: ({ children }) => (
-                      <pre className="bg-muted p-4 rounded-lg overflow-x-auto my-4">
-                        {children}
-                      </pre>
-                    ),
-                    a: ({ href, children }) => (
-                      <a
-                        href={href}
-                        className="text-primary hover:underline"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        {children}
-                      </a>
-                    ),
-                    img: ({ src, alt }) => {
-                      if (!src) return null;
-                      return (
-                        <Image
-                          src={src.toString()}
-                          alt={alt || ""}
-                          width={800}
-                          height={400}
-                          className="w-full h-auto rounded-lg my-4"
-                        />
-                      );
-                    },
-                  }}
-                >
-                  {blog.content}
-                </ReactMarkdown>
+                {renderCustomMarkdown(blog.content)}
               </div>
             </CardContent>
           </Card>

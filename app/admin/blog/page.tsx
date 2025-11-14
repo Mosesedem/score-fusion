@@ -2,31 +2,14 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
-import dynamic from "next/dynamic";
 import { useAuth } from "@/contexts/auth-context";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import {
-  Plus,
-  Edit,
-  Trash2,
-  Eye,
-  Calendar,
-  User,
-  Upload,
-  X,
-} from "lucide-react";
-
-// Dynamically import MDEditor to avoid SSR issues
-const MDEditor = dynamic(() => import("@uiw/react-md-editor"), {
-  ssr: false,
-  loading: () => (
-    <div className="min-h-[400px] bg-muted rounded-md animate-pulse" />
-  ),
-});
+import { CustomMarkdownEditor } from "@/components/custom-markdown-editor";
+import { Plus, Edit, Trash2, Eye, Calendar, User, X } from "lucide-react";
 
 interface BlogPost {
   id: string;
@@ -66,9 +49,6 @@ export default function AdminBlogPage() {
   // Image upload states
   const [uploadingHeader, setUploadingHeader] = useState(false);
   const [uploadingImages, setUploadingImages] = useState(false);
-  const [editorPreview, setEditorPreview] = useState<
-    "edit" | "live" | "preview"
-  >("edit");
 
   // Search and pagination states
   const [searchQuery, setSearchQuery] = useState("");
@@ -335,15 +315,11 @@ export default function AdminBlogPage() {
       <div className="container mx-auto px-4 py-8">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold flex justify-center items-center">
-              Blog Management
-            </h1>
+            <h1 className="text-3xl font-bold">Blog Management</h1>
             <p className="text-muted-foreground mt-1">
               Create and manage blog posts
             </p>
           </div>
-        </div>
-        <div className="flex justify-end p-4">
           <Button onClick={() => setShowForm(!showForm)}>
             <Plus className="h-4 w-4 mr-2" />
             New Blog Post
@@ -467,81 +443,21 @@ export default function AdminBlogPage() {
                 </div>
 
                 <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <Label htmlFor="content">Content *</Label>
-                    <div className="flex gap-2">
-                      <Button
-                        type="button"
-                        variant={
-                          editorPreview === "edit" ? "default" : "outline"
-                        }
-                        size="sm"
-                        onClick={() => setEditorPreview("edit")}
-                      >
-                        Edit
-                      </Button>
-                      <Button
-                        type="button"
-                        variant={
-                          editorPreview === "live" ? "default" : "outline"
-                        }
-                        size="sm"
-                        onClick={() => setEditorPreview("live")}
-                      >
-                        Live Preview
-                      </Button>
-                      <Button
-                        type="button"
-                        variant={
-                          editorPreview === "preview" ? "default" : "outline"
-                        }
-                        size="sm"
-                        onClick={() => setEditorPreview("preview")}
-                      >
-                        Preview Only
-                      </Button>
-                    </div>
-                  </div>
+                  <Label htmlFor="content">Content *</Label>
                   <div className="mt-2">
-                    <MDEditor
+                    <CustomMarkdownEditor
                       value={formData.content}
                       onChange={(value) =>
-                        setFormData({ ...formData, content: value || "" })
+                        setFormData({ ...formData, content: value })
                       }
-                      preview={editorPreview}
-                      hideToolbar={false}
-                      visibleDragbar={false}
-                      data-color-mode="light"
-                      textareaProps={{
-                        placeholder:
-                          "Write your blog post content here... (supports markdown)",
-                      }}
-                      className={`${
-                        errors.content
-                          ? "border border-destructive rounded-md"
-                          : ""
-                      }`}
-                      height={400}
+                      placeholder="Write your blog post content here. Use the toolbar for formatting or type directly."
+                      error={!!errors.content}
                     />
                     {errors.content && (
                       <p className="text-xs text-destructive mt-1">
                         {errors.content}
                       </p>
                     )}
-                    <div className="mt-2 text-xs text-muted-foreground">
-                      <p className="mb-1">
-                        <strong>Markdown shortcuts:</strong> Use the toolbar
-                        above or type directly:
-                      </p>
-                      <div className="grid grid-cols-2 gap-2 text-xs">
-                        <span>**bold**</span>
-                        <span>*italic*</span>
-                        <span>[link](url)</span>
-                        <span>![image](url)</span>
-                        <span># Heading</span>
-                        <span>- List item</span>
-                      </div>
-                    </div>
                   </div>
                 </div>
 

@@ -273,3 +273,118 @@
 .w-md-editor-preview img {
   @apply rounded-lg shadow-md;
 }
+
+/* MDX Editor Styles - Professional markdown editor */
+.mdxeditor {
+  @apply border-2 border-border rounded-md;
+  background-color: hsl(var(--background)) !important;
+}
+
+.mdxeditor-toolbar {
+  background-color: hsl(var(--muted)) !important;
+  border-bottom: 1px solid hsl(var(--border)) !important;
+  @apply border-b;
+}
+
+.mdxeditor-toolbar button {
+  color: hsl(var(--foreground)) !important;
+  background-color: transparent !important;
+}
+
+.mdxeditor-toolbar button:hover {
+  background-color: hsl(var(--accent)) !important;
+}
+
+.mdxeditor-toolbar button:active,
+.mdxeditor-toolbar button[data-active="true"] {
+  background-color: hsl(var(--primary)) !important;
+  color: hsl(var(--primary-foreground)) !important;
+}
+
+.mdxeditor-root-contenteditable {
+  background-color: hsl(var(--background)) !important;
+  color: hsl(var(--foreground)) !important;
+  min-height: 400px;
+}
+
+.mdxeditor-root-contenteditable:focus {
+  outline: none !important;
+}
+
+.mdxeditor-popup {
+  background-color: hsl(var(--popover)) !important;
+  border: 1px solid hsl(var(--border)) !important;
+  color: hsl(var(--popover-foreground)) !important;
+}
+
+.mdxeditor-popup input,
+.mdxeditor-popup textarea {
+  background-color: hsl(var(--background)) !important;
+  color: hsl(var(--foreground)) !important;
+  border: 1px solid hsl(var(--border)) !important;
+}
+
+.mdxeditor-popup button {
+  background-color: hsl(var(--primary)) !important;
+  color: hsl(var(--primary-foreground)) !important;
+}
+
+.mdxeditor-popup button:hover {
+  background-color: hsl(var(--primary)) !important;
+  opacity: 0.9;
+}
+
+/* Code blocks in MDX editor */
+.mdxeditor-code-block {
+  background-color: hsl(var(--muted)) !important;
+  border: 1px solid hsl(var(--border)) !important;
+  color: hsl(var(--foreground)) !important;
+}
+
+.mdxeditor-code-block pre {
+  background-color: hsl(var(--muted)) !important;
+  color: hsl(var(--foreground)) !important;
+}
+
+/* Tables in MDX editor */
+.mdxeditor-table {
+  border-color: hsl(var(--border)) !important;
+}
+
+.mdxeditor-table th,
+.mdxeditor-table td {
+  border-color: hsl(var(--border)) !important;
+  color: hsl(var(--foreground)) !important;
+}
+
+/* Links in MDX editor */
+.mdxeditor-link {
+  color: hsl(var(--primary)) !important;
+}
+
+/* Blockquotes in MDX editor */
+.mdxeditor-quote {
+  border-left-color: hsl(var(--primary)) !important;
+  color: hsl(var(--muted-foreground)) !important;
+}
+
+/* Headings in MDX editor */
+.mdxeditor-h1,
+.mdxeditor-h2,
+.mdxeditor-h3,
+.mdxeditor-h4,
+.mdxeditor-h5,
+.mdxeditor-h6 {
+  color: hsl(var(--foreground)) !important;
+}
+
+/* Lists in MDX editor */
+.mdxeditor-ul,
+.mdxeditor-ol {
+  color: hsl(var(--foreground)) !important;
+}
+
+/* Images in MDX editor */
+.mdxeditor-image {
+  @apply rounded-lg shadow-md;
+}
