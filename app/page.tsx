@@ -12,7 +12,6 @@ import {
   TrendingUp,
   Users,
   Activity,
-  Crown,
   Target,
   CheckCircle,
   Star,
@@ -92,6 +91,18 @@ interface Review {
   date: string;
 }
 
+interface BlogPost {
+  id: string;
+  title: string;
+  slug: string;
+  excerpt: string;
+  authorName: string;
+  publishedAt: string;
+  tags: string[];
+  viewCount: number;
+  headerImage?: string;
+}
+
 export default function Home() {
   const router = useRouter();
   const { user, isLoading } = useAuth();
@@ -100,6 +111,7 @@ export default function Home() {
   const [featuredTips, setFeaturedTips] = useState<Tip[]>([]);
   const [predictions, setPredictions] = useState<Tip[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
+  const [blogs, setBlogs] = useState<BlogPost[]>([]);
   const [stats, setStats] = useState({
     activeUsers: 0,
     todayWins: 0,
@@ -158,18 +170,15 @@ export default function Home() {
         }
 
         // Fetch predictions (free tips)
-        const predictionsResponse = await api.get<PredictionsApiResponse>(
-          "/predictions"
-        );
-        if (
-          predictionsResponse.success &&
-          predictionsResponse.data?.data?.predictions
-        ) {
-          const freePredictions =
-            predictionsResponse.data.data.predictions.filter(
+        const predictionsResponse = await fetch("/api/predictions");
+        if (predictionsResponse.ok) {
+          const predictionsData = await predictionsResponse.json();
+          if (predictionsData.success && predictionsData.data?.predictions) {
+            const freePredictions = predictionsData.data.predictions.filter(
               (tip: Tip) => !tip.isVIP
             );
-          setPredictions(freePredictions.slice(0, 5));
+            setPredictions(freePredictions.slice(0, 5));
+          }
         }
 
         // Fetch reviews (mock)
@@ -196,6 +205,15 @@ export default function Home() {
             date: "Nov 5, 2025",
           },
         ]);
+
+        // Fetch recent blog posts
+        const blogsResponse = await fetch("/api/blog");
+        if (blogsResponse.ok) {
+          const blogsData = await blogsResponse.json();
+          if (blogsData.success && blogsData.data?.blogs) {
+            setBlogs(blogsData.data.blogs);
+          }
+        }
 
         // Fetch platform stats (you can create a dedicated endpoint for this)
         // For now, we'll use mock data but structured for real data
@@ -234,7 +252,7 @@ export default function Home() {
       clearInterval(interval);
       clearInterval(slideInterval);
     };
-  }, []);
+  }, [api, promoSlides.length]);
 
   // Show nothing while checking auth to prevent flash
   if (isLoading) {
@@ -410,87 +428,73 @@ export default function Home() {
           </div>
         </div>
       </section>
-
       {/* Live Scores + Featured Tips */}
       <section className="py-8 md:py-12">
         <div className="container mx-auto px-4">
-          <div className="grid lg:grid-cols-3 gap-6 md:gap-8">
-            {/* Live Scores */}
-            <div className="lg:col-span-2">
-              <div className="flex items-center justify-between mb-4 md:mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
+            {/* Today's Predictions Table */}
+            <div className="border-t border-border bg-secondary rounded-lg">
+              <div className="flex items-center justify-between mb-4 md:mb-6 p-4 md:p-6">
                 <h2 className="text-xl md:text-2xl font-bold flex items-center gap-2">
-                  <Activity className="h-5 w-5 md:h-6 md:w-6 text-primary" />
-                  Live Matches
+                  <Target className="h-5 w-5 md:h-6 md:w-6 text-primary" />
+                  Today&apos;s Predictions
                 </h2>
-                <div className="flex items-center gap-2">
-                  <div className="h-2 w-2 bg-primary animate-pulse" />
-                  <span className="text-xs md:text-sm text-muted-foreground">
-                    Live
-                  </span>
-                </div>
+                <Link href="/tips">
+                  <Button variant="outline" size="sm">
+                    View All
+                  </Button>
+                </Link>
               </div>
-
-              <div className="space-y-3 md:space-y-4">
-                {loading ? (
-                  <div className="text-center py-8 text-muted-foreground text-sm md:text-base">
-                    Loading live matches...
-                  </div>
-                ) : liveMatches.length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground text-sm md:text-base">
-                    No live matches at the moment
-                  </div>
-                ) : (
-                  liveMatches.map((match) => (
-                    <Card key={match.id}>
-                      <CardContent className="p-3 md:p-4">
-                        <div className="flex items-center justify-between">
-                          <div className="flex-1 min-w-0">
-                            <div className="flex justify-between items-center mb-2">
-                              <span className="font-medium text-sm md:text-base truncate pr-2">
-                                {typeof match.homeTeam === "object"
-                                  ? match.homeTeam.name
-                                  : match.homeTeam}
-                              </span>
-                              <span className="text-xl md:text-2xl font-bold shrink-0">
-                                {match.homeTeamScore ?? 0}
-                              </span>
+              <Card className="border-0">
+                <CardContent className="p-0 overflow-x-auto">
+                  <table className="w-full min-w-[600px]">
+                    <thead>
+                      <tr className="border-b border-border">
+                        <th className="text-left p-4 font-medium">Time</th>
+                        <th className="text-left p-4 font-medium">Match</th>
+                        <th className="text-left p-4 font-medium">
+                          Prediction
+                        </th>
+                        <th className="text-left p-4 font-medium">Odds</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {predictions.map((pred) => (
+                        <tr
+                          key={pred.id}
+                          className="border-b border-border hover:bg-accent/50"
+                        >
+                          <td className="p-4 text-sm">
+                            {pred.matchDate
+                              ? new Date(pred.matchDate).toLocaleTimeString(
+                                  [],
+                                  {
+                                    hour: "2-digit",
+                                    minute: "2-digit",
+                                  }
+                                )
+                              : new Date(pred.createdAt).toLocaleDateString()}
+                          </td>
+                          <td className="p-4 text-sm">
+                            <div className="font-medium">
+                              {pred.homeTeam?.name || "TBD"}
                             </div>
-                            <div className="flex justify-between items-center">
-                              <span className="font-medium text-sm md:text-base truncate pr-2">
-                                {typeof match.awayTeam === "object"
-                                  ? match.awayTeam.name
-                                  : match.awayTeam}
-                              </span>
-                              <span className="text-xl md:text-2xl font-bold shrink-0">
-                                {match.awayTeamScore ?? 0}
-                              </span>
+                            <div className="text-muted-foreground">
+                              vs {pred.awayTeam?.name || "TBD"}
                             </div>
-                          </div>
-                          <div className="ml-3 md:ml-6 text-center shrink-0">
-                            <div className="text-xs bg-primary text-primary-foreground px-2 py-1 mb-1 uppercase">
-                              {match.status}
-                            </div>
-                            {match.minute && (
-                              <div className="text-xs text-muted-foreground">
-                                {match.minute}&apos;
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))
-                )}
-              </div>
-
-              <Link href="/livescores">
-                <Button
-                  className="w-full mt-4 text-sm md:text-base"
-                  variant="outline"
-                >
-                  View All Live Scores
-                </Button>
-              </Link>
+                          </td>
+                          <td className="p-4 text-sm font-semibold text-primary">
+                            {pred.predictedOutcome || pred.title}
+                          </td>
+                          <td className="p-4 text-sm">
+                            {pred.odds ? Number(pred.odds).toFixed(2) : "N/A"}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </CardContent>
+              </Card>
             </div>
 
             {/* Featured Tips */}
@@ -572,66 +576,87 @@ export default function Home() {
           </div>
         </div>
       </section>
-
-      {/* Today's Predictions Table */}
-      <section className="py-8 md:py-12 border-t border-border bg-secondary">
+      {/* Latest Blog Posts */}
+      <section className="py-8 md:py-12 border-t border-border">
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between mb-4 md:mb-6">
             <h2 className="text-xl md:text-2xl font-bold flex items-center gap-2">
-              <Target className="h-5 w-5 md:h-6 md:w-6 text-primary" />
-              Today&apos;s Predictions
+              <svg
+                className="h-5 w-5 md:h-6 md:w-6 text-primary"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
+                />
+              </svg>
+              Latest News
             </h2>
-            <Link href="/tips">
+            <Link href="/blog">
               <Button variant="outline" size="sm">
                 View All
               </Button>
             </Link>
           </div>
-          <Card>
-            <CardContent className="p-0 overflow-x-auto">
-              <table className="w-full min-w-[600px]">
-                <thead>
-                  <tr className="border-b border-border">
-                    <th className="text-left p-4 font-medium">Time</th>
-                    <th className="text-left p-4 font-medium">Match</th>
-                    <th className="text-left p-4 font-medium">Prediction</th>
-                    <th className="text-left p-4 font-medium">Odds</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {predictions.map((pred) => (
-                    <tr
-                      key={pred.id}
-                      className="border-b border-border hover:bg-accent/50"
-                    >
-                      <td className="p-4 text-sm">
-                        {pred.matchDate
-                          ? new Date(pred.matchDate).toLocaleTimeString([], {
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })
-                          : new Date(pred.createdAt).toLocaleDateString()}
-                      </td>
-                      <td className="p-4 text-sm">
-                        <div className="font-medium">
-                          {pred.homeTeam?.name || "TBD"}
-                        </div>
-                        <div className="text-muted-foreground">
-                          vs {pred.awayTeam?.name || "TBD"}
-                        </div>
-                      </td>
-                      <td className="p-4 text-sm font-semibold text-primary">
-                        {pred.predictedOutcome || pred.title}
-                      </td>
-                      <td className="p-4 text-sm">
-                        {pred.odds ? Number(pred.odds).toFixed(2) : "N/A"}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </CardContent>
-          </Card>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {blogs.length > 0 ? (
+              blogs.slice(0, 3).map((blog) => (
+                <Card
+                  key={blog.id}
+                  className="hover:shadow-lg transition-shadow"
+                >
+                  <CardContent className="p-6">
+                    {blog.headerImage && (
+                      <div className="mb-4">
+                        <Image
+                          src={blog.headerImage}
+                          alt={blog.title}
+                          width={400}
+                          height={200}
+                          className="w-full h-48 object-cover rounded-md"
+                        />
+                      </div>
+                    )}
+                    <div className="mb-4">
+                      <h3 className="text-lg font-bold mb-2 line-clamp-2">
+                        <Link
+                          href={`/blog/${blog.slug}`}
+                          className="hover:text-primary transition-colors"
+                        >
+                          {blog.title}
+                        </Link>
+                      </h3>
+                      <p className="text-muted-foreground text-sm line-clamp-3">
+                        {blog.excerpt}
+                      </p>
+                    </div>
+
+                    <div className="flex items-center justify-between text-xs text-muted-foreground mb-4">
+                      <span>{blog.authorName}</span>
+                      <span>
+                        {new Date(blog.publishedAt).toLocaleDateString()}
+                      </span>
+                    </div>
+
+                    <Link href={`/blog/${blog.slug}`}>
+                      <Button variant="outline" size="sm" className="w-full">
+                        Read More
+                      </Button>
+                    </Link>
+                  </CardContent>
+                </Card>
+              ))
+            ) : (
+              <div className="col-span-3 text-center py-8 text-muted-foreground">
+                <p>No blog posts available at the moment.</p>
+              </div>
+            )}
+          </div>
         </div>
       </section>
 
