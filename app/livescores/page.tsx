@@ -25,10 +25,6 @@ import {
   Search,
   X,
   ChevronDown,
-  ChevronUp,
-  TrendingUp,
-  Calendar,
-  MapPin,
   Users,
 } from "lucide-react";
 
@@ -90,19 +86,14 @@ export default function LiveScoresPage() {
   const [selectedLeague, setSelectedLeague] = useState<string>("all");
   const [availableLeagues, setAvailableLeagues] = useState<string[]>([]);
   const [fetchedLeagues, setFetchedLeagues] = useState<string[]>([]);
-  const [expandedMatchId, setExpandedMatchId] = useState<string | null>(null);
   const [favoriteTeams, setFavoriteTeams] = useState<string[]>([]);
-  const [showAllLeagues, setShowAllLeagues] = useState(false);
 
   const fetchMatches = useCallback(
     async (status?: FilterStatus, page: number = 1, search?: string) => {
       try {
         let statusParam = "";
         let searchParam = "";
-        // Increase limit to fetch more matches and show more leagues
         const pageParam = `&page=${page}&limit=100`;
-
-        // Always use API source for fetching
         const sourceParam = "&source=api&sport=football";
 
         if (status && status !== "all") {
@@ -113,33 +104,29 @@ export default function LiveScoresPage() {
           searchParam = `&search=${encodeURIComponent(search)}`;
         }
 
-        // For 'all' status or no status, fetch fixtures from wider range to show more leagues
         let dateParams = "";
         if (!status || status === "all") {
           const today = new Date();
           today.setHours(0, 0, 0, 0);
           const startDate = new Date(today);
-          startDate.setDate(startDate.getDate() - 3); // Last 3 days
+          startDate.setDate(startDate.getDate() - 3);
           const endDate = new Date(today);
-          endDate.setDate(endDate.getDate() + 14); // Next 14 days
+          endDate.setDate(endDate.getDate() + 14);
           endDate.setHours(23, 59, 59, 999);
           dateParams = `&dateFrom=${startDate.toISOString()}&dateTo=${endDate.toISOString()}`;
         } else if (status === "live") {
-          // For live matches, check today only
           const today = new Date();
           today.setHours(0, 0, 0, 0);
           const tomorrow = new Date(today);
           tomorrow.setDate(tomorrow.getDate() + 1);
           dateParams = `&dateFrom=${today.toISOString()}&dateTo=${tomorrow.toISOString()}`;
         } else if (status === "scheduled") {
-          // For scheduled, show next 14 days
           const today = new Date();
           today.setHours(0, 0, 0, 0);
           const twoWeeks = new Date(today);
           twoWeeks.setDate(twoWeeks.getDate() + 14);
           dateParams = `&dateFrom=${today.toISOString()}&dateTo=${twoWeeks.toISOString()}`;
         } else if (status === "finished") {
-          // For finished, show last 7 days
           const today = new Date();
           today.setHours(23, 59, 59, 999);
           const lastWeek = new Date(today);
@@ -149,7 +136,6 @@ export default function LiveScoresPage() {
         }
 
         const url = `/api/livescores/matches?${sourceParam}${statusParam}${searchParam}${pageParam}${dateParams}`;
-        console.log("[LiveScores] Fetching from:", url);
 
         const response = await fetch(url);
 
@@ -184,7 +170,6 @@ export default function LiveScoresPage() {
 
   const handleSearch = async () => {
     if (!searchQuery.trim()) return;
-
     setIsSearching(true);
     setCurrentPage(1);
     await fetchMatches(filterStatus, 1, searchQuery);
@@ -213,25 +198,20 @@ export default function LiveScoresPage() {
     setCurrentPage(1);
     setLoading(true);
     fetchMatches(filterStatus, 1, searchQuery || undefined);
-    // We intentionally avoid adding `searchQuery` to prevent refetch on each keystroke
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filterStatus, fetchMatches]);
 
-  // Extract unique leagues from matches
   useEffect(() => {
     const leaguesFromMatches = Array.from(
       new Set(matches.map((m) => m.league?.name).filter(Boolean))
     ) as string[];
-    // Merge with fetched leagues from broader window
     const merged = Array.from(
       new Set([...(leaguesFromMatches || []), ...(fetchedLeagues || [])])
     ).sort();
     setAvailableLeagues(merged);
   }, [matches, fetchedLeagues]);
 
-  // Fetch broader league list to show more leagues in the dropdown
   useEffect(() => {
-    // Build a wider default window: last 14 days to next 60 days
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const from = new Date(today);
@@ -239,11 +219,9 @@ export default function LiveScoresPage() {
     const to = new Date(today);
     to.setDate(to.getDate() + 60);
 
-    // Use both provider and fixtures sources for maximum coverage
     const url = `/api/livescores/leagues?dateFrom=${from.toISOString()}&dateTo=${to.toISOString()}&maxPages=8&source=both`;
 
     let aborted = false;
-    console.log("[LiveScores] Fetching leagues from:", url);
     fetch(url)
       .then((res) => res.json())
       .then((json) => {
@@ -251,7 +229,6 @@ export default function LiveScoresPage() {
           const names: string[] = json.data.leagues
             .map((l: { name?: string }) => l?.name)
             .filter(Boolean);
-          console.log(`[LiveScores] Received ${names.length} leagues from API`);
           setFetchedLeagues(Array.from(new Set(names)).sort());
         }
       })
@@ -264,7 +241,6 @@ export default function LiveScoresPage() {
     };
   }, []);
 
-  // Load favorite teams from localStorage
   useEffect(() => {
     const saved = localStorage.getItem("favoriteTeams");
     if (saved) {
@@ -276,7 +252,6 @@ export default function LiveScoresPage() {
     }
   }, []);
 
-  // Toggle favorite team
   const toggleFavorite = (teamName: string) => {
     setFavoriteTeams((prev) => {
       const newFavorites = prev.includes(teamName)
@@ -287,17 +262,12 @@ export default function LiveScoresPage() {
     });
   };
 
-  // Toggle match expansion
-  const toggleMatchExpansion = (matchId: string) => {
-    setExpandedMatchId((prev) => (prev === matchId ? null : matchId));
-  };
-
   useEffect(() => {
-    if (!autoRefresh || searchQuery) return; // Don't auto-refresh when searching
+    if (!autoRefresh || searchQuery) return;
 
     const interval = setInterval(() => {
       fetchMatches(filterStatus, 1);
-    }, 30000); // Refresh every 30 seconds
+    }, 30000);
 
     return () => clearInterval(interval);
   }, [autoRefresh, filterStatus, searchQuery, fetchMatches]);
@@ -359,13 +329,11 @@ export default function LiveScoresPage() {
   const scheduledMatches = matches.filter((m) => m.status === "scheduled");
   const finishedMatches = matches.filter((m) => m.status === "finished");
 
-  // Filter matches by selected league
   const filteredMatches =
     selectedLeague === "all"
       ? matches
       : matches.filter((m) => m.league?.name === selectedLeague);
 
-  // Separate favorite matches
   const favoriteMatches = filteredMatches.filter(
     (m) =>
       favoriteTeams.includes(m.homeTeam) || favoriteTeams.includes(m.awayTeam)
@@ -468,7 +436,6 @@ export default function LiveScoresPage() {
 
         {/* Filters */}
         <div className="space-y-4 mb-6">
-          {/* Status Filters */}
           <div className="flex items-center gap-2 overflow-x-auto pb-2">
             <Filter className="h-4 w-4 text-muted-foreground shrink-0" />
             {(["all", "live", "scheduled", "finished"] as FilterStatus[]).map(
@@ -486,130 +453,57 @@ export default function LiveScoresPage() {
             )}
           </div>
 
-          {/* League Filter */}
           {availableLeagues.length > 0 && (
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <Trophy className="h-4 w-4 text-muted-foreground shrink-0" />
-                <span className="text-sm font-medium shrink-0">
-                  League ({availableLeagues.length}):
-                </span>
-
-                {/* Dropdown for many leagues (mobile friendly) */}
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="sm" className="shrink-0">
-                      {selectedLeague === "all"
-                        ? "All Leagues"
-                        : selectedLeague}
-                      <ChevronDown className="h-3 w-3 ml-2" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent
-                    align="start"
-                    className="w-[250px] max-h-[400px] overflow-y-auto"
-                  >
-                    <DropdownMenuLabel>Select League</DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => setSelectedLeague("all")}>
-                      <span className="font-medium">All Leagues</span>
-                      <span className="ml-auto text-xs text-muted-foreground">
-                        {matches.length}
-                      </span>
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    {availableLeagues.map((league) => {
-                      const leagueMatchCount = matches.filter(
-                        (m) => m.league?.name === league
-                      ).length;
-                      return (
-                        <DropdownMenuItem
-                          key={league}
-                          onClick={() => setSelectedLeague(league)}
-                        >
-                          <span
-                            className={
-                              selectedLeague === league ? "font-semibold" : ""
-                            }
-                          >
-                            {league}
-                          </span>
-                          <span className="ml-auto text-xs text-muted-foreground">
-                            {leagueMatchCount}
-                          </span>
-                        </DropdownMenuItem>
-                      );
-                    })}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-
-                {/* Horizontal scroll for quick access (desktop) */}
-                <div className="hidden md:flex items-center gap-2 overflow-x-auto pb-2 flex-1">
-                  <Button
-                    variant={selectedLeague === "all" ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setSelectedLeague("all")}
-                    className="shrink-0"
-                  >
-                    All
+            <div className="flex items-center gap-2">
+              <Trophy className="h-4 w-4 text-muted-foreground shrink-0" />
+              <span className="text-sm font-medium shrink-0">League:</span>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="shrink-0">
+                    {selectedLeague === "all" ? "All Leagues" : selectedLeague}
+                    <ChevronDown className="h-3 w-3 ml-2" />
                   </Button>
-                  {(showAllLeagues
-                    ? availableLeagues
-                    : availableLeagues.slice(0, 6)
-                  ).map((league) => (
-                    <Button
-                      key={league}
-                      variant={
-                        selectedLeague === league ? "default" : "outline"
-                      }
-                      size="sm"
-                      onClick={() => setSelectedLeague(league)}
-                      className="shrink-0"
-                      title={league}
-                    >
-                      {league.length > 20
-                        ? `${league.substring(0, 20)}...`
-                        : league}
-                    </Button>
-                  ))}
-                  {availableLeagues.length > 6 && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setShowAllLeagues(!showAllLeagues)}
-                      className="shrink-0 text-primary"
-                    >
-                      {showAllLeagues ? (
-                        <>
-                          Less
-                          <ChevronUp className="h-3 w-3 ml-1" />
-                        </>
-                      ) : (
-                        <>
-                          +{availableLeagues.length - 6}
-                          <ChevronDown className="h-3 w-3 ml-1" />
-                        </>
-                      )}
-                    </Button>
-                  )}
-                </div>
-              </div>
-
-              {selectedLeague !== "all" && (
-                <div className="text-xs text-muted-foreground pl-6">
-                  Filtering by:{" "}
-                  <span className="font-medium text-foreground">
-                    {selectedLeague}
-                  </span>
-                  {" • "}
-                  {filteredMatches.length} match
-                  {filteredMatches.length !== 1 ? "es" : ""}
-                </div>
-              )}
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  align="start"
+                  className="w-[250px] max-h-[400px] overflow-y-auto"
+                >
+                  <DropdownMenuLabel>Select League</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => setSelectedLeague("all")}>
+                    <span className="font-medium">All Leagues</span>
+                    <span className="ml-auto text-xs text-muted-foreground">
+                      {matches.length}
+                    </span>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  {availableLeagues.map((league) => {
+                    const leagueMatchCount = matches.filter(
+                      (m) => m.league?.name === league
+                    ).length;
+                    return (
+                      <DropdownMenuItem
+                        key={league}
+                        onClick={() => setSelectedLeague(league)}
+                      >
+                        <span
+                          className={
+                            selectedLeague === league ? "font-semibold" : ""
+                          }
+                        >
+                          {league}
+                        </span>
+                        <span className="ml-auto text-xs text-muted-foreground">
+                          {leagueMatchCount}
+                        </span>
+                      </DropdownMenuItem>
+                    );
+                  })}
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           )}
 
-          {/* Favorites Info */}
           {favoriteTeams.length > 0 && (
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Users className="h-4 w-4" />
@@ -622,7 +516,7 @@ export default function LiveScoresPage() {
         </div>
 
         {/* Search Bar */}
-        <div className="mb-6">
+        {/* <div className="mb-6">
           <div className="flex gap-2">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -659,12 +553,7 @@ export default function LiveScoresPage() {
               )}
             </Button>
           </div>
-          {searchQuery && (
-            <p className="text-sm text-muted-foreground mt-2">
-              Showing results for &quot;{searchQuery}&quot;
-            </p>
-          )}
-        </div>
+        </div> */}
 
         {/* Matches List */}
         {loading ? (
@@ -672,56 +561,12 @@ export default function LiveScoresPage() {
             <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
             <p className="text-muted-foreground">Loading matches...</p>
           </div>
-        ) : matches.length === 0 ? (
-          <Card>
-            <CardContent className="py-12 text-center">
-              <Activity className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-              <h3 className="text-lg font-semibold mb-2">No matches found</h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                {filterStatus === "live"
-                  ? "No live matches at this moment. Check back soon!"
-                  : filterStatus === "all"
-                  ? "No matches available. Try adjusting your filters or search."
-                  : `No ${filterStatus} matches at the moment`}
-              </p>
-              {filterStatus === "live" && (
-                <div className="flex flex-col items-center gap-2 mt-4">
-                  <p className="text-xs text-muted-foreground">
-                    Matches are typically live during these times:
-                  </p>
-                  <div className="flex gap-2 flex-wrap justify-center">
-                    <Badge variant="outline">12:00 - 17:00 UTC</Badge>
-                    <Badge variant="outline">19:00 - 23:00 UTC</Badge>
-                  </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setFilterStatus("scheduled")}
-                    className="mt-4"
-                  >
-                    View Upcoming Matches
-                  </Button>
-                </div>
-              )}
-              {searchQuery && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleClearSearch}
-                  className="mt-4"
-                >
-                  Clear Search
-                </Button>
-              )}
-            </CardContent>
-          </Card>
         ) : (
           <div className="space-y-3 md:space-y-4">
             {displayMatches.map((match) => {
               const isFavorite =
                 favoriteTeams.includes(match.homeTeam) ||
                 favoriteTeams.includes(match.awayTeam);
-              const isExpanded = expandedMatchId === match.id;
 
               return (
                 <Card
@@ -730,11 +575,9 @@ export default function LiveScoresPage() {
                     match.live ? "border-destructive border-2" : ""
                   } ${
                     isFavorite ? "border-primary" : ""
-                  } hover:shadow-lg transition-all cursor-pointer`}
-                  onClick={() => toggleMatchExpansion(match.id)}
+                  } hover:shadow-lg transition-all`}
                 >
                   <CardContent className="p-4">
-                    {/* League Info */}
                     {match.league && (
                       <div className="flex items-center justify-between gap-2 mb-3 pb-2 border-b border-border">
                         <div className="flex items-center gap-2">
@@ -767,11 +610,8 @@ export default function LiveScoresPage() {
                       </div>
                     )}
 
-                    {/* Match Details */}
                     <div className="flex items-center gap-4">
-                      {/* Teams */}
                       <div className="flex-1">
-                        {/* Home Team */}
                         <div className="flex items-center justify-between gap-2 mb-2">
                           <div className="flex items-center gap-2 flex-1">
                             {match.homeTeamLogo && (
@@ -801,7 +641,6 @@ export default function LiveScoresPage() {
                               : "☆"}
                           </Button>
                         </div>
-                        {/* Away Team */}
                         <div className="flex items-center justify-between gap-2">
                           <div className="flex items-center gap-2 flex-1">
                             {match.awayTeamLogo && (
@@ -833,7 +672,6 @@ export default function LiveScoresPage() {
                         </div>
                       </div>
 
-                      {/* Score/Time */}
                       <div className="text-center min-w-20">
                         {match.status === "live" ||
                         match.status === "finished" ? (
@@ -857,7 +695,6 @@ export default function LiveScoresPage() {
                         )}
                       </div>
 
-                      {/* Match Time/Status */}
                       <div className="text-right min-w-[60px]">
                         <div className="text-xs md:text-sm font-medium">
                           {formatMatchTime(
@@ -874,7 +711,6 @@ export default function LiveScoresPage() {
                       </div>
                     </div>
 
-                    {/* Recent Events for Live Matches */}
                     {match.live &&
                       match.recentEvents &&
                       match.recentEvents.length > 0 && (
@@ -902,128 +738,6 @@ export default function LiveScoresPage() {
                           </div>
                         </div>
                       )}
-
-                    {/* Expanded Details */}
-                    {isExpanded && (
-                      <div className="mt-4 pt-4 border-t border-border space-y-3">
-                        {/* Match Info */}
-                        <div className="grid grid-cols-2 gap-3 text-sm">
-                          <div className="flex items-center gap-2">
-                            <Calendar className="h-4 w-4 text-muted-foreground" />
-                            <div>
-                              <div className="text-xs text-muted-foreground">
-                                Date
-                              </div>
-                              <div className="font-medium">
-                                {new Date(
-                                  match.scheduledAt
-                                ).toLocaleDateString()}
-                              </div>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Clock className="h-4 w-4 text-muted-foreground" />
-                            <div>
-                              <div className="text-xs text-muted-foreground">
-                                Time
-                              </div>
-                              <div className="font-medium">
-                                {new Date(match.scheduledAt).toLocaleTimeString(
-                                  [],
-                                  {
-                                    hour: "2-digit",
-                                    minute: "2-digit",
-                                  }
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                          {match.venue && (
-                            <div className="flex items-center gap-2 col-span-2">
-                              <MapPin className="h-4 w-4 text-muted-foreground" />
-                              <div>
-                                <div className="text-xs text-muted-foreground">
-                                  Venue
-                                </div>
-                                <div className="font-medium">{match.venue}</div>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Action Buttons */}
-                        <div className="flex gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="flex-1"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              // Could open match details modal or navigate
-                            }}
-                          >
-                            <TrendingUp className="h-4 w-4 mr-2" />
-                            View Stats
-                          </Button>
-                          {match.canBet && (
-                            <Button
-                              variant="default"
-                              size="sm"
-                              className="flex-1"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                // Could navigate to betting page
-                              }}
-                            >
-                              Place Bet
-                            </Button>
-                          )}
-                        </div>
-
-                        {/* Expand/Collapse indicator */}
-                        <div className="text-center">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="text-xs"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              toggleMatchExpansion(match.id);
-                            }}
-                          >
-                            {isExpanded ? (
-                              <>
-                                <ChevronUp className="h-3 w-3 mr-1" />
-                                Show Less
-                              </>
-                            ) : (
-                              <>
-                                <ChevronDown className="h-3 w-3 mr-1" />
-                                Show More
-                              </>
-                            )}
-                          </Button>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Collapse indicator when not expanded */}
-                    {!isExpanded && (
-                      <div className="mt-3 text-center">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-xs"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            toggleMatchExpansion(match.id);
-                          }}
-                        >
-                          <ChevronDown className="h-3 w-3 mr-1" />
-                          Show More
-                        </Button>
-                      </div>
-                    )}
                   </CardContent>
                 </Card>
               );
@@ -1031,7 +745,6 @@ export default function LiveScoresPage() {
           </div>
         )}
 
-        {/* Load More Button */}
         {!loading && matches.length > 0 && pagination.hasMore && (
           <div className="mt-6 text-center">
             <Button
@@ -1053,6 +766,29 @@ export default function LiveScoresPage() {
             </Button>
           </div>
         )}
+
+        {/* Live Scores Feed - Integrated as dedicated section below matches */}
+        <Card className="mt-8 mb-6">
+          <CardContent className="p-4">
+            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+              <Activity className="h-5 w-5 text-primary" />
+              Live Scores Feed
+            </h2>
+            <div className="rounded-md overflow-hidden border border-border">
+              <iframe
+                src="https://www.livescore.bz/webmasters.asp?lang=en&sport=football(soccer)&data-1=today&data-2=&word=livescore"
+                marginHeight={0}
+                marginWidth={0}
+                scrolling="auto"
+                height="600"
+                width="100%"
+                frameBorder="0"
+                className="w-full block"
+                style={{ minHeight: "600px" }}
+              />
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
