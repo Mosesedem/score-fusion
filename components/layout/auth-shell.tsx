@@ -16,7 +16,7 @@ export default function AuthShell({ children }: { children: React.ReactNode }) {
   const hasSidebar = !!user && !isAdminRoute;
 
   return (
-    <div className={hasSidebar ? "lg:pl-64" : undefined}>
+    <div className={hasSidebar ? "lg:pl-64 pb-24 md:pb-0" : undefined}>
       {!isAdminRoute && <AppSidebar />}
       {children}
     </div>
