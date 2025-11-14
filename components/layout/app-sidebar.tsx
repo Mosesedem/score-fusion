@@ -27,6 +27,7 @@ import {
   Activity,
   CreditCard,
   Home,
+  BookCheck,
 } from "lucide-react";
 
 const items = [
@@ -41,6 +42,7 @@ const items = [
   { href: "/earnings", label: "Earnings", icon: Wallet },
   { href: "/help", label: "Help", icon: HelpCircle },
   { href: "/contact", label: "Contact", icon: Mail },
+  { href: "/blog", label: "Blog", icon: BookCheck },
 ];
 
 // Guest users have access to all features like basic users

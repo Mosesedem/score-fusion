@@ -65,8 +65,8 @@ export async function GET() {
     ]);
 
     // Calculate estimated revenue (these are just estimates, adjust based on your pricing)
-    const monthlyPrice = 9.99; // Adjust to your actual monthly price
-    const yearlyPrice = 99.99; // Adjust to your actual yearly price
+    const monthlyPrice = 400; // Adjust to your actual monthly price
+    const yearlyPrice = 1500; // Adjust to your actual yearly price
 
     const monthlyRevenue = monthlySubscriptions * monthlyPrice;
     const yearlyRevenue = yearlySubscriptions * (yearlyPrice / 12); // Monthly ARR

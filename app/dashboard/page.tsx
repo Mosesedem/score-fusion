@@ -514,7 +514,7 @@ export default function DashboardPage() {
                   </div>
                   <div className="bg-green-50 border border-green-200 p-3 rounded-lg mb-4">
                     <p className="text-xs text-green-800 font-medium">
-                      🎯 Last week: 8/10 VIP tips won (80% success rate)
+                      🎯 Last week: 10/10 VIP tips won (100% success rate)
                     </p>
                   </div>
                   <ul className="space-y-2 mb-4 text-xs sm:text-sm">
@@ -621,7 +621,7 @@ export default function DashboardPage() {
             </Card>
 
             {/* Dynamic Pro Tips & Success Stories */}
-            <Card className="bg-gradient-to-br from-primary/5 to-primary/10 border-primary">
+            <Card className="bg-linear-to-br from-primary/5 to-primary/10 border-primary">
               <CardContent className="p-3 sm:p-4">
                 <div className="flex items-start gap-2 mb-2">
                   <span className="text-lg">🏆</span>

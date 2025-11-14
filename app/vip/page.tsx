@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
-
+import { useRouter } from "next/navigation";
 export default function VIPAreaPage() {
   const { user } = useAuth();
   const api = useApiClient();
@@ -63,11 +63,13 @@ export default function VIPAreaPage() {
       category: "tip" | "update";
     }>
   >([]);
-  const [historyPredictions, setHistoryPredictions] = useState<typeof vipPredictions>([]);
+  const [historyPredictions, setHistoryPredictions] = useState<
+    typeof vipPredictions
+  >([]);
   const [historyUpdates, setHistoryUpdates] = useState<typeof vipUpdates>([]);
   const [loadingPredictions, setLoadingPredictions] = useState(false);
   const [loadingUpdates, setLoadingUpdates] = useState(false);
-
+  const router = useRouter();
   const checkVIPAccess = useCallback(async () => {
     console.log("🔍 [VIP Page] Starting VIP access check...");
     console.log("🔍 [VIP Page] Current user:", user);
@@ -268,16 +270,25 @@ export default function VIPAreaPage() {
 
                 {user && (
                   <div className="bg-secondary p-4 md:p-6 space-y-4">
-                    <h3 className="font-bold text-base md:text-lg">
-                      Subscription Plans
-                    </h3>
+                    <div className="flex justify-between">
+                      <h3 className="font-bold text-base md:text-lg">
+                        Subscription Plans
+                      </h3>
+                      <div
+                        className="text-sm md:text-base text-muted-foreground hover:underline cursor-pointer"
+                        onClick={() => router.push("/subscriptions")}
+                      >
+                        See All Plans
+                      </div>
+                    </div>
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
                       <div className="border-2 border-border p-3 md:p-4 space-y-2">
                         <h4 className="font-bold text-sm md:text-base">
                           Monthly
                         </h4>
                         <p className="text-xl md:text-2xl font-bold text-primary">
-                          $29.99/mo
+                          € 100.00/week
                         </p>
                         <ul className="text-xs md:text-sm space-y-1">
                           <li>✓ All VIP tips & updates</li>
@@ -286,7 +297,7 @@ export default function VIPAreaPage() {
                           <li>✓ Cancel anytime</li>
                         </ul>
                         <Button className="w-full mt-4 h-10 text-sm md:text-base">
-                          Subscribe Monthly
+                          Subscribe Weekly
                         </Button>
                       </div>
                       <div className="border-2 border-primary p-3 md:p-4 space-y-2">
@@ -297,10 +308,10 @@ export default function VIPAreaPage() {
                           Yearly
                         </h4>
                         <p className="text-xl md:text-2xl font-bold text-primary">
-                          $249.99/yr
+                          € 400.00/month
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          Save $110 per year
+                          Save € 400 per Month
                         </p>
                         <ul className="text-xs md:text-sm space-y-1">
                           <li>✓ All VIP tips & updates</li>
@@ -309,7 +320,7 @@ export default function VIPAreaPage() {
                           <li>✓ 2 months free</li>
                         </ul>
                         <Button className="w-full mt-4 h-10 text-sm md:text-base">
-                          Subscribe Yearly
+                          Subscribe Monthly
                         </Button>
                       </div>
                     </div>
@@ -393,7 +404,8 @@ export default function VIPAreaPage() {
           <CardHeader>
             <CardTitle>Current VIP Predictions</CardTitle>
             <p className="text-sm text-muted-foreground mt-2">
-              Active VIP predictions with detailed analysis, team insights, and winning ticket snapshots
+              Active VIP predictions with detailed analysis, team insights, and
+              winning ticket snapshots
             </p>
           </CardHeader>
           <CardContent>
@@ -679,7 +691,10 @@ export default function VIPAreaPage() {
                   <h3 className="font-bold text-base mb-4">Past VIP Tips</h3>
                   <div className="grid gap-4 md:grid-cols-2">
                     {historyPredictions.map((prediction) => (
-                      <Card key={prediction.id} className="border-2 border-border">
+                      <Card
+                        key={prediction.id}
+                        className="border-2 border-border"
+                      >
                         <CardContent className="p-4">
                           <div className="flex items-center gap-1.5 md:gap-2 mb-2 flex-wrap">
                             <Badge className="text-[10px] md:text-xs px-1.5 md:px-2 py-0.5">

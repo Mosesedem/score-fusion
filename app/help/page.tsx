@@ -77,7 +77,7 @@ export default function HelpPage() {
       category: "vip",
       question: "How much does VIP membership cost?",
       answer:
-        "We offer flexible VIP plans: Monthly ($29.99), Quarterly ($79.99 - save 11%), and Annual ($299.99 - save 17%). All plans include unlimited access to premium tips, advanced analytics, and priority support. You can cancel anytime.",
+        "We offer flexible VIP plans: weekly (€100), Bi-weekly (€200 ), and Monthly (€ 400 - save 50%). All plans include unlimited access to premium tips, advanced analytics, and priority support. You can cancel anytime.",
     },
     {
       category: "vip",

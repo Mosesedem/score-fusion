@@ -316,6 +316,7 @@ export default function Home() {
                 className={`absolute inset-0 transition-opacity duration-500 ${
                   index === currentSlide ? "opacity-100" : "opacity-0"
                 }`}
+                onClick={() => router.push("/subscriptions")}
               >
                 <Image
                   src={slide.img}
@@ -387,7 +388,7 @@ export default function Home() {
                 <CardTitle className="text-lg font-bold">Weekly</CardTitle>
               </CardHeader>
               <CardContent className="text-center space-y-2">
-                <div className="text-3xl font-bold text-primary">$9.99</div>
+                <div className="text-3xl font-bold text-primary"> € 100.00</div>
                 <div className="text-xs text-muted-foreground">per week</div>
                 <div className="text-xs">
                   VIP tips • Correct scores • Priority support
@@ -399,8 +400,8 @@ export default function Home() {
                 <CardTitle className="text-lg font-bold">Monthly</CardTitle>
               </CardHeader>
               <CardContent className="text-center space-y-2">
-                <div className="text-3xl font-bold text-primary">$14.99</div>
-                <div className="text-xs text-muted-foreground">per month</div>
+                <div className="text-3xl font-bold text-primary">€ 200.00</div>
+                <div className="text-xs text-muted-foreground">Two Weeks</div>
                 <div className="text-xs">
                   Most Popular • Telegram group • Cancel anytime
                 </div>
@@ -411,7 +412,7 @@ export default function Home() {
                 <CardTitle className="text-lg font-bold">Yearly</CardTitle>
               </CardHeader>
               <CardContent className="text-center space-y-2">
-                <div className="text-3xl font-bold text-primary">$124.99</div>
+                <div className="text-3xl font-bold text-primary">€ 400.00</div>
                 <div className="text-xs text-muted-foreground">per year</div>
                 <div className="text-xs">
                   Save big • Exclusive webinars • 4 months free
