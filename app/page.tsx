@@ -768,7 +768,7 @@ export default function Home() {
       </section>
 
       {/* Top Betting Sites */}
-      <section className="py-8 md:py-12 border-t border-border bg-secondary">
+      {/* <section className="py-8 md:py-12 border-t border-border bg-secondary">
         <div className="container mx-auto px-4">
           <h2 className="text-xl md:text-2xl font-bold text-center mb-6 md:mb-8">
             Top Betting Sites
@@ -806,7 +806,7 @@ export default function Home() {
             ))}
           </div>
         </div>
-      </section>
+      </section> */}
 
       {/* Security & Trust */}
       <section className="py-8 md:py-12 border-t border-border">
