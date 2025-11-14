@@ -61,6 +61,7 @@ export async function GET(request: NextRequest) {
           slug: true,
           excerpt: true,
           authorName: true,
+          headerImage: true,
           publishedAt: true,
           tags: true,
           viewCount: true,
