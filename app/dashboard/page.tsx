@@ -153,7 +153,8 @@ export default function DashboardPage() {
             const betsRes = await api.get("/bets?limit=1");
             if (betsRes.success) {
               const stats = (betsRes.data as any)?.statistics;
-              const wr = typeof stats?.winRate === "number" ? stats.winRate : null;
+              const wr =
+                typeof stats?.winRate === "number" ? stats.winRate : null;
               if (wr && wr > 0) {
                 winRateCandidate = wr;
               }
@@ -161,7 +162,9 @@ export default function DashboardPage() {
           }
         }
 
-        setDerivedWinRate(winRateCandidate && winRateCandidate > 0 ? winRateCandidate : null);
+        setDerivedWinRate(
+          winRateCandidate && winRateCandidate > 0 ? winRateCandidate : null
+        );
 
         // Show welcome tooltip for new users
         if (user && !user.guest) {
@@ -181,7 +184,7 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 max-w-7xl">
+      <div className=" mx-auto px-3 sm:px-4 py-4 sm:py-6 max-w-7xl p-20">
         {/* Header - Compact for mobile */}
         <div className="mb-4 sm:mb-6">
           <h1 className="text-xl sm:text-2xl md:text-3xl font-bold mb-1">
@@ -204,7 +207,9 @@ export default function DashboardPage() {
                   )}
                 </div>
                 <div className="text-xl sm:text-2xl font-bold mb-0.5">
-                  {derivedWinRate !== null ? `${derivedWinRate.toFixed(1)}%` : "—"}
+                  {derivedWinRate !== null
+                    ? `${derivedWinRate.toFixed(1)}%`
+                    : "—"}
                 </div>
                 <p className="text-[10px] sm:text-xs text-muted-foreground">
                   Win Rate
@@ -246,9 +251,9 @@ export default function DashboardPage() {
             <Card className="hover:shadow-md transition-shadow cursor-pointer h-full relative">
               <CardContent className="p-3 sm:p-4">
                 <div className="flex items-start justify-between mb-2">
-                  <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 text-blue-500" />
+                  <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 " />
                   {predictions.length > 5 && (
-                    <div className="absolute -top-1 -right-1 h-3 w-3 bg-blue-500 rounded-full animate-pulse" />
+                    <div className="absolute -top-1 -right-1 h-3 w-3 bg-primary rounded-full animate-pulse" />
                   )}
                 </div>
                 <div className="text-xl sm:text-2xl font-bold mb-0.5">
@@ -258,7 +263,7 @@ export default function DashboardPage() {
                   Tips Today
                 </p>
                 {userStats.streakDays > 0 && (
-                  <p className="text-[8px] sm:text-[10px] text-blue-600 mt-1">
+                  <p className="text-[8px] sm:text-[10px]  mt-1">
                     {userStats.streakDays} day streak
                   </p>
                 )}
@@ -544,10 +549,10 @@ export default function DashboardPage() {
 
             {/* Welcome Tooltip for New Users */}
             {showWelcomeTooltip && (
-              <Card className="border-blue-500 bg-blue-50">
+              <Card className="border-primary">
                 <CardContent className="p-4">
                   <div className="flex items-start gap-3">
-                    <div className="h-8 w-8 bg-blue-500 rounded-full flex items-center justify-center shrink-0">
+                    <div className="h-8 w-8 bg-primary rounded-full flex items-center justify-center shrink-0">
                       <span className="text-white text-sm">👋</span>
                     </div>
                     <div className="flex-1">
@@ -559,7 +564,7 @@ export default function DashboardPage() {
                       </p>
                       <button
                         onClick={() => setShowWelcomeTooltip(false)}
-                        className="text-xs text-blue-600 hover:underline"
+                        className="text-xs text-primary hover:underline"
                       >
                         Got it!
                       </button>
@@ -581,7 +586,7 @@ export default function DashboardPage() {
                   <button className="w-full text-left border-2 border-border py-2.5 px-3 rounded-lg hover:bg-accent transition-colors text-xs sm:text-sm font-medium relative">
                     📊 All Tips
                     {predictions.length > 0 && (
-                      <span className="absolute right-3 top-1/2 -translate-y-1/2 bg-blue-500 text-white text-xs px-2 py-0.5 rounded-full">
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 bg-primary text-white text-xs px-2 py-0.5 rounded-full">
                         {predictions.length}
                       </span>
                     )}
@@ -627,7 +632,7 @@ export default function DashboardPage() {
                 <p className="text-[10px] sm:text-xs text-muted-foreground mb-2">
                   "Made $2,400 last month following VIP tips!" - Sarah M.
                 </p>
-                <div className="flex items-center gap-1 text-[10px] text-amber-600">
+                <div className="flex items-center gap-1 text-[10px] ">
                   <span>⭐⭐⭐⭐⭐</span>
                   <span className="font-medium">Verified Winner</span>
                 </div>
@@ -636,19 +641,19 @@ export default function DashboardPage() {
 
             {/* Progress Tracker for Engagement */}
             {user && !user.guest && (
-              <Card className="bg-gradient-to-r from-green-50 to-blue-50 border-green-200">
+              <Card className="border-primary">
                 <CardContent className="p-3 sm:p-4">
                   <div className="flex items-center justify-between mb-2">
                     <h3 className="font-bold text-xs sm:text-sm">
                       Your Progress
                     </h3>
-                    <span className="text-xs text-green-600">
+                    <span className="text-xs text-primary">
                       {Math.min(userStats.totalTipsViewed, 10)}/10
                     </span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
                     <div
-                      className="bg-gradient-to-r from-green-400 to-blue-500 h-2 rounded-full transition-all duration-500"
+                      className="bg-primary h-2 rounded-full transition-all duration-500"
                       style={{
                         width: `${Math.min(
                           (userStats.totalTipsViewed / 10) * 100,

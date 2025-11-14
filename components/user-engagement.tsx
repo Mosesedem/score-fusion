@@ -30,7 +30,11 @@ interface UserEngagementProps {
   isVIP: boolean;
 }
 
-export function UserEngagement({ user, userStats, isVIP }: UserEngagementProps) {
+export function UserEngagement({
+  user,
+  userStats,
+  isVIP,
+}: UserEngagementProps) {
   const [showStreakCelebration, setShowStreakCelebration] = useState(false);
   const [showDailyReward, setShowDailyReward] = useState(false);
   const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
@@ -43,7 +47,7 @@ export function UserEngagement({ user, userStats, isVIP }: UserEngagementProps) 
 
     // Show daily reward for active users
     if (userStats.totalTipsViewed > 0 && !isVIP) {
-      const lastRewardShown = localStorage.getItem('lastDailyReward');
+      const lastRewardShown = localStorage.getItem("lastDailyReward");
       const today = new Date().toDateString();
       if (lastRewardShown !== today) {
         setShowDailyReward(true);
@@ -52,8 +56,10 @@ export function UserEngagement({ user, userStats, isVIP }: UserEngagementProps) 
 
     // Show upgrade prompt for engaged non-VIP users only
     if (!isVIP && userStats.totalTipsViewed >= 5 && userStats.winRate > 50) {
-      const lastUpgradePrompt = localStorage.getItem('lastUpgradePrompt');
-      const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toDateString();
+      const lastUpgradePrompt = localStorage.getItem("lastUpgradePrompt");
+      const threeDaysAgo = new Date(
+        Date.now() - 3 * 24 * 60 * 60 * 1000
+      ).toDateString();
       if (!lastUpgradePrompt || lastUpgradePrompt < threeDaysAgo) {
         setShowUpgradePrompt(true);
       }
@@ -61,13 +67,13 @@ export function UserEngagement({ user, userStats, isVIP }: UserEngagementProps) 
   }, [userStats, isVIP]);
 
   const handleDailyRewardClaim = () => {
-    localStorage.setItem('lastDailyReward', new Date().toDateString());
+    localStorage.setItem("lastDailyReward", new Date().toDateString());
     setShowDailyReward(false);
     // Here you would typically call an API to give the user their reward
   };
 
   const handleUpgradePromptDismiss = () => {
-    localStorage.setItem('lastUpgradePrompt', new Date().toDateString());
+    localStorage.setItem("lastUpgradePrompt", new Date().toDateString());
     setShowUpgradePrompt(false);
   };
 
@@ -113,7 +119,9 @@ export function UserEngagement({ user, userStats, isVIP }: UserEngagementProps) 
                   <Gift className="h-6 w-6 text-white" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-green-800">Daily Reward Available!</h3>
+                  <h3 className="font-bold text-green-800">
+                    Daily Reward Available!
+                  </h3>
                   <p className="text-sm text-green-700">
                     Claim your free bonus for being active today
                   </p>
@@ -154,7 +162,8 @@ export function UserEngagement({ user, userStats, isVIP }: UserEngagementProps) 
                     You're Ready for VIP! 🎯
                   </h3>
                   <p className="text-sm text-muted-foreground">
-                    {userStats.winRate.toFixed(0)}% win rate shows you know good tips. Get VIP for even better ones!
+                    {userStats.winRate.toFixed(0)}% win rate shows you know good
+                    tips. Get VIP for even better ones!
                   </p>
                 </div>
               </div>
@@ -221,29 +230,32 @@ export function UserEngagement({ user, userStats, isVIP }: UserEngagementProps) 
           </div>
           {userStats.totalTipsViewed < 10 && (
             <p className="text-xs text-muted-foreground mt-2">
-              View {10 - userStats.totalTipsViewed} more tips to unlock new achievements!
+              View {10 - userStats.totalTipsViewed} more tips to unlock new
+              achievements!
             </p>
           )}
         </CardContent>
       </Card>
 
       {/* Next Milestone */}
-      <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
+      <Card className="border-primary/50 mb-4">
         <CardContent className="p-4">
-          <h3 className="font-bold text-sm mb-2 text-blue-800">Next Milestone</h3>
+          <h3 className="font-bold text-sm mb-2 ">Next Milestone</h3>
           {userStats.totalTipsViewed < 25 ? (
             <div>
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs text-blue-700">Tip Explorer</span>
-                <span className="text-xs text-blue-600">{userStats.totalTipsViewed}/25</span>
+                <span className="text-xs ">Tip Explorer</span>
+                <span className="text-xs ">{userStats.totalTipsViewed}/25</span>
               </div>
               <div className="w-full bg-blue-200 rounded-full h-2">
                 <div
                   className="bg-blue-500 h-2 rounded-full transition-all duration-500"
-                  style={{ width: `${(userStats.totalTipsViewed / 25) * 100}%` }}
+                  style={{
+                    width: `${(userStats.totalTipsViewed / 25) * 100}%`,
+                  }}
                 />
               </div>
-              <p className="text-xs text-blue-600 mt-1">
+              <p className="text-xs mt-1">
                 Unlock exclusive rewards at 25 tips viewed!
               </p>
             </div>
@@ -251,7 +263,9 @@ export function UserEngagement({ user, userStats, isVIP }: UserEngagementProps) 
             <div>
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs text-blue-700">Week Warrior</span>
-                <span className="text-xs text-blue-600">{userStats.streakDays}/7</span>
+                <span className="text-xs text-blue-600">
+                  {userStats.streakDays}/7
+                </span>
               </div>
               <div className="w-full bg-blue-200 rounded-full h-2">
                 <div
