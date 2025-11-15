@@ -183,7 +183,7 @@ export default function PrivacyPage() {
                 <p>
                   For questions about this Privacy Policy or data practices,
                   please contact us through our support page or email us at
-                  privacy@scorefusion.com
+                  scorefusionn@gmail.com
                 </p>
               </CardContent>
             </Card>

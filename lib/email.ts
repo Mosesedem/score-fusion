@@ -6,7 +6,7 @@ const FROM_EMAIL = "noreply@getscorefusion.com";
 const FROM_NAME = "Score Fusion";
 
 // Primary brand color
-const PRIMARY_COLOR = "#10b981"; // emerald-500
+const PRIMARY_COLOR = "#FFA500"; // orange
 const DARK_BG = "#0f172a"; // slate-900
 
 interface EmailOptions {

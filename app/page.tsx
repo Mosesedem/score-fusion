@@ -811,35 +811,36 @@ export default function Home() {
 
       {/* Security & Trust */}
       <section className="py-8 md:py-12 border-t border-border">
-        <div className="container mx-auto px-4">
+        <div className=" mx-auto px-4">
           <h2 className="text-xl md:text-2xl font-bold text-center mb-6 md:mb-8">
             Secure & Trusted
           </h2>
-          <div className="grid md:grid-cols-2 gap-6 text-center">
+          <div className="flex justify-center gap-6 text-center">
             <div>
-              <h3 className="font-semibold mb-4">Trusted By</h3>
-              <div className="flex flex-wrap justify-center gap-4">
-                {["egba", "ibia", "ecogra"].map((logo) => (
+              <h3 className="font-semibold mb-4">Available</h3>
+              <div className="flex flex-wrap justify-center gap-6">
+                {["skrill", "western", "transfer"].map((logo) => (
                   <Image
                     key={logo}
-                    src={`/images/trust-${logo}.png`}
+                    src={`/images/${logo}.png`}
                     alt={logo}
-                    width={80}
+                    width={120}
                     height={40}
                     className="opacity-70"
                   />
                 ))}
               </div>
             </div>
+
             <div>
               <h3 className="font-semibold mb-4">Secure Payments</h3>
               <div className="flex flex-wrap justify-center gap-4">
-                {["visa", "mastercard", "paypal"].map((icon) => (
+                {["visa", "master-card", "paypal"].map((icon) => (
                   <Image
                     key={icon}
-                    src={`/images/trust-${icon}.png`}
+                    src={`/images/${icon}.png`}
                     alt={icon}
-                    width={80}
+                    width={120}
                     height={40}
                     className="opacity-70"
                   />

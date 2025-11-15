@@ -61,17 +61,19 @@ export default function ContactPage() {
                 <CardContent className="text-muted-foreground">
                   <p className="mb-2">For general inquiries:</p>
                   <a
-                    href="mailto:support@scorefusion.com"
+                    href="mailto:scorefusionn@gmail.com
+"
                     className="text-primary hover:underline"
                   >
-                    support@scorefusion.com
+                    scorefusionn@gmail.com
                   </a>
                   <p className="mt-4 mb-2">For VIP support:</p>
                   <a
-                    href="mailto:vip@scorefusion.com"
+                    href="mailto:scorefusionn@gmail.com
+"
                     className="text-primary hover:underline"
                   >
-                    vip@scorefusion.com
+                    scorefusionn@gmail.com
                   </a>
                 </CardContent>
               </Card>
