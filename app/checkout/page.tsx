@@ -158,7 +158,7 @@ const formPaymentMethods = [
     icon: CreditCard,
     description: "PayPal payment",
     details:
-      "Send to: payments@scorefusion.com\nNote: Include your username in payment reference",
+      "Send to: Scorefusionn@gmail.com\nNote: Include your username in payment reference",
   },
   {
     id: "mobile_money",
@@ -189,9 +189,9 @@ const contactMethods = [
   {
     icon: MessageSquare,
     label: "WhatsApp",
-    value: "+1 (555) 123-4567",
+    value: "+84 589 950 720",
     action:
-      "https://wa.me/15551234567?text=Hi,%20I%20want%20to%20subscribe%20to%20the%20" +
+      "https://wa.me/84589950720?text=Hi,%20I%20want%20to%20subscribe%20to%20the%20" +
       (plans[0] ? plans[0].name : "VIP") +
       "%20plan%20(€" +
       (plans[0] ? plans[0].price : "") +
@@ -201,8 +201,8 @@ const contactMethods = [
   {
     icon: MessageSquare,
     label: "Telegram",
-    value: "@ScoreFusionSupport",
-    action: "https://t.me/ScoreFusionSupport",
+    value: "@Donaldauthorr",
+    action: "https://t.me/Donaldauthorr",
     color: "bg-sky-500 hover:bg-sky-600",
   },
 ];
@@ -912,16 +912,16 @@ function CheckoutContent() {
                     <div className="space-y-3">
                       <div className="flex items-center gap-2">
                         <Mail className="h-4 w-4" />
-                        <span className="text-sm">admin@scorefusion.com</span>
+                        <span className="text-sm">Scorefusionn@gmail.com</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <Phone className="h-4 w-4" />
-                        <span className="text-sm">+1 (555) 123-4567</span>
+                        <span className="text-sm">+84 589 950 720</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <MessageSquare className="h-4 w-4" />
                         <span className="text-sm">
-                          Telegram: @ScoreFusionSupport
+                          Telegram: @Donaldauthorr
                         </span>
                       </div>
                     </div>
