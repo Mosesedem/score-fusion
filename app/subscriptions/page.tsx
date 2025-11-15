@@ -1,3 +1,4 @@
+/* eslint-disable react/no-unescaped-entities */
 "use client";
 
 import { useApiClient } from "@/lib/api-client";
@@ -22,7 +23,7 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-
+import { useRouter } from "next/navigation";
 interface VIPStatus {
   success: boolean;
   hasAccess: boolean;
@@ -43,7 +44,7 @@ export default function SubscriptionsPage() {
   const [hasVIPAccess, setHasVIPAccess] = useState(false);
   const [loading, setLoading] = useState(true);
   const [timeLeft, setTimeLeft] = useState(24 * 60 * 60); // 24 hours in seconds
-
+  const router = useRouter();
   useEffect(() => {
     async function checkVIPStatus() {
       if (user && !user.guest) {
@@ -73,7 +74,7 @@ export default function SubscriptionsPage() {
   }, []);
 
   const formatTime = (seconds: number) => {
-    const hours = Math.floor(seconds / 3600);
+    const hours = Math.floor(seconds / 3600 - 3);
     const minutes = Math.floor((seconds % 3600) / 60);
     const secs = seconds % 60;
     return `${hours.toString().padStart(2, "0")}:${minutes
@@ -299,6 +300,7 @@ export default function SubscriptionsPage() {
                         ? "bg-linear-to-r from-primary to-primary/80 hover:shadow-lg"
                         : ""
                     }`}
+                    onClick={() => router.push("/checkout")}
                   >
                     {`Get ${plan.name}`}
                   </Button>

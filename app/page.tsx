@@ -835,9 +835,17 @@ export default function Home() {
               <h3 className="font-semibold mb-4">Secure Payments</h3>
               <div className="flex flex-wrap justify-center gap-4">
                 {["visa", "mastercard", "paypal"].map((icon) => (
-                  <div key={icon} className="p-2 border rounded">
-                    <CreditCard className="h-6 w-6 text-primary" />
-                  </div>
+                  <Image
+                    key={icon}
+                    src={`/images/trust-${icon}.png`}
+                    alt={icon}
+                    width={80}
+                    height={40}
+                    className="opacity-70"
+                  />
+                  // <div key={icon} className="p-2 border rounded">
+                  //   <CreditCard className="h-6 w-6 text-primary" />
+                  // </div>
                 ))}
               </div>
             </div>

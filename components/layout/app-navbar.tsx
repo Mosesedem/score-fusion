@@ -26,6 +26,7 @@ import {
   Mail,
   Activity,
   BookOpen,
+  Crown,
 } from "lucide-react";
 import { Icon } from "@/components/logo";
 import { NotificationSystem } from "@/components/notification-system";
@@ -75,6 +76,7 @@ export function AppNavbar() {
   // Navigation items for non-authenticated users only
   const publicNavItems = [
     { href: "/", label: "Home", icon: Home },
+    { href: "/vip", label: "VIP", icon: Crown },
     { href: "/tips", label: "Tips", icon: TrendingUp },
     { href: "/livescores", label: "Live Scores", icon: Activity },
     { href: "/blog", label: "Blog", icon: BookOpen },
