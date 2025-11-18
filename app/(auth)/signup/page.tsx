@@ -176,7 +176,9 @@ function SignupForm() {
                   type={showConfirmPassword ? "text" : "password"}
                   placeholder="At least 8 characters"
                   value={formData.confirmPassword}
-                  onChange={(e) => updateField("confirmPassword", e.target.value)}
+                  onChange={(e) =>
+                    updateField("confirmPassword", e.target.value)
+                  }
                   required
                   disabled={isLoading}
                   className="h-11 md:h-10 text-base pr-10"
