@@ -16,7 +16,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Icon } from "@/components/logo";
-import { Loader2 } from "lucide-react";
+import { Loader2, Eye, EyeOff } from "lucide-react";
 
 function SignupForm() {
   const { signup } = useAuth();
@@ -26,6 +26,7 @@ function SignupForm() {
   const [formData, setFormData] = useState({
     email: "",
     password: "",
+    confirmPassword: "",
     displayName: "",
     country: "",
     dob: "",
@@ -38,6 +39,8 @@ function SignupForm() {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,6 +49,12 @@ function SignupForm() {
     // Validate password
     if (formData.password.length < 8) {
       setError("Password must be at least 8 characters long");
+      return;
+    }
+
+    // Validate password confirmation
+    if (formData.password !== formData.confirmPassword) {
+      setError("Passwords do not match");
       return;
     }
 
@@ -132,18 +141,61 @@ function SignupForm() {
               <Label htmlFor="password" className="text-sm md:text-base">
                 Password
               </Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="At least 8 characters"
-                value={formData.password}
-                onChange={(e) => updateField("password", e.target.value)}
-                required
-                disabled={isLoading}
-                className="h-11 md:h-10 text-base"
-              />
+              <div className="relative">
+                <Input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="At least 8 characters"
+                  value={formData.password}
+                  onChange={(e) => updateField("password", e.target.value)}
+                  required
+                  disabled={isLoading}
+                  className="h-11 md:h-10 text-base pr-10"
+                />
+                <button
+                  type="button"
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                  onClick={() => setShowPassword(!showPassword)}
+                  disabled={isLoading}
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4 text-gray-400" />
+                  ) : (
+                    <Eye className="h-4 w-4 text-gray-400" />
+                  )}
+                </button>
+              </div>
             </div>
             <div className="space-y-2">
+              <Label htmlFor="confirmPassword" className="text-sm md:text-base">
+                Confirm Password
+              </Label>
+              <div className="relative">
+                <Input
+                  id="confirmPassword"
+                  type={showConfirmPassword ? "text" : "password"}
+                  placeholder="At least 8 characters"
+                  value={formData.confirmPassword}
+                  onChange={(e) => updateField("confirmPassword", e.target.value)}
+                  required
+                  disabled={isLoading}
+                  className="h-11 md:h-10 text-base pr-10"
+                />
+                <button
+                  type="button"
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  disabled={isLoading}
+                >
+                  {showConfirmPassword ? (
+                    <EyeOff className="h-4 w-4 text-gray-400" />
+                  ) : (
+                    <Eye className="h-4 w-4 text-gray-400" />
+                  )}
+                </button>
+              </div>
+            </div>
+            {/* <div className="space-y-2">
               <Label htmlFor="dob" className="text-sm md:text-base">
                 Date of Birth (Optional)
               </Label>
@@ -155,7 +207,7 @@ function SignupForm() {
                 disabled={isLoading}
                 className="h-11 md:h-10 text-base"
               />
-            </div>
+            </div> */}
             <div className="space-y-2">
               <Label htmlFor="country" className="text-sm md:text-base">
                 Country (Optional)
