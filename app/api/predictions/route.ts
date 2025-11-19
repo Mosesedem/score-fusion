@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { getCurrentSession } from "@/lib/session";
 import { cacheHelpers } from "@/lib/redis";
 import { hasVIPAccess } from "@/lib/vip-access";
+import { Prisma } from "@prisma/client";
 
 function startOfDay(date: Date) {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate());
@@ -95,26 +96,7 @@ export async function GET(request: NextRequest) {
       tipViewLimit = 10;
     }
 
-    interface Where {
-      status: "published";
-      publishAt: { lte: Date };
-      sport?: { mode: "insensitive"; equals: string };
-      featured?: boolean;
-      isVIP?: boolean;
-      category?: "tip" | "update";
-      OR?: Array<
-        | { title: { mode: "insensitive"; contains: string } }
-        | { content: { mode: "insensitive"; contains: string } }
-        | { summary: { mode: "insensitive"; contains: string } }
-        | { tags: { hasSome: string[] } }
-        | { result: { not: null; not: "pending" } }
-        | { matchDate: { lt: Date } }
-      >;
-      tags?: { hasSome: string[] };
-      matchDate?: { gte: Date } | { lt: Date };
-    }
-
-    const where: Where = {
+    const where: Prisma.TipWhereInput = {
       status: "published",
       publishAt: { lte: new Date() },
       ...(validatedQuery.history
@@ -173,7 +155,7 @@ export async function GET(request: NextRequest) {
         { tags: { hasSome: [validatedQuery.search] } },
       ];
       if (where.OR) {
-        where.OR = [...(where.OR as any[]), ...searchOR];
+        where.OR = [...where.OR, ...searchOR];
       } else {
         where.OR = searchOR;
       }
