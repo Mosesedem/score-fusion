@@ -54,18 +54,11 @@ export default function HistoryPage() {
   const fetchHistory = useCallback(async () => {
     try {
       setLoading(true);
-      // Fetch all predictions
-      const response = await api.get<{ predictions: Tip[] }>("/predictions");
-      const now = new Date();
-      const twoHoursAgo = new Date(now.getTime() - 2 * 60 * 60 * 1000);
-
-      const isHistorical = (tip: Tip) => {
-        const hasResult = tip.result && tip.result !== "pending";
-        const isPast = tip.matchDate ? new Date(tip.matchDate) < twoHoursAgo : false;
-        return Boolean(hasResult || isPast);
-      };
-
-      const historical = (response.data?.predictions || []).filter(isHistorical);
+      // Fetch all historical predictions
+      const response = await api.get<{ predictions: Tip[] }>(
+        "/predictions?history=true"
+      );
+      const historical = response.data?.predictions || [];
       historical.sort((a, b) => {
         const aDate = a.matchDate ? new Date(a.matchDate).getTime() : -Infinity;
         const bDate = b.matchDate ? new Date(b.matchDate).getTime() : -Infinity;
@@ -97,6 +90,7 @@ export default function HistoryPage() {
           setHasVIPAccess(data.hasAccess);
         }
       } catch (error) {
+        console.error("Failed to check VIP access:", error);
       }
     };
 
@@ -173,19 +167,28 @@ export default function HistoryPage() {
                 <div className="text-center py-8 md:py-12 text-muted-foreground text-xs md:text-sm">
                   Loading history...
                 </div>
-              ) : allPredictions.filter((t) => (filter === "all" ? true : filter === "free" ? !t.isVIP : t.isVIP)).length > 0 ? (
+              ) : allPredictions.filter((t) =>
+                  filter === "all"
+                    ? true
+                    : filter === "free"
+                    ? !t.isVIP
+                    : t.isVIP
+                ).length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 md:gap-4">
                   {[...allPredictions]
-                    .filter((t) => (filter === "all" ? true : filter === "free" ? !t.isVIP : t.isVIP))
-                    .sort((a, b) => {
-                      const aDate = a.matchDate ? new Date(a.matchDate).getTime() : -Infinity;
-                      const bDate = b.matchDate ? new Date(b.matchDate).getTime() : -Infinity;
-                      return bDate - aDate;
-                    })
+                    .filter((t) =>
+                      filter === "all"
+                        ? true
+                        : filter === "free"
+                        ? !t.isVIP
+                        : t.isVIP
+                    )
                     .map((tip) => (
                       <div
                         key={tip.id}
-                        className={`border-2 ${tip.isVIP ? "border-primary/50" : "border-muted"} rounded-lg p-3 md:p-4 hover:border-primary transition-colors`}
+                        className={`border-2 ${
+                          tip.isVIP ? "border-primary/50" : "border-muted"
+                        } rounded-lg p-3 md:p-4 hover:border-primary transition-colors`}
                       >
                         <div className="flex items-start justify-between gap-2 md:gap-4 mb-3">
                           <div className="flex-1 min-w-0">
@@ -214,7 +217,10 @@ export default function HistoryPage() {
                               <Calendar className="h-2.5 w-2.5 md:h-3 md:w-3" />
                               <span>
                                 {tip.matchDate
-                                  ? new Date(tip.matchDate).toLocaleString("en-NG", { timeZone: "Africa/Lagos" })
+                                  ? new Date(tip.matchDate).toLocaleString(
+                                      "en-NG",
+                                      { timeZone: "Africa/Lagos" }
+                                    )
                                   : "N/A"}
                               </span>
                             </div>
@@ -230,7 +236,8 @@ export default function HistoryPage() {
                                       />
                                     )}
                                     <span>
-                                      {tip.homeTeam.shortName || tip.homeTeam.name}
+                                      {tip.homeTeam.shortName ||
+                                        tip.homeTeam.name}
                                     </span>
                                   </div>
                                 )}
@@ -247,7 +254,8 @@ export default function HistoryPage() {
                                       />
                                     )}
                                     <span>
-                                      {tip.awayTeam.shortName || tip.awayTeam.name}
+                                      {tip.awayTeam.shortName ||
+                                        tip.awayTeam.name}
                                     </span>
                                   </div>
                                 )}
@@ -255,8 +263,12 @@ export default function HistoryPage() {
                             )}
                             {tip.predictedOutcome && (
                               <div className="text-[10px] md:text-xs">
-                                <span className="text-muted-foreground">Prediction: </span>
-                                <span className="font-medium">{tip.predictedOutcome}</span>
+                                <span className="text-muted-foreground">
+                                  Prediction:{" "}
+                                </span>
+                                <span className="font-medium">
+                                  {tip.predictedOutcome}
+                                </span>
                               </div>
                             )}
                           </div>
@@ -266,7 +278,9 @@ export default function HistoryPage() {
                                 <div className="text-base md:text-lg lg:text-xl font-bold text-primary">
                                   {tip.odds}
                                 </div>
-                                <div className="text-[10px] md:text-xs text-muted-foreground">Odds</div>
+                                <div className="text-[10px] md:text-xs text-muted-foreground">
+                                  Odds
+                                </div>
                               </>
                             )}
                           </div>
@@ -277,7 +291,14 @@ export default function HistoryPage() {
                             size="sm"
                             className="w-full text-[10px] md:text-xs"
                           >
-                            {tip.isVIP && !hasVIPAccess && tip.matchDate && new Date() < new Date(new Date(tip.matchDate).getTime() + 8 * 60 * 60 * 1000) ? (
+                            {tip.isVIP &&
+                            !hasVIPAccess &&
+                            tip.matchDate &&
+                            new Date() <
+                              new Date(
+                                new Date(tip.matchDate).getTime() +
+                                  8 * 60 * 60 * 1000
+                              ) ? (
                               <>
                                 <Lock className="h-3 w-3 md:h-4 md:w-4 mr-1.5 md:mr-2" />
                                 Unlock Full Analysis
@@ -296,8 +317,13 @@ export default function HistoryPage() {
               ) : (
                 <div className="text-center py-8 md:py-12 text-muted-foreground">
                   <TrendingUp className="h-12 w-12 md:h-16 md:w-16 mx-auto mb-3 md:mb-4 opacity-50" />
-                  <p className="text-sm md:text-base lg:text-lg">No completed predictions yet</p>
-                  <p className="text-xs md:text-sm mt-2">Completed predictions will appear here after matches conclude</p>
+                  <p className="text-sm md:text-base lg:text-lg">
+                    No completed predictions yet
+                  </p>
+                  <p className="text-xs md:text-sm mt-2">
+                    Completed predictions will appear here after matches
+                    conclude
+                  </p>
                 </div>
               )}
             </CardContent>
