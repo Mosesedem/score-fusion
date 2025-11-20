@@ -213,6 +213,7 @@ export async function GET(request: NextRequest) {
           viewCount: true,
           successRate: true,
           result: true,
+          matchResult: true,
           createdAt: true,
           updatedAt: true,
         },

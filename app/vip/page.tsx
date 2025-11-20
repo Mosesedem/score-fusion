@@ -6,7 +6,6 @@ import { useAuth } from "@/contexts/auth-context";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import {
   Crown,
   Lock,
@@ -37,11 +36,20 @@ export default function VIPAreaPage() {
       homeTeam?: { name: string; logoUrl?: string };
       awayTeam?: { name: string; logoUrl?: string };
       predictedOutcome?: string;
+      confidenceLevel?: number;
       ticketSnapshots: string[];
       result?: string;
       matchDate?: string;
       createdAt: string;
       category: "tip" | "update";
+      matchResult?: string;
+      tipResult?: {
+        id: string;
+        settledAt: string;
+        outcome: string;
+        payout?: number;
+        createdAt: string;
+      };
     }>
   >([]);
   const [vipUpdates, setVipUpdates] = useState<
@@ -56,11 +64,20 @@ export default function VIPAreaPage() {
       homeTeam?: { name: string; logoUrl?: string };
       awayTeam?: { name: string; logoUrl?: string };
       predictedOutcome?: string;
+      confidenceLevel?: number;
       ticketSnapshots: string[];
       result?: string;
       matchDate?: string;
       createdAt: string;
       category: "tip" | "update";
+      matchResult?: string;
+      tipResult?: {
+        id: string;
+        settledAt: string;
+        outcome: string;
+        payout?: number;
+        createdAt: string;
+      };
     }>
   >([]);
   const [historyPredictions, setHistoryPredictions] = useState<
@@ -427,29 +444,6 @@ export default function VIPAreaPage() {
                 {vipPredictions.map((prediction) => (
                   <Card key={prediction.id} className="border-2 border-primary">
                     <CardContent className="p-4">
-                      <div className="flex items-center gap-1.5 md:gap-2 mb-2 flex-wrap">
-                        <Badge className=" text-[10px] md:text-xs px-1.5 md:px-2 py-0.5">
-                          {prediction.sport}
-                        </Badge>
-                        {prediction.league && (
-                          <Badge className=" text-[10px] md:text-xs px-1.5 md:px-2 py-0.5">
-                            {prediction.league}
-                          </Badge>
-                        )}
-                        {prediction.result && (
-                          <Badge
-                            className={`text-[10px] md:text-xs px-1.5 md:px-2 py-0.5 ${
-                              prediction.result === "won"
-                                ? "bg-green-500 text-white"
-                                : prediction.result === "lost"
-                                ? "bg-red-500 text-white"
-                                : "bg-gray-500 text-white"
-                            }`}
-                          >
-                            {prediction.result.toUpperCase()}
-                          </Badge>
-                        )}
-                      </div>
                       <h3 className="font-bold text-sm md:text-base mb-3 line-clamp-2">
                         {prediction.title}
                       </h3>
@@ -484,6 +478,43 @@ export default function VIPAreaPage() {
                           </div>
                         </div>
                       )}
+                      {prediction.matchResult && (
+                        <div className="text-center text-xs md:text-sm font-medium text-primary mb-3">
+                          {prediction.matchResult}
+                        </div>
+                      )}
+                      <div className="space-y-1 text-[10px] md:text-xs mb-3">
+                        {prediction.predictedOutcome && (
+                          <div>
+                            <span className="text-muted-foreground">
+                              Prediction:{" "}
+                            </span>
+                            <span className="font-medium">
+                              {prediction.predictedOutcome}
+                            </span>
+                          </div>
+                        )}
+                        {prediction.confidenceLevel && (
+                          <div>
+                            <span className="text-muted-foreground">
+                              Confidence Level:{" "}
+                            </span>
+                            <span className="font-medium">
+                              {prediction.confidenceLevel}%
+                            </span>
+                          </div>
+                        )}
+                        {prediction.result && (
+                          <div>
+                            <span className="text-muted-foreground">
+                              Result:{" "}
+                            </span>
+                            <span className="font-medium capitalize">
+                              {prediction.result}
+                            </span>
+                          </div>
+                        )}
+                      </div>
                       <p className="text-xs md:text-sm text-muted-foreground mb-3 line-clamp-2">
                         {prediction.summary || prediction.content}
                       </p>
@@ -556,32 +587,6 @@ export default function VIPAreaPage() {
                 {vipUpdates.map((update) => (
                   <Card key={update.id} className="border-2 border-purple-500">
                     <CardContent className="p-4">
-                      <div className="flex items-center gap-1.5 md:gap-2 mb-2 flex-wrap">
-                        <Badge className="bg-purple-500 text-white text-[10px] md:text-xs px-1.5 md:px-2 py-0.5">
-                          UPDATE
-                        </Badge>
-                        <Badge className=" text-[10px] md:text-xs px-1.5 md:px-2 py-0.5">
-                          {update.sport}
-                        </Badge>
-                        {update.league && (
-                          <Badge className=" text-[10px] md:text-xs px-1.5 md:px-2 py-0.5">
-                            {update.league}
-                          </Badge>
-                        )}
-                        {update.result && (
-                          <Badge
-                            className={`text-[10px] md:text-xs px-1.5 md:px-2 py-0.5 ${
-                              update.result === "won"
-                                ? "bg-green-500 text-white"
-                                : update.result === "lost"
-                                ? "bg-red-500 text-white"
-                                : "bg-gray-500 text-white"
-                            }`}
-                          >
-                            {update.result.toUpperCase()}
-                          </Badge>
-                        )}
-                      </div>
                       <h3 className="font-bold text-sm md:text-base mb-3 line-clamp-2">
                         {update.title}
                       </h3>
@@ -616,6 +621,38 @@ export default function VIPAreaPage() {
                           </div>
                         </div>
                       )}
+                      <div className="space-y-1 text-[10px] md:text-xs mb-3">
+                        {update.predictedOutcome && (
+                          <div>
+                            <span className="text-muted-foreground">
+                              Prediction:{" "}
+                            </span>
+                            <span className="font-medium">
+                              {update.predictedOutcome}
+                            </span>
+                          </div>
+                        )}
+                        {update.confidenceLevel && (
+                          <div>
+                            <span className="text-muted-foreground">
+                              Confidence Level:{" "}
+                            </span>
+                            <span className="font-medium">
+                              {update.confidenceLevel}%
+                            </span>
+                          </div>
+                        )}
+                        {update.result && (
+                          <div>
+                            <span className="text-muted-foreground">
+                              Result:{" "}
+                            </span>
+                            <span className="font-medium capitalize">
+                              {update.result}
+                            </span>
+                          </div>
+                        )}
+                      </div>
                       <p className="text-xs md:text-sm text-muted-foreground mb-3 line-clamp-2">
                         {update.summary || update.content}
                       </p>
@@ -693,32 +730,13 @@ export default function VIPAreaPage() {
                     {historyPredictions.map((prediction) => (
                       <Card
                         key={prediction.id}
-                        className="border-2 border-border"
+                        className={`border-2 ${
+                          prediction.result === "won"
+                            ? "border-emerald-500"
+                            : "border-border"
+                        }`}
                       >
                         <CardContent className="p-4">
-                          <div className="flex items-center gap-1.5 md:gap-2 mb-2 flex-wrap">
-                            <Badge className="text-[10px] md:text-xs px-1.5 md:px-2 py-0.5">
-                              {prediction.sport}
-                            </Badge>
-                            {prediction.league && (
-                              <Badge className="text-[10px] md:text-xs px-1.5 md:px-2 py-0.5">
-                                {prediction.league}
-                              </Badge>
-                            )}
-                            {prediction.result && (
-                              <Badge
-                                className={`text-[10px] md:text-xs px-1.5 md:px-2 py-0.5 ${
-                                  prediction.result === "won"
-                                    ? "bg-green-500 text-white"
-                                    : prediction.result === "lost"
-                                    ? "bg-red-500 text-white"
-                                    : "bg-gray-500 text-white"
-                                }`}
-                              >
-                                {prediction.result.toUpperCase()}
-                              </Badge>
-                            )}
-                          </div>
                           <h3 className="font-bold text-sm md:text-base mb-3 line-clamp-2">
                             {prediction.title}
                           </h3>
@@ -753,6 +771,74 @@ export default function VIPAreaPage() {
                               </div>
                             </div>
                           )}
+                          {prediction.matchResult && (
+                            <div
+                              className={`text-xs md:text-sm font-medium mb-2 ${
+                                prediction.result === "won"
+                                  ? "text-emerald-700 dark:text-emerald-400"
+                                  : "text-primary"
+                              }`}
+                            >
+                              {prediction.matchResult}
+                            </div>
+                          )}
+                          <div className="space-y-1 text-[10px] md:text-xs mb-3">
+                            {prediction.result && (
+                              <div>
+                                <span className="text-muted-foreground">
+                                  Result:{" "}
+                                </span>
+                                <span
+                                  className={`font-medium capitalize ${
+                                    prediction.result === "won"
+                                      ? "text-emerald-600 dark:text-emerald-400"
+                                      : prediction.result === "lost"
+                                      ? "text-red-500"
+                                      : ""
+                                  }`}
+                                >
+                                  {prediction.result}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                          {prediction.tipResult && (
+                            <details className="mb-3">
+                              <summary className="text-[10px] md:text-xs font-medium cursor-pointer text-primary hover:text-primary/80">
+                                Tip Result Details
+                              </summary>
+                              <div className="mt-1 space-y-1 text-[10px] md:text-xs pl-2 border-l-2 border-primary/20">
+                                <div>
+                                  <span className="text-muted-foreground">
+                                    Settled At:{" "}
+                                  </span>
+                                  <span className="font-medium">
+                                    {new Date(
+                                      prediction.tipResult.settledAt
+                                    ).toLocaleString()}
+                                  </span>
+                                </div>
+                                <div>
+                                  <span className="text-muted-foreground">
+                                    Outcome:{" "}
+                                  </span>
+                                  <span className="font-medium capitalize">
+                                    {prediction.tipResult.outcome}
+                                  </span>
+                                </div>
+                                {prediction.tipResult.payout && (
+                                  <div>
+                                    <span className="text-muted-foreground">
+                                      Payout:{" "}
+                                    </span>
+                                    <span className="font-medium">
+                                      €{prediction.tipResult.payout}
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+                            </details>
+                          )}
                           <Link href={`/tips/${prediction.id}`}>
                             <Button
                               variant="outline"
@@ -773,32 +859,49 @@ export default function VIPAreaPage() {
                   <h3 className="font-bold text-base mb-4">Past VIP Updates</h3>
                   <div className="grid gap-4 md:grid-cols-2">
                     {historyUpdates.map((update) => (
-                      <Card key={update.id} className="border-2 border-border">
+                      <Card
+                        key={update.id}
+                        className={`border-2 ${
+                          update.result === "won"
+                            ? "border-emerald-500"
+                            : "border-border"
+                        }`}
+                      >
                         <CardContent className="p-4">
-                          <div className="flex items-center gap-1.5 md:gap-2 mb-2 flex-wrap">
-                            <Badge className="bg-purple-500 text-white text-[10px] md:text-xs px-1.5 md:px-2 py-0.5">
-                              UPDATE
-                            </Badge>
-                            <Badge className="text-[10px] md:text-xs px-1.5 md:px-2 py-0.5">
-                              {update.sport}
-                            </Badge>
-                            {update.result && (
-                              <Badge
-                                className={`text-[10px] md:text-xs px-1.5 md:px-2 py-0.5 ${
-                                  update.result === "won"
-                                    ? "bg-green-500 text-white"
-                                    : update.result === "lost"
-                                    ? "bg-red-500 text-white"
-                                    : "bg-gray-500 text-white"
-                                }`}
-                              >
-                                {update.result.toUpperCase()}
-                              </Badge>
-                            )}
-                          </div>
                           <h3 className="font-bold text-sm md:text-base mb-3 line-clamp-2">
                             {update.title}
                           </h3>
+                          <div className="space-y-1 text-[10px] md:text-xs mb-1">
+                            {update.result && (
+                              <div>
+                                <span className="text-muted-foreground">
+                                  Result:{" "}
+                                </span>
+                                <span
+                                  className={`font-medium capitalize ${
+                                    update.result === "won"
+                                      ? "text-emerald-600 dark:text-emerald-400"
+                                      : update.result === "lost"
+                                      ? "text-red-500"
+                                      : ""
+                                  }`}
+                                >
+                                  {update.result}
+                                </span>
+                              </div>
+                            )}
+                            {update.matchResult && (
+                              <div
+                                className={`text-xs md:text-sm font-medium ${
+                                  update.result === "won"
+                                    ? "text-emerald-700 dark:text-emerald-400"
+                                    : "text-primary"
+                                }`}
+                              >
+                                {update.matchResult}
+                              </div>
+                            )}
+                          </div>
                           <Link href={`/tips/${update.id}`}>
                             <Button
                               variant="outline"

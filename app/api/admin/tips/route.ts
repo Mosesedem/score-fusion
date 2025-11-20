@@ -223,7 +223,7 @@ export async function GET(request: NextRequest) {
       predictionType: string | null;
       predictedOutcome: string | null;
       ticketSnapshots: string[];
-      publishAt: Date;
+      publishAt: Date | null;
       isVIP: boolean;
       featured: boolean;
       authorId: string | null;

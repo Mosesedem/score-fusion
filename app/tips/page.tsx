@@ -5,7 +5,6 @@ import { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { TrendingUp, Lock, Calendar, Target } from "lucide-react";
 import { useApiClient, ApiResponse } from "@/lib/api-client";
 
@@ -33,6 +32,7 @@ interface Tip {
   };
   predictionType?: string;
   predictedOutcome?: string;
+  confidenceLevel?: number;
   ticketSnapshots: string[];
   isVIP: boolean;
   featured: boolean;
@@ -42,6 +42,14 @@ interface Tip {
   category?: string;
   createdAt: string;
   authorName?: string;
+  matchResult?: string;
+  tipResult?: {
+    id: string;
+    settledAt: string;
+    outcome: string;
+    payout?: number;
+    createdAt: string;
+  };
 }
 
 interface PredictionsData {
@@ -288,38 +296,31 @@ export default function TipsPage() {
                 <Card
                   key={tip.id}
                   className={`border-2 ${
-                    tip.isVIP ? "border-primary" : "border-border"
+                    viewMode === "history" && tip.result === "won"
+                      ? "border-emerald-500"
+                      : tip.isVIP
+                      ? "border-primary"
+                      : "border-border"
                   } hover:border-primary transition-colors`}
                 >
                   <CardHeader className="pb-2 p-3 md:p-4 lg:p-6 lg:pb-3">
                     <div className="flex items-center justify-between mb-1.5 md:mb-2 gap-1.5 md:gap-2">
-                      <Badge className="text-[10px] md:text-xs px-1.5 md:px-2 py-0.5">
+                      <div className="text-[10px] md:text-xs px-1.5 md:px-2 py-0.5 bg-secondary text-secondary-foreground rounded">
                         {tip.sport}
-                      </Badge>
-                      <div className="flex items-center gap-1 shrink-0 flex-wrap">
-                        {tip.isVIP && (
-                          <Badge className="bg-primary text-primary-foreground text-[10px] md:text-xs px-1.5 md:px-2 py-0.5">
-                            <Lock className="h-2 w-2 md:h-2.5 md:w-2.5 mr-0.5 md:mr-1" />
-                            VIP
-                          </Badge>
-                        )}
-                        {tip.featured && (
-                          <Badge className="bg-primary text-primary-foreground text-[10px] md:text-xs px-1.5 md:px-2 py-0.5">
-                            Featured
-                          </Badge>
-                        )}
-                        {tip.result && (
-                          <Badge
-                            className={`text-[10px] md:text-xs px-1.5 md:px-2 py-0.5 ${
+                      </div>
+                      <div className="text-[10px] md:text-xs text-muted-foreground">
+                        {viewMode === "history" && tip.result && (
+                          <span
+                            className={`font-medium capitalize ${
                               tip.result === "won"
-                                ? "bg-green-500 text-white"
+                                ? "text-emerald-600 dark:text-emerald-400"
                                 : tip.result === "lost"
-                                ? "bg-red-500 text-white"
-                                : "bg-gray-500 text-white"
+                                ? "text-red-500"
+                                : ""
                             }`}
                           >
-                            {tip.result.toUpperCase()}
-                          </Badge>
+                            {tip.result}
+                          </span>
                         )}
                       </div>
                     </div>
@@ -368,13 +369,92 @@ export default function TipsPage() {
                         </div>
                       </div>
                     )}
+                    {tip.matchResult && (
+                      <div className="text-center text-xs md:text-sm font-medium text-primary mb-3 md:mb-4">
+                        {tip.matchResult}
+                      </div>
+                    )}
 
-                    {/* Prediction Summary */}
-                    <p className="text-[10px] md:text-xs lg:text-sm text-muted-foreground mb-3 md:mb-4 line-clamp-3">
-                      {isVIPLocked(tip)
-                        ? "🔒 Unlock VIP access to view full analysis and ticket snapshots"
-                        : tip.summary || tip.content}
-                    </p>
+                    {/* Prediction Details */}
+                    <div className="space-y-1 text-[10px] md:text-xs lg:text-sm mb-3 md:mb-4">
+                      {tip.predictedOutcome && (
+                        <div>
+                          <span className="text-muted-foreground">
+                            Prediction:{" "}
+                          </span>
+                          <span className="font-medium">
+                            {tip.predictedOutcome}
+                          </span>
+                        </div>
+                      )}
+                      {tip.confidenceLevel && (
+                        <div>
+                          <span className="text-muted-foreground">
+                            Confidence Level:{" "}
+                          </span>
+                          <span className="font-medium">
+                            {tip.confidenceLevel}%
+                          </span>
+                        </div>
+                      )}
+                      {viewMode === "history" && tip.result && (
+                        <div>
+                          <span className="text-muted-foreground">
+                            Result:{" "}
+                          </span>
+                          <span
+                            className={`font-medium capitalize ${
+                              tip.result === "won"
+                                ? "text-emerald-600 dark:text-emerald-400"
+                                : tip.result === "lost"
+                                ? "text-red-500"
+                                : ""
+                            }`}
+                          >
+                            {tip.result}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Tip Result Details for History */}
+                    {viewMode === "history" && tip.tipResult && (
+                      <details className="mb-3 md:mb-4">
+                        <summary className="text-[10px] md:text-xs lg:text-sm font-medium cursor-pointer text-primary hover:text-primary/80">
+                          Tip Result Details
+                        </summary>
+                        <div className="mt-1 space-y-1 text-[10px] md:text-xs lg:text-sm pl-2 border-l-2 border-primary/20">
+                          <div>
+                            <span className="text-muted-foreground">
+                              Settled At:{" "}
+                            </span>
+                            <span className="font-medium">
+                              {new Date(
+                                tip.tipResult.settledAt
+                              ).toLocaleString()}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">
+                              Outcome:{" "}
+                            </span>
+                            <span className="font-medium capitalize">
+                              {tip.tipResult.outcome}
+                            </span>
+                          </div>
+                          {tip.tipResult.payout && (
+                            <div>
+                              <span className="text-muted-foreground">
+                                Payout:{" "}
+                              </span>
+                              <span className="font-medium">
+                                €{tip.tipResult.payout}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      </details>
+                    )}
 
                     {/* Odds and Prediction */}
                     <div className="flex items-center justify-between mb-3 md:mb-4">
@@ -390,16 +470,6 @@ export default function TipsPage() {
                           </>
                         )}
                       </div>
-                      {tip.predictedOutcome && (
-                        <div className="text-right">
-                          <div className="text-xs md:text-sm font-bold line-clamp-1">
-                            {tip.predictedOutcome}
-                          </div>
-                          <div className="text-[10px] md:text-xs text-muted-foreground">
-                            Prediction
-                          </div>
-                        </div>
-                      )}
                     </div>
 
                     {/* Metadata */}
@@ -412,8 +482,10 @@ export default function TipsPage() {
                           })}
                         </span>
                       </div>
-                      {tip.authorName && (
-                        <span className="truncate">By {tip.authorName}</span>
+                      {tip.confidenceLevel && (
+                        <span className="truncate">
+                          Confidence Level:{tip.confidenceLevel}
+                        </span>
                       )}
                     </div>
 

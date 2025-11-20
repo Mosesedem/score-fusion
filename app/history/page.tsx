@@ -4,7 +4,6 @@ import { useSession } from "next-auth/react";
 import { useApiClient } from "@/lib/api-client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Calendar, TrendingUp, Crown, Lock } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState, useCallback } from "react";
@@ -33,6 +32,7 @@ interface Tip {
   };
   predictionType?: string;
   predictedOutcome?: string;
+  confidenceLevel?: number;
   ticketSnapshots: string[];
   isVIP: boolean;
   featured: boolean;
@@ -41,6 +41,14 @@ interface Tip {
   successRate?: number;
   createdAt: string;
   authorName?: string;
+  matchResult?: string;
+  tipResult?: {
+    id: string;
+    settledAt: string;
+    outcome: string;
+    payout?: number;
+    createdAt: string;
+  };
 }
 
 export default function HistoryPage() {
@@ -96,25 +104,6 @@ export default function HistoryPage() {
 
     checkVIPAccess();
   }, [api]);
-
-  const getResultBadge = (result?: string) => {
-    if (!result) return null;
-    const colors = {
-      won: "bg-green-500 text-white",
-      lost: "bg-red-500 text-white",
-      void: "bg-gray-500 text-white",
-      pending: "bg-blue-500 text-white",
-    };
-    return (
-      <Badge
-        className={`${
-          colors[result.toLowerCase() as keyof typeof colors] || colors.pending
-        } text-[10px] md:text-xs px-1.5 md:px-2 py-0.5`}
-      >
-        {result.toUpperCase()}
-      </Badge>
-    );
-  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -187,33 +176,16 @@ export default function HistoryPage() {
                       <div
                         key={tip.id}
                         className={`border-2 ${
-                          tip.isVIP ? "border-primary/50" : "border-muted"
+                          tip.result === "won"
+                            ? "border-emerald-500"
+                            : tip.isVIP
+                            ? "border-primary/50"
+                            : "border-muted"
                         } rounded-lg p-3 md:p-4 hover:border-primary transition-colors`}
                       >
                         <div className="flex items-start justify-between gap-2 md:gap-4 mb-3">
                           <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-1.5 md:gap-2 mb-1.5 md:mb-2 flex-wrap">
-                              {tip.league && (
-                                <Badge className="text-[10px] md:text-xs px-1.5 md:px-2 py-0.5">
-                                  {tip.league}
-                                </Badge>
-                              )}
-                              {tip.featured && (
-                                <Badge className="bg-yellow-500 text-white text-[10px] md:text-xs px-1.5 md:px-2 py-0.5">
-                                  Featured
-                                </Badge>
-                              )}
-                              {tip.isVIP && (
-                                <Badge className="bg-primary text-primary-foreground text-[10px] md:text-xs px-1.5 md:px-2 py-0.5 flex items-center gap-1">
-                                  <Crown className="h-3 w-3" /> VIP
-                                </Badge>
-                              )}
-                              {tip.result && getResultBadge(tip.result)}
-                            </div>
-                            <h4 className="text-muted-foreground text-sm md:text-base mb-1 md:mb-2 line-clamp-2">
-                              {tip.title}
-                            </h4>
-                            <div className="flex items-center gap-1 text-[10px] md:text-xs text-muted-foreground mb-2">
+                            <div className="flex items-center gap-1 text-[10px] md:text-xs text-muted-foreground mb-1.5">
                               <Calendar className="h-2.5 w-2.5 md:h-3 md:w-3" />
                               <span>
                                 {tip.matchDate
@@ -224,6 +196,86 @@ export default function HistoryPage() {
                                   : "N/A"}
                               </span>
                             </div>
+                            <h4 className="text-muted-foreground text-sm md:text-base mb-1 md:mb-2 line-clamp-2">
+                              {tip.title}
+                            </h4>
+                            <div className="space-y-1 text-[10px] md:text-xs">
+                              {tip.predictedOutcome && (
+                                <div>
+                                  <span className="text-muted-foreground">
+                                    Prediction:{" "}
+                                  </span>
+                                  <span className="font-medium">
+                                    {tip.predictedOutcome}
+                                  </span>
+                                </div>
+                              )}
+                              {tip.confidenceLevel && (
+                                <div>
+                                  <span className="text-muted-foreground">
+                                    Confidence Level:{" "}
+                                  </span>
+                                  <span className="font-medium">
+                                    {tip.confidenceLevel}%
+                                  </span>
+                                </div>
+                              )}
+                              {tip.result && (
+                                <div>
+                                  <span className="text-muted-foreground">
+                                    Result:{" "}
+                                  </span>
+                                  <span
+                                    className={`font-medium capitalize ${
+                                      tip.result === "won"
+                                        ? "text-emerald-600 dark:text-emerald-400"
+                                        : tip.result === "lost"
+                                        ? "text-red-500"
+                                        : ""
+                                    }`}
+                                  >
+                                    {tip.result}
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                            {tip.tipResult && (
+                              <details className="mt-2">
+                                <summary className="text-[10px] md:text-xs font-medium cursor-pointer text-primary hover:text-primary/80">
+                                  Tip Result Details
+                                </summary>
+                                <div className="mt-1 space-y-1 text-[10px] md:text-xs pl-2 border-l-2 border-primary/20">
+                                  <div>
+                                    <span className="text-muted-foreground">
+                                      Settled At:{" "}
+                                    </span>
+                                    <span className="font-medium">
+                                      {new Date(
+                                        tip.tipResult.settledAt
+                                      ).toLocaleString()}
+                                    </span>
+                                  </div>
+                                  <div>
+                                    <span className="text-muted-foreground">
+                                      Outcome:{" "}
+                                    </span>
+                                    <span className="font-medium capitalize">
+                                      {tip.tipResult.outcome}
+                                    </span>
+                                  </div>
+                                  {tip.tipResult.payout && (
+                                    <div>
+                                      <span className="text-muted-foreground">
+                                        Payout:{" "}
+                                      </span>
+                                      <span className="font-medium">
+                                        €{tip.tipResult.payout}
+                                      </span>
+                                    </div>
+                                  )}
+                                </div>
+                              </details>
+                            )}
                             {(tip.homeTeam || tip.awayTeam) && (
                               <div className="flex items-center gap-2 text-sm md:text-base font-bold mb-2">
                                 {tip.homeTeam && (
@@ -259,16 +311,17 @@ export default function HistoryPage() {
                                     </span>
                                   </div>
                                 )}
-                              </div>
-                            )}
-                            {tip.predictedOutcome && (
-                              <div className="text-[10px] md:text-xs">
-                                <span className="text-muted-foreground">
-                                  Prediction:{" "}
-                                </span>
-                                <span className="font-medium">
-                                  {tip.predictedOutcome}
-                                </span>
+                                {tip.matchResult && (
+                                  <span
+                                    className={`text-xs md:text-sm font-medium ml-2 ${
+                                      tip.result === "won"
+                                        ? "text-emerald-700 dark:text-emerald-400"
+                                        : "text-primary"
+                                    }`}
+                                  >
+                                    {tip.matchResult}
+                                  </span>
+                                )}
                               </div>
                             )}
                           </div>

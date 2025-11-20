@@ -107,10 +107,11 @@ model Tip {
   awayTeam         Team?             @relation("AwayTips", fields: [awayTeamId], references: [id], onDelete: SetNull)
   predictionType   PredictionType? // winner, over_under, both_teams_score, etc.
   predictedOutcome String? // home_win, draw, away_win, over, under, yes, no, etc.
+  matchResult      String            @default("Pending")
   confidenceLevel  Int? // confidence level in prediction (1-100%)
   // Ticket snapshots for morale boosting (up to 10)
   ticketSnapshots  String[] // URLs to betting ticket images
-  publishAt        DateTime
+  publishAt        DateTime?         @default(now()) // scheduled publish date
   isVIP            Boolean           @default(false)
   category         TipCategory       @default(tip) // tip, update
   featured         Boolean           @default(false)
