@@ -462,7 +462,7 @@ export default function TipsPage() {
                         {tip.odds && (
                           <>
                             <div className="text-lg md:text-xl lg:text-2xl font-bold text-primary">
-                              {tip.odds}
+                              {Number(tip.odds).toFixed(2)}
                             </div>
                             <div className="text-[10px] md:text-xs text-muted-foreground">
                               Odds

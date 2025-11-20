@@ -327,7 +327,8 @@ export default function TipDetailPage() {
                 <Card>
                   <CardContent className="p-3 md:p-4 text-center">
                     <div className="text-xl md:text-2xl lg:text-3xl font-bold text-primary">
-                      {tip.odds}
+                      {/* {tip.odds} */}
+                      {Number(tip.odds).toFixed(2)}
                     </div>
                     <div className="text-[10px] md:text-xs text-muted-foreground mt-1">
                       Odds

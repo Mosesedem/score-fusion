@@ -522,7 +522,8 @@ export default function VIPAreaPage() {
                         {prediction.odds && (
                           <div>
                             <div className="text-lg md:text-xl font-bold text-primary">
-                              {prediction.odds}
+                              {/* {prediction.odds} */}
+                              {Number(prediction.odds).toFixed(2)}
                             </div>
                             <div className="text-[10px] md:text-xs text-muted-foreground">
                               Odds
