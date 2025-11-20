@@ -497,7 +497,7 @@ export default function AdminPredictionsPage() {
       matchDate: "",
       homeTeamId: "",
       awayTeamId: "",
-      predictionType: "",
+      predictionType: "winner",
       predictedOutcome: "",
       ticketSnapshots: [],
       isVIP: false,
