@@ -1245,7 +1245,8 @@ export default function AdminPredictionsPage() {
                     <select
                       id="oddsSource"
                       className="w-full px-3 py-2 bg-background border-2 border-border text-foreground rounded-md"
-                      value={formData.oddsSource}
+                      // value={formData.oddsSource}
+                      value="manual"
                       onChange={(e) =>
                         setFormData({
                           ...formData,
