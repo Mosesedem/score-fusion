@@ -17,6 +17,8 @@ import {
   XCircle,
   Clock,
   AlertCircle,
+  BicepsFlexed,
+  Lightbulb,
 } from "lucide-react";
 
 interface Tip {
@@ -326,6 +328,7 @@ export default function TipDetailPage() {
               {tip.odds && (
                 <Card>
                   <CardContent className="p-3 md:p-4 text-center">
+                    <TrendingUp className="h-5 w-5 md:h-6 md:w-6 text-primary mx-auto mb-1" />
                     <div className="text-xl md:text-2xl lg:text-3xl font-bold text-primary">
                       {/* {tip.odds} */}
                       {Number(tip.odds).toFixed(2)}
@@ -339,11 +342,27 @@ export default function TipDetailPage() {
               {tip.confidenceLevel && (
                 <Card>
                   <CardContent className="p-3 md:p-4 text-center">
+                    <BicepsFlexed className="h-5 w-5 md:h-6 md:w-6 text-primary mx-auto mb-1" />
                     <div className="text-xl md:text-2xl lg:text-3xl font-bold text-primary">
                       {tip.confidenceLevel}%
                     </div>
                     <div className="text-[10px] md:text-xs text-muted-foreground mt-1">
                       Confidence
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {tip.predictedOutcome && (
+                <Card>
+                  <CardContent className="p-3 md:p-4 text-center">
+                    <Lightbulb className="h-5 w-5 md:h-6 md:w-6 text-primary mx-auto mb-1" />
+                    <div className="text-xl md:text-2xl lg:text-3xl font-bold text-primary">
+                      {/* {tip.odds} */}
+                      {tip.predictedOutcome}
+                    </div>
+                    <div className="text-[10px] md:text-xs text-muted-foreground mt-1">
+                      Predicted
                     </div>
                   </CardContent>
                 </Card>

@@ -329,7 +329,8 @@ export default function HistoryPage() {
                             {tip.odds && (
                               <>
                                 <div className="text-base md:text-lg lg:text-xl font-bold text-primary">
-                                  {tip.odds}
+                                  {/* {tip.odds} */}
+                                  {Number(tip.odds).toFixed(2)}
                                 </div>
                                 <div className="text-[10px] md:text-xs text-muted-foreground">
                                   Odds
