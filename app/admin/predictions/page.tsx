@@ -1149,7 +1149,7 @@ export default function AdminPredictionsPage() {
                         id="predictionType"
                         className="w-full px-3 py-2 bg-background border-2 border-border text-foreground rounded-md"
                         // value={formData.predictionType}
-                        value="default"
+                        value="winner"
                         onChange={(e) =>
                           setFormData({
                             ...formData,
