@@ -281,7 +281,7 @@ export default function TipsPage() {
               </CardContent>
             </Card>
           ) : (
-            <div className="space-y-3 sm:space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
               {displayedTips.map((tip) => (
                 <Link key={tip.id} href={`/tips/${tip.id}`} className="block">
                   <Card className="hover:shadow-lg transition-all hover:border-primary/50">

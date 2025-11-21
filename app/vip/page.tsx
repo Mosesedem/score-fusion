@@ -545,7 +545,7 @@ export default function VIPAreaPage() {
                 </p>
               </div>
             ) : (
-              <div className="grid gap-4 md:grid-cols-2">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
                 {vipPredictions.map((prediction) => (
                   <Card key={prediction.id} className="border-2 border-primary">
                     <CardContent className="p-4">
@@ -709,7 +709,7 @@ export default function VIPAreaPage() {
                 <p className="text-sm">Loading VIP updates...</p>
               </div>
             ) : vipUpdates.length > 0 ? (
-              <div className="grid gap-4 md:grid-cols-2">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
                 {vipUpdates.map((update) => (
                   <Card key={update.id} className="border-2 border-purple-500">
                     <CardContent className="p-4">
@@ -893,7 +893,7 @@ export default function VIPAreaPage() {
               {historyPredictions.length > 0 && (
                 <div className="mb-6">
                   <h3 className="font-bold text-base mb-4">Past VIP Tips</h3>
-                  <div className="grid gap-4 md:grid-cols-2">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
                     {historyPredictions.map((prediction) => (
                       <Card
                         key={prediction.id}
@@ -1072,7 +1072,7 @@ export default function VIPAreaPage() {
               {historyUpdates.length > 0 && (
                 <div>
                   <h3 className="font-bold text-base mb-4">Past VIP Updates</h3>
-                  <div className="grid gap-4 md:grid-cols-2">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
                     {historyUpdates.map((update) => (
                       <Card
                         key={update.id}

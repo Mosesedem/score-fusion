@@ -164,7 +164,7 @@ export default function HistoryPage() {
                     ? !t.isVIP
                     : t.isVIP
                 ).length > 0 ? (
-                <div className="space-y-3 sm:space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
                   {[...allPredictions]
                     .filter((t) =>
                       filter === "all"
