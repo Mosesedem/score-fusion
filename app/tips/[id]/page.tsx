@@ -20,6 +20,7 @@ import {
   BicepsFlexed,
   Lightbulb,
 } from "lucide-react";
+import { useAuth } from "@/contexts/auth-context";
 
 interface Tip {
   id: string;
@@ -73,6 +74,7 @@ export default function TipDetailPage() {
   const [loading, setLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [vipLocked, setVipLocked] = useState(false);
+  const { user } = useAuth();
 
   const fetchTip = async () => {
     try {
@@ -146,25 +148,27 @@ export default function TipDetailPage() {
                   View VIP Plans
                 </Button>
               </Link>
-              <Link href="/login">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="w-full sm:w-auto"
-                >
-                  Log in
-                </Button>
-              </Link>
+              {(!user || user.guest) && (
+                <Link href="/login">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="w-full sm:w-auto"
+                  >
+                    Log in
+                  </Button>
+                </Link>
+              )}
             </div>
             <div className="pt-2 border-t border-border mt-2">
               <Button
                 variant="ghost"
                 size="sm"
                 className="text-xs md:text-sm"
-                onClick={() => router.push("/tips")}
+                onClick={() => router.back()}
               >
                 <ArrowLeft className="h-3 w-3 md:h-4 md:w-4 mr-1" />
-                Back to Predictions
+                Go Back
               </Button>
             </div>
           </CardContent>

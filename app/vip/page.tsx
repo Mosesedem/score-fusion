@@ -14,6 +14,7 @@ import {
   CheckCircle,
   Target,
   Calendar,
+  Loader2,
 } from "lucide-react";
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
@@ -23,8 +24,25 @@ export default function VIPAreaPage() {
   const api = useApiClient();
   const [hasVIPAccess, setHasVIPAccess] = useState(false);
   const [loading, setLoading] = useState(true);
+  type TokenAccess = {
+    expiresAt: string;
+    remaining: number;
+    type: string;
+  } | null;
+  type SubscriptionData = {
+    plan: string;
+    status: string;
+    currentPeriodEnd: string;
+    cancelAtPeriodEnd: boolean;
+  } | null;
+
+  const [entitlements, setEntitlements] = useState<{
+    subscription: SubscriptionData;
+    tokenAccess: TokenAccess;
+  } | null>(null);
   const [tokenCode, setTokenCode] = useState("");
   const [tokenError, setTokenError] = useState("");
+  const [redeeming, setRedeeming] = useState(false);
   const [vipPredictions, setVipPredictions] = useState<
     Array<{
       id: string;
@@ -105,11 +123,20 @@ export default function VIPAreaPage() {
       });
 
       if (res.success) {
-        const data = res.data as { hasAccess: boolean };
-        console.log("🔍 [VIP Page] Parsed data:", data);
-        console.log("🔍 [VIP Page] hasAccess value:", data.hasAccess);
+        // /api/vip/status returns { success: true, data: { hasAccess, subscription, tokenAccess } }
+        const data = res.data as {
+          hasAccess: boolean;
+          subscription?: SubscriptionData | null;
+          tokenAccess?: TokenAccess | null;
+        };
 
-        setHasVIPAccess(data.hasAccess);
+        console.log("🔍 [VIP Page] Parsed data:", data);
+
+        setHasVIPAccess(Boolean(data.hasAccess));
+        setEntitlements({
+          subscription: data.subscription ?? null,
+          tokenAccess: data.tokenAccess ?? null,
+        });
 
         if (data.hasAccess) {
           console.log("✅ [VIP Page] VIP ACCESS GRANTED!");
@@ -123,12 +150,9 @@ export default function VIPAreaPage() {
       console.error("❌ [VIP Page] Error checking VIP access:", error);
     } finally {
       setLoading(false);
-      console.log(
-        "🔍 [VIP Page] VIP access check complete. hasVIPAccess =",
-        hasVIPAccess
-      );
+      console.log("🔍 [VIP Page] VIP access check complete.");
     }
-  }, [api, user, hasVIPAccess]);
+  }, [api, user]);
 
   const fetchVIPPredictions = useCallback(async () => {
     setLoadingPredictions(true);
@@ -186,6 +210,15 @@ export default function VIPAreaPage() {
 
   useEffect(() => {
     console.log("🔄 [VIP Page] User effect triggered. User:", user);
+    // Only run check when we have a user object and it's not a guest placeholder
+    if (!user || user.guest) {
+      // If no authenticated user, clear out entitlements and stop loading
+      setHasVIPAccess(false);
+      setEntitlements(null);
+      setLoading(false);
+      return;
+    }
+
     checkVIPAccess();
   }, [user, checkVIPAccess]);
 
@@ -208,20 +241,61 @@ export default function VIPAreaPage() {
   const handleTokenRedeem = async (e: React.FormEvent) => {
     e.preventDefault();
     setTokenError("");
+    // Ensure user is authenticated (page shows login CTA when no user)
+    if (!user) {
+      setTokenError("You need to be signed in to redeem tokens");
+      return;
+    }
 
+    setRedeeming(true);
     try {
+      const normalized = tokenCode.trim().toUpperCase();
+
       const res = await api.post("/vip/tokens/redeem", {
-        token: tokenCode,
+        token: normalized,
       });
 
       if (res.success) {
+        // Refresh entitlements and predictions and show immediate access
         setHasVIPAccess(true);
         setTokenCode("");
+        setTokenError("");
+
+        // If the response provides remainingUses, update entitlements tokenAccess
+        if (res.data) {
+          const redeemData = res.data as {
+            tokenId?: string;
+            type?: string;
+            remainingUses?: number;
+            expiresAt?: string;
+          };
+
+          setEntitlements((prev) => ({
+            subscription: prev?.subscription ?? null,
+            tokenAccess:
+              redeemData && redeemData.remainingUses !== undefined
+                ? {
+                    expiresAt: String(
+                      redeemData.expiresAt ?? new Date().toISOString()
+                    ),
+                    remaining: Number(redeemData.remainingUses ?? 0),
+                    type: String(redeemData.type ?? "general"),
+                  }
+                : prev?.tokenAccess ?? null,
+          }));
+        }
+
+        // Refresh entitlements and predictions
+        await checkVIPAccess();
+        await fetchVIPPredictions();
       } else {
         setTokenError(res.error || "Invalid token code");
       }
-    } catch {
+    } catch (err) {
+      console.error("Redeem failed:", err);
       setTokenError("Failed to redeem token. Please try again.");
+    } finally {
+      setRedeeming(false);
     }
   };
 
@@ -373,7 +447,14 @@ export default function VIPAreaPage() {
                       <Input
                         placeholder="Enter your VIP token code"
                         value={tokenCode}
-                        onChange={(e) => setTokenCode(e.target.value)}
+                        onChange={(e) =>
+                          setTokenCode(
+                            e.target.value
+                              .toUpperCase()
+                              .replace(/[^A-Z0-9]/gi, "")
+                              .slice(0, 7)
+                          )
+                        }
                         className="text-center font-mono h-11 md:h-10 text-base"
                         required
                       />
@@ -382,13 +463,35 @@ export default function VIPAreaPage() {
                           {tokenError}
                         </p>
                       )}
+
+                      {entitlements?.tokenAccess && (
+                        <p className="text-xs md:text-sm text-muted-foreground mt-2 text-center">
+                          You have {entitlements.tokenAccess.remaining} token
+                          use
+                          {entitlements.tokenAccess.remaining !== 1 ? "s" : ""}{" "}
+                          remaining — expires{" "}
+                          {new Date(
+                            entitlements.tokenAccess.expiresAt
+                          ).toLocaleDateString()}
+                        </p>
+                      )}
                     </div>
                     <Button
                       type="submit"
                       className="w-full h-10 text-sm md:text-base"
+                      disabled={redeeming}
                     >
-                      <CheckCircle className="h-4 w-4 mr-2" />
-                      Redeem Token
+                      {redeeming ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Redeeming...
+                        </>
+                      ) : (
+                        <>
+                          <CheckCircle className="h-4 w-4 mr-2" />
+                          Redeem Token
+                        </>
+                      )}
                     </Button>
                   </form>
                   <p className="text-xs text-muted-foreground text-center mt-4">
@@ -907,7 +1010,8 @@ export default function VIPAreaPage() {
                           </div>
                           {prediction.ticketSnapshots.length > 0 && (
                             <div className="mb-3 text-[10px] md:text-xs text-muted-foreground">
-                              Ticket snapshots: {prediction.ticketSnapshots.length}
+                              Ticket snapshots:{" "}
+                              {prediction.ticketSnapshots.length}
                             </div>
                           )}
                           {prediction.tipResult && (

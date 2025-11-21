@@ -221,7 +221,7 @@ model Subscription {
 
 model VIPToken {
   id        String    @id @default(uuid())
-  token     String    @unique @default(cuid()) // cryptographically random
+  token     String    @unique @db.VarChar(7) // 6-7 char PIN/code (alphanumeric)
   userId    String?
   tipId     String? // null = general access, specific tip ID = single tip access
   type      String    @default("general") // general, single, bundle
