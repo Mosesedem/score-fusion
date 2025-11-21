@@ -86,7 +86,7 @@ export default function AdminVIPTokensPage() {
   const itemsPerPage = 10;
   const [editingToken, setEditingToken] = useState<VIPToken | null>(null);
   const [editForm, setEditForm] = useState({
-    userId: "",
+    userId: "unassigned",
     expirationDays: "",
     quantity: "",
     used: "",
@@ -492,6 +492,7 @@ export default function AdminVIPTokensPage() {
                     onValueChange={(value) =>
                       setFormData({ ...formData, userId: value })
                     }
+                    defaultValue="unassigned"
                   >
                     <SelectTrigger id="userId">
                       <SelectValue placeholder="Choose a user..." />
