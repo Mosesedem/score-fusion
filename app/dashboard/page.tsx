@@ -212,9 +212,8 @@ export default function DashboardPage() {
             <Image
               src="/images/do.gif"
               alt="VIP Banner"
-              width={240}
-              height={40}
-              className="object-contain"
+              fill
+              className="object-cover rounded-lg"
             />
           )}
         </div>
