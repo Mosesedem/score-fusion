@@ -533,8 +533,8 @@ export default function VIPAreaPage() {
           <CardContent>
             {loadingPredictions ? (
               <div className="text-center py-12 text-muted-foreground">
-                <Crown className="h-16 w-16 mx-auto mb-4 opacity-50 animate-pulse" />
-                <p className="text-lg">Loading VIP predictions...</p>
+                <Loader2 className="animate-spin h-8 w-8 mx-auto mb-4" />
+                <p className="text-sm">Loading VIP predictions...</p>
               </div>
             ) : vipPredictions.length === 0 ? (
               <div className="text-center py-12 text-muted-foreground">
@@ -705,8 +705,8 @@ export default function VIPAreaPage() {
           <CardContent>
             {loadingUpdates ? (
               <div className="text-center py-12 text-muted-foreground">
-                <Target className="h-16 w-16 mx-auto mb-4 opacity-50 animate-pulse" />
-                <p className="text-lg">Loading VIP updates...</p>
+                <Loader2 className="animate-spin h-8 w-8 mx-auto mb-4" />
+                <p className="text-sm">Loading VIP updates...</p>
               </div>
             ) : vipUpdates.length > 0 ? (
               <div className="grid gap-4 md:grid-cols-2">
