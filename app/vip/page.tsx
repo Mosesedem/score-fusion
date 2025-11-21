@@ -409,7 +409,6 @@ export default function VIPAreaPage() {
                           <li>✓ All VIP tips & updates</li>
                           <li>✓ Correct score predictions</li>
                           <li>✓ Priority support</li>
-                          <li>✓ 2 months free</li>
                         </ul>
                         <Button className="w-full mt-4 h-10 text-sm md:text-base">
                           Subscribe Monthly
@@ -468,7 +467,9 @@ export default function VIPAreaPage() {
                         <p className="text-xs md:text-sm text-muted-foreground mt-2 text-center">
                           You have {entitlements.tokenAccess.remaining} token
                           use
-                          {entitlements.tokenAccess.remaining !== 1 ? "s" : ""}{" "}
+                          {entitlements.tokenAccess.remaining !== 1
+                            ? "s"
+                            : ""}{" "}
                           remaining — expires{" "}
                           {new Date(
                             entitlements.tokenAccess.expiresAt

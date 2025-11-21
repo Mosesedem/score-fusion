@@ -481,19 +481,14 @@ export default function DashboardPage() {
                     </button>
                   </Link>
                 )}
-                <Link href="/livescores" className="block">
+                <Link href="/history" className="block">
                   <button className="w-full text-left border-2 border-border py-2.5 px-3 rounded-lg hover:bg-accent transition-colors text-xs sm:text-sm font-medium relative">
-                    ⚡ Live Scores
-                    {liveMatches.length > 0 && (
-                      <span className="absolute right-3 top-1/2 -translate-y-1/2 bg-red-500 text-white text-xs px-2 py-0.5 rounded-full animate-pulse">
-                        LIVE
-                      </span>
-                    )}
+                    ✅ ⏰ History
                   </button>
                 </Link>
-                <Link href="/referral" className="block">
+                <Link href="/contact" className="block">
                   <button className="w-full text-left border-2 border-border py-2.5 px-3 rounded-lg hover:bg-accent transition-colors text-xs sm:text-sm font-medium">
-                    🎁 Refer & Earn
+                    ☎ Contact Us
                   </button>
                 </Link>
               </CardContent>
