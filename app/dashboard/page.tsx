@@ -102,7 +102,7 @@ export default function DashboardPage() {
 
         // Fetch predictions - VIP if user has access, otherwise free
         const predictionsRes = await api.get(
-          `/predictions?vip=${vipStatus}&limit=3&today=true`
+          `/predictions?vip=false&limit=3&today=true`
         );
 
         if (predictionsRes.success) {
@@ -112,7 +112,9 @@ export default function DashboardPage() {
           setPredictions(predictionsData.predictions);
         } else if (vipStatus && !user?.guest) {
           // If VIP predictions fail, fallback to free predictions
-          const freeRes = await api.get("/predictions?vip=false&limit=3");
+          const freeRes = await api.get(
+            "/predictions?vip=false&limit=3&today=true"
+          );
           if (freeRes.success) {
             const freeData = freeRes.data as { predictions: Prediction[] };
             setPredictions(freeData.predictions);
@@ -301,8 +303,9 @@ export default function DashboardPage() {
           <div className="lg:col-span-2 space-y-4 sm:space-y-6">
             <div className="flex items-center justify-between mb-2 sm:mb-3">
               <h2 className="text-base sm:text-lg font-bold flex items-center gap-2">
-                {isVIP && <Crown className="h-4 w-4 text-amber-500" />}
-                {isVIP ? "VIP Tips" : "Today's Tips"}
+                {/* {isVIP && <Crown className="h-4 w-4 text-amber-500" />}
+                {isVIP ? "VIP Tips" : "Today's Tips"} */}
+                Today's Tips
               </h2>
               <Link
                 href="/tips"
@@ -382,7 +385,24 @@ export default function DashboardPage() {
                             <span className="truncate">{pred.league}</span>
                           )}
                         </div>
-
+                        <div className="flex items-center gap-2 text-[10px] sm:text-xs text-muted-foreground mb-2">
+                          {pred.matchDate && (
+                            <span className="truncate">
+                              {" "}
+                              {new Date(pred.matchDate).toLocaleString(
+                                "en-US",
+                                {
+                                  weekday: "short",
+                                  month: "short",
+                                  day: "numeric",
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                  hour12: false,
+                                }
+                              )}
+                            </span>
+                          )}
+                        </div>
                         {/* Prediction Summary */}
                         <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2 mb-3">
                           {pred.summary}
@@ -405,6 +425,7 @@ export default function DashboardPage() {
                               Odds: {Number(pred.odds).toFixed(2)}
                             </div>
                           )}
+
                           {pred.isVIP && (
                             <Crown className="h-4 w-4 text-amber-500" />
                           )}
@@ -422,68 +443,6 @@ export default function DashboardPage() {
                   <p className="text-xs mt-1">Check back soon for new tips</p>
                 </CardContent>
               </Card>
-            )}
-
-            {/* Live Matches */}
-            {liveMatches.length > 0 && (
-              <div>
-                <div className="flex items-center justify-between mb-2 sm:mb-3">
-                  <h2 className="text-base sm:text-lg font-bold flex items-center gap-2">
-                    <span className="h-2 w-2 bg-red-500 rounded-full animate-pulse" />
-                    Live Now
-                  </h2>
-                  <Link
-                    href="/livescores"
-                    className="text-xs sm:text-sm text-primary hover:underline font-medium"
-                  >
-                    View All →
-                  </Link>
-                </div>
-
-                <div className="space-y-3">
-                  {liveMatches.slice(0, 3).map((match) => (
-                    <Link
-                      key={match.id}
-                      href={`/livescores?match=${match.id}`}
-                      className="block"
-                    >
-                      <Card className="hover:shadow-lg transition-all hover:border-red-500/50">
-                        <CardContent className="p-3 sm:p-4">
-                          <div className="flex items-center justify-between mb-3">
-                            <div className="text-[10px] sm:text-xs text-muted-foreground truncate flex-1">
-                              {match.league.name}
-                            </div>
-                            {match.minute && (
-                              <div className="flex items-center gap-1 text-xs font-bold text-red-500 ml-2">
-                                <span className="h-1.5 w-1.5 bg-red-500 rounded-full animate-pulse" />
-                                {match.minute}&apos;
-                              </div>
-                            )}
-                          </div>
-                          <div className="space-y-2">
-                            <div className="flex items-center justify-between">
-                              <span className="text-sm sm:text-base font-medium truncate flex-1">
-                                {match.homeTeam}
-                              </span>
-                              <span className="text-lg sm:text-xl font-bold ml-2">
-                                {match.homeTeamScore}
-                              </span>
-                            </div>
-                            <div className="flex items-center justify-between">
-                              <span className="text-sm sm:text-base font-medium truncate flex-1">
-                                {match.awayTeam}
-                              </span>
-                              <span className="text-lg sm:text-xl font-bold ml-2">
-                                {match.awayTeamScore}
-                              </span>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </Link>
-                  ))}
-                </div>
-              </div>
             )}
           </div>
 
