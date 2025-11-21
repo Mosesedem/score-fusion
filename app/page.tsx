@@ -461,7 +461,7 @@ export default function Home() {
                   <p className="text-sm">Loading tips...</p>
                 </div>
               ) : predictions.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 md:gap-6 px-4 pb-6 md:px-6 md:pb-8">
                   {predictions.map((pred) => (
                     <Link
                       key={pred.id}
