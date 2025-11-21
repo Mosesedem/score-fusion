@@ -15,7 +15,7 @@ import {
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { UserEngagement } from "@/components/user-engagement";
-
+import Image from "next/image";
 interface Prediction {
   id: string;
   title: string;
@@ -197,104 +197,26 @@ export default function DashboardPage() {
         </div>
 
         {/* Stats Grid - Enhanced with real data and engagement */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-4 sm:mb-6">
-          <Link href="/history">
-            <Card className="hover:shadow-md transition-shadow cursor-pointer h-full relative group">
-              <CardContent className="p-3 sm:p-4">
-                <div className="flex items-start justify-between mb-2">
-                  <Trophy className="h-4 w-4 sm:h-5 sm:w-5 text-amber-500" />
-                  {derivedWinRate !== null && derivedWinRate > 60 && (
-                    <div className="absolute -top-1 -right-1 h-3 w-3 bg-green-500 rounded-full animate-pulse" />
-                  )}
-                </div>
-                <div className="text-xl sm:text-2xl font-bold mb-0.5">
-                  {derivedWinRate !== null
-                    ? `${derivedWinRate.toFixed(1)}%`
-                    : "—"}
-                </div>
-                <p className="text-[10px] sm:text-xs text-muted-foreground">
-                  Win Rate
-                </p>
-                {userStats.correctPredictions > 0 && (
-                  <p className="text-[8px] sm:text-[10px] text-green-600 mt-1">
-                    {userStats.correctPredictions} correct
-                  </p>
-                )}
-              </CardContent>
-            </Card>
-          </Link>
-
-          <Link href={isVIP ? "/vip" : "/subscriptions"}>
-            <Card className="hover:shadow-md transition-shadow cursor-pointer h-full relative group">
-              <CardContent className="p-3 sm:p-4">
-                <div className="flex items-start justify-between mb-2">
-                  <Wallet className="h-4 w-4 sm:h-5 sm:w-5 text-green-500" />
-                  {!isVIP && (
-                    <div className="absolute -top-1 -right-1 h-3 w-3 bg-primary rounded-full animate-bounce" />
-                  )}
-                </div>
-                <div className="text-xl sm:text-2xl font-bold mb-0.5">
-                  ${userStats.totalEarnings.toFixed(0)}
-                </div>
-                <p className="text-[10px] sm:text-xs text-muted-foreground">
-                  {isVIP ? "Earned" : "Potential"}
-                </p>
-                {!isVIP && (
-                  <p className="text-[8px] sm:text-[10px] text-primary mt-1">
-                    Upgrade to earn
-                  </p>
-                )}
-              </CardContent>
-            </Card>
-          </Link>
-
-          <Link href="/tips">
-            <Card className="hover:shadow-md transition-shadow cursor-pointer h-full relative">
-              <CardContent className="p-3 sm:p-4">
-                <div className="flex items-start justify-between mb-2">
-                  <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 " />
-                  {predictions.length > 5 && (
-                    <div className="absolute -top-1 -right-1 h-3 w-3 bg-primary rounded-full animate-pulse" />
-                  )}
-                </div>
-                <div className="text-xl sm:text-2xl font-bold mb-0.5">
-                  {predictions.length}
-                </div>
-                <p className="text-[10px] sm:text-xs text-muted-foreground">
-                  Tips Today
-                </p>
-                {userStats.streakDays > 0 && (
-                  <p className="text-[8px] sm:text-[10px]  mt-1">
-                    {userStats.streakDays} day streak
-                  </p>
-                )}
-              </CardContent>
-            </Card>
-          </Link>
-
-          <Link href="/livescores">
-            <Card className="hover:shadow-md transition-shadow cursor-pointer h-full relative">
-              <CardContent className="p-3 sm:p-4">
-                <div className="flex items-start justify-between mb-2">
-                  <Activity className="h-4 w-4 sm:h-5 sm:w-5 text-red-500" />
-                  {liveMatches.length > 0 && (
-                    <div className="absolute -top-1 -right-1 h-2 w-2 bg-red-500 rounded-full animate-pulse" />
-                  )}
-                </div>
-                <div className="text-xl sm:text-2xl font-bold mb-0.5">
-                  {liveMatches.length}
-                </div>
-                <p className="text-[10px] sm:text-xs text-muted-foreground">
-                  Live Now
-                </p>
-                {liveMatches.length > 0 && (
-                  <p className="text-[8px] sm:text-[10px] text-red-600 mt-1">
-                    Matches active
-                  </p>
-                )}
-              </CardContent>
-            </Card>
-          </Link>
+        <div className="flex mb-4 relative sm:mb-6 h-48 md:h-64 w-full">
+          {!isVIP || user?.guest ? (
+            <Image
+              src="/images/do.gif"
+              alt="Free Banner"
+              // width={240}
+              // height={40}
+              fill
+              className="object-cover rounded-lg"
+              // className="object-contain"
+            />
+          ) : (
+            <Image
+              src="/images/do.gif"
+              alt="VIP Banner"
+              width={240}
+              height={40}
+              className="object-contain"
+            />
+          )}
         </div>
 
         {/* Main Content */}
