@@ -16,6 +16,8 @@ import {
   CheckCircle,
   Star,
   CreditCard,
+  Crown,
+  Loader2,
 } from "lucide-react";
 import Footer from "@/components/footer";
 import Image from "next/image";
@@ -103,6 +105,8 @@ interface BlogPost {
   headerImage?: string;
 }
 
+type PredictionsData = PredictionsApiResponse["data"];
+
 export default function Home() {
   const router = useRouter();
   const { user, isLoading } = useAuth();
@@ -161,24 +165,27 @@ export default function Home() {
         }
 
         // Fetch featured tips
-        const tipsResponse = await fetch("/api/tips?featured=true&limit=3");
+        const tipsResponse = await fetch(
+          "/api/predictions?featured=true&limit=3"
+        );
         if (tipsResponse.ok) {
           const tipsData = await tipsResponse.json();
           if (tipsData.success && tipsData.data?.tips) {
             setFeaturedTips(tipsData.data.tips);
           }
         }
-
+        const predictionsResponse = await api.get<PredictionsData>(
+          "/predictions?vip=false&limit=3&today=true"
+        );
         // Fetch predictions (free tips)
-        const predictionsResponse = await fetch("/api/predictions");
-        if (predictionsResponse.ok) {
-          const predictionsData = await predictionsResponse.json();
-          if (predictionsData.success && predictionsData.data?.predictions) {
-            const freePredictions = predictionsData.data.predictions.filter(
-              (tip: Tip) => !tip.isVIP
-            );
-            setPredictions(freePredictions.slice(0, 5));
-          }
+        // const predictionsResponse = await fetch(
+        //   "/predictions?vip=false&limit=3&today=true"
+        // );
+        if (predictionsResponse.success && predictionsResponse.data) {
+          const freePredictions = predictionsResponse.data.predictions.filter(
+            (tip: Tip) => !tip.isVIP
+          );
+          setPredictions(freePredictions.slice(0, 5));
         }
 
         // Fetch reviews (mock)
@@ -397,7 +404,7 @@ export default function Home() {
             </Card>
             <Card className="border-primary border-2 ring-2 ring-primary/20">
               <CardHeader className="text-center pb-2">
-                <CardTitle className="text-lg font-bold">Monthly</CardTitle>
+                <CardTitle className="text-lg font-bold">Bi-Weekly</CardTitle>
               </CardHeader>
               <CardContent className="text-center space-y-2">
                 <div className="text-3xl font-bold text-primary">€ 200.00</div>
@@ -409,13 +416,13 @@ export default function Home() {
             </Card>
             <Card className="border-2">
               <CardHeader className="text-center pb-2">
-                <CardTitle className="text-lg font-bold">Yearly</CardTitle>
+                <CardTitle className="text-lg font-bold">Monthly</CardTitle>
               </CardHeader>
               <CardContent className="text-center space-y-2">
                 <div className="text-3xl font-bold text-primary">€ 400.00</div>
-                <div className="text-xs text-muted-foreground">per year</div>
+                <div className="text-xs text-muted-foreground">per month</div>
                 <div className="text-xs">
-                  Save big • Exclusive webinars • 4 months free
+                  Save big • Exclusive webinars • Detailed analysis
                 </div>
               </CardContent>
             </Card>
@@ -432,7 +439,7 @@ export default function Home() {
       {/* Live Scores + Featured Tips */}
       <section className="py-8 md:py-12">
         <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
+          <div className="grid grid-cols-1 gap-6 md:gap-8">
             {/* Today's Predictions Table */}
             <div className="border-t border-border bg-secondary rounded-lg">
               <div className="flex items-center justify-between mb-4 md:mb-6 p-4 md:p-6">
@@ -446,137 +453,141 @@ export default function Home() {
                   </Button>
                 </Link>
               </div>
-              <Card className="border-0">
-                <CardContent className="p-0 overflow-x-auto">
-                  <table className="w-full min-w-[600px]">
-                    <thead>
-                      <tr className="border-b border-border">
-                        <th className="text-left p-4 font-medium">Time</th>
-                        <th className="text-left p-4 font-medium">Match</th>
-                        <th className="text-left p-4 font-medium">
-                          Prediction
-                        </th>
-                        <th className="text-left p-4 font-medium">Odds</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {predictions.map((pred) => (
-                        <tr
-                          key={pred.id}
-                          className="border-b border-border hover:bg-accent/50"
-                        >
-                          <td className="p-4 text-sm">
-                            {pred.matchDate
-                              ? new Date(pred.matchDate).toLocaleTimeString(
-                                  [],
+
+              {loading ? (
+                <div className="text-center py-12 text-muted-foreground">
+                  <Loader2 className="animate-spin h-8 w-8  mx-auto mb-4" />
+                  {/* <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4" /> */}
+                  <p className="text-sm">Loading tips...</p>
+                </div>
+              ) : predictions.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4">
+                  {predictions.map((pred) => (
+                    <Link
+                      key={pred.id}
+                      href={`/tips/${pred.id}`}
+                      className="block"
+                    >
+                      <Card className="hover:shadow-lg transition-all hover:border-primary/50">
+                        <CardContent className="p-3 sm:p-4">
+                          {/* Match Teams with Logos */}
+                          {pred.homeTeam && pred.awayTeam ? (
+                            <div className="mb-3">
+                              <div className="flex items-center justify-between gap-3 mb-2">
+                                <div className="flex items-center gap-2 flex-1 min-w-0">
+                                  {pred.homeTeam.logoUrl && (
+                                    <div className="relative h-8 w-8 sm:h-10 sm:w-10 shrink-0">
+                                      <img
+                                        src={pred.homeTeam.logoUrl}
+                                        alt={pred.homeTeam.name}
+                                        // fill
+                                        className="object-contain"
+                                      />
+                                    </div>
+                                  )}
+                                  <span className="font-semibold text-sm sm:text-base truncate">
+                                    {pred.homeTeam.name}
+                                  </span>
+                                </div>
+                                <div className="px-2 py-1 bg-muted rounded text-xs font-bold">
+                                  VS
+                                </div>
+                                <div className="flex items-center gap-2 flex-1 min-w-0 justify-end">
+                                  <span className="font-semibold text-sm sm:text-base truncate">
+                                    {pred.awayTeam.name}
+                                  </span>
+                                  {pred.awayTeam.logoUrl && (
+                                    <div className="relative h-8 w-8 sm:h-10 sm:w-10 shrink-0">
+                                      <img
+                                        src={pred.awayTeam.logoUrl}
+                                        alt={pred.awayTeam.name}
+                                        // fill
+                                        className="object-contain"
+                                      />
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          ) : (
+                            <h3 className="font-semibold text-sm sm:text-base mb-2">
+                              {pred.title}
+                            </h3>
+                          )}
+
+                          {/* League & Sport */}
+                          <div className="flex items-center gap-2 text-[10px] sm:text-xs text-muted-foreground mb-2">
+                            <span className="px-2 py-0.5 bg-secondary rounded">
+                              {pred.sport}
+                            </span>
+                            {pred.league && (
+                              <span className="truncate">{pred.league}</span>
+                            )}
+                          </div>
+                          <div className="flex items-center justify-center gap-2 text-[14px] sm:text-xs text-muted-foreground mb-2">
+                            {pred.matchDate && (
+                              <span className="truncate">
+                                {" "}
+                                {new Date(pred.matchDate).toLocaleString(
+                                  "en-US",
                                   {
+                                    weekday: "short",
+                                    month: "short",
+                                    day: "numeric",
                                     hour: "2-digit",
                                     minute: "2-digit",
+                                    hour12: false,
                                   }
-                                )
-                              : new Date(pred.createdAt).toLocaleDateString()}
-                          </td>
-                          <td className="p-4 text-sm">
-                            <div className="font-medium">
-                              {pred.homeTeam?.name || "TBD"}
-                            </div>
-                            <div className="text-muted-foreground">
-                              vs {pred.awayTeam?.name || "TBD"}
-                            </div>
-                          </td>
-                          <td className="p-4 text-sm font-semibold text-primary">
-                            {pred.predictedOutcome || pred.title}
-                          </td>
-                          <td className="p-4 text-sm">
-                            {pred.odds ? Number(pred.odds).toFixed(2) : "N/A"}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Featured Tips */}
-            <div>
-              <h2 className="text-xl md:text-2xl font-bold mb-4 md:mb-6 flex items-center gap-2">
-                <TrendingUp className="h-5 w-5 md:h-6 md:w-6 text-primary" />
-                Featured Tips
-              </h2>
-
-              <div className="space-y-3 md:space-y-4">
-                {loading ? (
-                  <div className="text-center py-8 text-muted-foreground text-sm md:text-base">
-                    Loading tips...
-                  </div>
-                ) : featuredTips.length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground text-sm md:text-base">
-                    No featured tips available
-                  </div>
-                ) : (
-                  featuredTips.map((tip) => (
-                    <Card
-                      key={tip.id}
-                      className="border-2 hover:border-primary transition-colors"
-                    >
-                      <CardHeader className="pb-3 p-3 md:p-6 md:pb-3">
-                        <div className="flex items-center justify-between gap-2">
-                          <CardTitle className="text-sm md:text-base line-clamp-2">
-                            {tip.title}
-                          </CardTitle>
-                          <div
-                            className={`text-xs px-2 py-1 border shrink-0 ${
-                              tip.successRate && tip.successRate > 70
-                                ? "border-primary text-primary"
-                                : "border-border text-muted-foreground"
-                            }`}
-                          >
-                            {tip.successRate
-                              ? `${tip.successRate.toFixed(0)}%`
-                              : "New"}
+                                )}
+                              </span>
+                            )}
                           </div>
-                        </div>
-                      </CardHeader>
-                      <CardContent className="p-3 md:p-6 md:pt-0">
-                        <div className="text-xs md:text-sm mb-2 text-muted-foreground line-clamp-2">
-                          {tip.summary || tip.content.substring(0, 100) + "..."}
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-lg md:text-xl font-bold text-primary">
-                            Odds:{" "}
-                            {Number(tip.odds)
-                              ? Number(tip.odds).toFixed(2)
-                              : "N/A"}
-                          </span>
-                          <Link href={`/tips/${tip.id}`}>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="text-xs md:text-sm"
-                            >
-                              View
-                            </Button>
-                          </Link>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))
-                )}
-              </div>
+                          {/* Prediction Summary */}
+                          <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2 mb-3">
+                            {pred.summary}
+                          </p>
 
-              <Link href="/tips">
-                <Button
-                  className="w-full mt-4 text-sm md:text-base"
-                  variant="outline"
-                >
-                  View All Tips
-                </Button>
-              </Link>
+                          {/* Footer - Odds & Prediction */}
+                          <div className="flex items-center justify-between pt-2 border-t">
+                            {pred.predictedOutcome && (
+                              <div className="flex items-center gap-1">
+                                <span className="text-[10px] sm:text-xs text-muted-foreground">
+                                  Prediction:
+                                </span>
+                                <span className="text-xs sm:text-sm font-bold text-primary">
+                                  {pred.predictedOutcome}
+                                </span>
+                              </div>
+                            )}
+                            {pred.odds && (
+                              <div className="px-2 py-1 bg-primary/10 text-primary rounded font-bold text-xs sm:text-sm">
+                                Odds: {Number(pred.odds).toFixed(2)}
+                              </div>
+                            )}
+
+                            {pred.isVIP && (
+                              <Crown className="h-4 w-4 text-amber-500" />
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </Link>
+                  ))}
+                </div>
+              ) : (
+                <Card>
+                  <CardContent className="text-center py-12 text-muted-foreground">
+                    <TrendingUp className="h-12 w-12 mx-auto mb-4 opacity-30" />
+                    <p className="text-sm font-medium">No tips available</p>
+                    <p className="text-xs mt-1">Check back soon for new tips</p>
+                  </CardContent>
+                </Card>
+              )}
             </div>
           </div>
         </div>
       </section>
+
       {/* Latest Blog Posts */}
       <section className="py-8 md:py-12 border-t border-border">
         <div className="container mx-auto px-4">
