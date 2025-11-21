@@ -13,6 +13,7 @@ import {
   TrendingUp,
   CheckCircle,
   Target,
+  Calendar,
 } from "lucide-react";
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
@@ -541,10 +542,30 @@ export default function VIPAreaPage() {
                           </div>
                         )}
                       </div>
+                      <div className="flex items-center justify-between text-[10px] md:text-xs text-muted-foreground mb-3 gap-2">
+                        <div className="flex items-center gap-1 min-w-0">
+                          <Calendar className="h-2.5 w-2.5 md:h-3 md:w-3 shrink-0" />
+                          <span className="truncate">
+                            {new Date(
+                              prediction.matchDate || prediction.createdAt
+                            ).toLocaleString("en-NG", {
+                              year: "numeric",
+                              month: "short",
+                              day: "numeric",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </span>
+                        </div>
+                        {prediction.confidenceLevel && (
+                          <span className="truncate">
+                            Confidence Level:{prediction.confidenceLevel}
+                          </span>
+                        )}
+                      </div>
                       {prediction.ticketSnapshots.length > 0 && (
                         <div className="mb-3 text-[10px] md:text-xs text-muted-foreground">
-                          📊 {prediction.ticketSnapshots.length} ticket
-                          snapshot(s)
+                          Ticket snapshots: {prediction.ticketSnapshots.length}
                         </div>
                       )}
                       <Link href={`/tips/${prediction.id}`}>
@@ -622,6 +643,17 @@ export default function VIPAreaPage() {
                           </div>
                         </div>
                       )}
+                      {update.matchResult && (
+                        <div
+                          className={`text-xs md:text-sm font-medium mb-2 ${
+                            update.result === "won"
+                              ? "text-emerald-700 dark:text-emerald-400"
+                              : "text-primary"
+                          }`}
+                        >
+                          {update.matchResult}
+                        </div>
+                      )}
                       <div className="space-y-1 text-[10px] md:text-xs mb-3">
                         {update.predictedOutcome && (
                           <div>
@@ -648,7 +680,15 @@ export default function VIPAreaPage() {
                             <span className="text-muted-foreground">
                               Result:{" "}
                             </span>
-                            <span className="font-medium capitalize">
+                            <span
+                              className={`font-medium capitalize ${
+                                update.result === "won"
+                                  ? "text-emerald-600 dark:text-emerald-400"
+                                  : update.result === "lost"
+                                  ? "text-red-500"
+                                  : ""
+                              }`}
+                            >
                               {update.result}
                             </span>
                           </div>
@@ -661,7 +701,7 @@ export default function VIPAreaPage() {
                         {update.odds && (
                           <div>
                             <div className="text-lg md:text-xl font-bold text-primary">
-                              {update.odds}
+                              {Number(update.odds).toFixed(2)}
                             </div>
                             <div className="text-[10px] md:text-xs text-muted-foreground">
                               Odds
@@ -679,9 +719,30 @@ export default function VIPAreaPage() {
                           </div>
                         )}
                       </div>
+                      <div className="flex items-center justify-between text-[10px] md:text-xs text-muted-foreground mb-3 gap-2">
+                        <div className="flex items-center gap-1 min-w-0">
+                          <Calendar className="h-2.5 w-2.5 md:h-3 md:w-3 shrink-0" />
+                          <span className="truncate">
+                            {new Date(
+                              update.matchDate || update.createdAt
+                            ).toLocaleString("en-NG", {
+                              year: "numeric",
+                              month: "short",
+                              day: "numeric",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </span>
+                        </div>
+                        {update.confidenceLevel && (
+                          <span className="truncate">
+                            Confidence Level:{update.confidenceLevel}
+                          </span>
+                        )}
+                      </div>
                       {update.ticketSnapshots.length > 0 && (
                         <div className="mb-3 text-[10px] md:text-xs text-muted-foreground">
-                          📊 {update.ticketSnapshots.length} ticket snapshot(s)
+                          Ticket snapshots: {update.ticketSnapshots.length}
                         </div>
                       )}
                       <Link href={`/tips/${update.id}`}>
@@ -784,6 +845,26 @@ export default function VIPAreaPage() {
                             </div>
                           )}
                           <div className="space-y-1 text-[10px] md:text-xs mb-3">
+                            {prediction.predictedOutcome && (
+                              <div>
+                                <span className="text-muted-foreground">
+                                  Prediction:{" "}
+                                </span>
+                                <span className="font-medium">
+                                  {prediction.predictedOutcome}
+                                </span>
+                              </div>
+                            )}
+                            {prediction.confidenceLevel && (
+                              <div>
+                                <span className="text-muted-foreground">
+                                  Confidence Level:{" "}
+                                </span>
+                                <span className="font-medium">
+                                  {prediction.confidenceLevel}%
+                                </span>
+                              </div>
+                            )}
                             {prediction.result && (
                               <div>
                                 <span className="text-muted-foreground">
@@ -803,6 +884,32 @@ export default function VIPAreaPage() {
                               </div>
                             )}
                           </div>
+                          <div className="flex items-center justify-between text-[10px] md:text-xs text-muted-foreground mb-3 gap-2">
+                            <div className="flex items-center gap-1 min-w-0">
+                              <Calendar className="h-2.5 w-2.5 md:h-3 md:w-3 shrink-0" />
+                              <span className="truncate">
+                                {new Date(
+                                  prediction.matchDate || prediction.createdAt
+                                ).toLocaleString("en-NG", {
+                                  year: "numeric",
+                                  month: "short",
+                                  day: "numeric",
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                })}
+                              </span>
+                            </div>
+                            {prediction.confidenceLevel && (
+                              <span className="truncate">
+                                Confidence Level:{prediction.confidenceLevel}
+                              </span>
+                            )}
+                          </div>
+                          {prediction.ticketSnapshots.length > 0 && (
+                            <div className="mb-3 text-[10px] md:text-xs text-muted-foreground">
+                              Ticket snapshots: {prediction.ticketSnapshots.length}
+                            </div>
+                          )}
                           {prediction.tipResult && (
                             <details className="mb-3">
                               <summary className="text-[10px] md:text-xs font-medium cursor-pointer text-primary hover:text-primary/80">
@@ -872,7 +979,69 @@ export default function VIPAreaPage() {
                           <h3 className="font-bold text-sm md:text-base mb-3 line-clamp-2">
                             {update.title}
                           </h3>
-                          <div className="space-y-1 text-[10px] md:text-xs mb-1">
+                          {(update.homeTeam || update.awayTeam) && (
+                            <div className="flex items-center justify-between mb-3 p-2 bg-secondary rounded">
+                              <div className="text-center flex-1">
+                                {update.homeTeam?.logoUrl && (
+                                  <img
+                                    src={update.homeTeam.logoUrl}
+                                    alt={update.homeTeam.name}
+                                    className="w-8 h-8 md:w-10 md:h-10 mx-auto mb-1 object-contain"
+                                  />
+                                )}
+                                <p className="text-[10px] md:text-xs font-medium line-clamp-1">
+                                  {update.homeTeam?.name}
+                                </p>
+                              </div>
+                              <div className="px-3 font-bold text-muted-foreground text-xs md:text-sm">
+                                VS
+                              </div>
+                              <div className="text-center flex-1">
+                                {update.awayTeam?.logoUrl && (
+                                  <img
+                                    src={update.awayTeam.logoUrl}
+                                    alt={update.awayTeam.name}
+                                    className="w-8 h-8 md:w-10 md:h-10 mx-auto mb-1 object-contain"
+                                  />
+                                )}
+                                <p className="text-[10px] md:text-xs font-medium line-clamp-1">
+                                  {update.awayTeam?.name}
+                                </p>
+                              </div>
+                            </div>
+                          )}
+                          {update.matchResult && (
+                            <div
+                              className={`text-xs md:text-sm font-medium mb-2 ${
+                                update.result === "won"
+                                  ? "text-emerald-700 dark:text-emerald-400"
+                                  : "text-primary"
+                              }`}
+                            >
+                              {update.matchResult}
+                            </div>
+                          )}
+                          <div className="space-y-1 text-[10px] md:text-xs mb-3">
+                            {update.predictedOutcome && (
+                              <div>
+                                <span className="text-muted-foreground">
+                                  Prediction:{" "}
+                                </span>
+                                <span className="font-medium">
+                                  {update.predictedOutcome}
+                                </span>
+                              </div>
+                            )}
+                            {update.confidenceLevel && (
+                              <div>
+                                <span className="text-muted-foreground">
+                                  Confidence Level:{" "}
+                                </span>
+                                <span className="font-medium">
+                                  {update.confidenceLevel}%
+                                </span>
+                              </div>
+                            )}
                             {update.result && (
                               <div>
                                 <span className="text-muted-foreground">
@@ -891,18 +1060,70 @@ export default function VIPAreaPage() {
                                 </span>
                               </div>
                             )}
-                            {update.matchResult && (
-                              <div
-                                className={`text-xs md:text-sm font-medium ${
-                                  update.result === "won"
-                                    ? "text-emerald-700 dark:text-emerald-400"
-                                    : "text-primary"
-                                }`}
-                              >
-                                {update.matchResult}
-                              </div>
+                          </div>
+                          <div className="flex items-center justify-between text-[10px] md:text-xs text-muted-foreground mb-3 gap-2">
+                            <div className="flex items-center gap-1 min-w-0">
+                              <Calendar className="h-2.5 w-2.5 md:h-3 md:w-3 shrink-0" />
+                              <span className="truncate">
+                                {new Date(
+                                  update.matchDate || update.createdAt
+                                ).toLocaleString("en-NG", {
+                                  year: "numeric",
+                                  month: "short",
+                                  day: "numeric",
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                })}
+                              </span>
+                            </div>
+                            {update.confidenceLevel && (
+                              <span className="truncate">
+                                Confidence Level:{update.confidenceLevel}
+                              </span>
                             )}
                           </div>
+                          {update.ticketSnapshots.length > 0 && (
+                            <div className="mb-3 text-[10px] md:text-xs text-muted-foreground">
+                              Ticket snapshots: {update.ticketSnapshots.length}
+                            </div>
+                          )}
+                          {update.tipResult && (
+                            <details className="mb-3">
+                              <summary className="text-[10px] md:text-xs font-medium cursor-pointer text-primary hover:text-primary/80">
+                                Tip Result Details
+                              </summary>
+                              <div className="mt-1 space-y-1 text-[10px] md:text-xs pl-2 border-l-2 border-primary/20">
+                                <div>
+                                  <span className="text-muted-foreground">
+                                    Settled At:{" "}
+                                  </span>
+                                  <span className="font-medium">
+                                    {new Date(
+                                      update.tipResult.settledAt
+                                    ).toLocaleString()}
+                                  </span>
+                                </div>
+                                <div>
+                                  <span className="text-muted-foreground">
+                                    Outcome:{" "}
+                                  </span>
+                                  <span className="font-medium capitalize">
+                                    {update.tipResult.outcome}
+                                  </span>
+                                </div>
+                                {update.tipResult.payout && (
+                                  <div>
+                                    <span className="text-muted-foreground">
+                                      Payout:{" "}
+                                    </span>
+                                    <span className="font-medium">
+                                      €{update.tipResult.payout}
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+                            </details>
+                          )}
                           <Link href={`/tips/${update.id}`}>
                             <Button
                               variant="outline"
