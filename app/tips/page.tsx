@@ -478,7 +478,12 @@ export default function TipsPage() {
                         <Calendar className="h-2.5 w-2.5 md:h-3 md:w-3 shrink-0" />
                         <span className="truncate">
                           {new Date(tip.createdAt).toLocaleString("en-NG", {
-                            timeZone: "Africa/Lagos",
+                            // timeZone: "Africa/Lagos",
+                            year: "numeric",
+                            month: "short",
+                            day: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
                           })}
                         </span>
                       </div>

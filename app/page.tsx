@@ -651,7 +651,14 @@ export default function Home() {
                     <div className="flex items-center justify-between text-xs text-muted-foreground mb-4">
                       {/* <span>{blog.authorName}</span> */}
                       <span>
-                        {new Date(blog.publishedAt).toLocaleDateString()}
+                        {new Date(blog.publishedAt).toLocaleDateString(
+                          "en-US",
+                          {
+                            year: "numeric",
+                            month: "short",
+                            day: "numeric",
+                          }
+                        )}
                       </span>
                     </div>
 

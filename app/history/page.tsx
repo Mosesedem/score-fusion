@@ -190,8 +190,16 @@ export default function HistoryPage() {
                               <span>
                                 {tip.matchDate
                                   ? new Date(tip.matchDate).toLocaleString(
-                                      "en-NG",
-                                      { timeZone: "Africa/Lagos" }
+                                      "en-US",
+                                      // { timeZone: "Africa/Lagos" },
+                                      {
+                                        year: "numeric",
+                                        month: "short",
+                                        day: "numeric",
+                                        hour: "2-digit",
+                                        minute: "2-digit",
+                                        // timeZoneName: "short",
+                                      }
                                     )
                                   : "N/A"}
                               </span>

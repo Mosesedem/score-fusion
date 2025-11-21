@@ -316,7 +316,15 @@ export default function TipDetailPage() {
                   {tip.matchDate && (
                     <div className="flex items-center justify-center gap-1 mt-3 md:mt-4 text-xs md:text-sm text-muted-foreground">
                       <Calendar className="h-3 w-3 md:h-4 md:w-4" />
-                      <span>{new Date(tip.matchDate).toLocaleString()}</span>
+                      <span>
+                        {new Date(tip.matchDate).toLocaleString("en-US", {
+                          year: "numeric",
+                          month: "short",
+                          day: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </span>
                     </div>
                   )}
                 </CardContent>
