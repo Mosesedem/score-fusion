@@ -385,7 +385,7 @@ export default function DashboardPage() {
                             <span className="truncate">{pred.league}</span>
                           )}
                         </div>
-                        <div className="flex items-center gap-2 text-[10px] sm:text-xs text-muted-foreground mb-2">
+                        <div className="flex items-center justify-center gap-2 text-[14px] sm:text-xs text-muted-foreground mb-2">
                           {pred.matchDate && (
                             <span className="truncate">
                               {" "}
