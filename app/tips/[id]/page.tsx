@@ -322,11 +322,12 @@ export default function TipDetailPage() {
                       <Calendar className="h-3 w-3 md:h-4 md:w-4" />
                       <span>
                         {new Date(tip.matchDate).toLocaleString("en-US", {
-                          year: "numeric",
+                          weekday: "short",
                           month: "short",
                           day: "numeric",
                           hour: "2-digit",
                           minute: "2-digit",
+                          hour12: false,
                         })}
                       </span>
                     </div>

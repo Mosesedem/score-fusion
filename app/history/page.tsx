@@ -193,12 +193,12 @@ export default function HistoryPage() {
                                       "en-US",
                                       // { timeZone: "Africa/Lagos" },
                                       {
-                                        year: "numeric",
+                                        weekday: "short",
                                         month: "short",
                                         day: "numeric",
                                         hour: "2-digit",
                                         minute: "2-digit",
-                                        // timeZoneName: "short",
+                                        hour12: false,
                                       }
                                     )
                                   : "N/A"}

@@ -477,14 +477,16 @@ export default function TipsPage() {
                       <div className="flex items-center gap-1 min-w-0">
                         <Calendar className="h-2.5 w-2.5 md:h-3 md:w-3 shrink-0" />
                         <span className="truncate">
-                          {new Date(tip.createdAt).toLocaleString("en-NG", {
-                            // timeZone: "Africa/Lagos",
-                            year: "numeric",
-                            month: "short",
-                            day: "numeric",
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
+                          {tip?.matchDate
+                            ? new Date(tip.matchDate).toLocaleString("en-NG", {
+                                weekday: "short",
+                                month: "short",
+                                day: "numeric",
+                                hour: "2-digit",
+                                minute: "2-digit",
+                                hour12: false,
+                              })
+                            : "Date not available"}
                         </span>
                       </div>
                       {tip.confidenceLevel && (

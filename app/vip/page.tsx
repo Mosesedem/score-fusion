@@ -830,11 +830,12 @@ export default function VIPAreaPage() {
                             {new Date(
                               update.matchDate || update.createdAt
                             ).toLocaleString("en-NG", {
-                              year: "numeric",
+                              weekday: "short",
                               month: "short",
                               day: "numeric",
                               hour: "2-digit",
                               minute: "2-digit",
+                              hour12: false,
                             })}
                           </span>
                         </div>
@@ -995,11 +996,12 @@ export default function VIPAreaPage() {
                                 {new Date(
                                   prediction.matchDate || prediction.createdAt
                                 ).toLocaleString("en-NG", {
-                                  year: "numeric",
+                                  weekday: "short",
                                   month: "short",
                                   day: "numeric",
                                   hour: "2-digit",
                                   minute: "2-digit",
+                                  hour12: false,
                                 })}
                               </span>
                             </div>
