@@ -1539,7 +1539,7 @@ export default function AdminPredictionsPage() {
                     <div className="flex flex-wrap items-center gap-2 md:gap-4 text-xs md:text-sm mb-2">
                       {tip.odds && (
                         <span className="text-primary font-bold">
-                          Odds: {tip.odds}
+                          Odds: {Number(tip.odds).toFixed(2)}
                         </span>
                       )}
                       <span className="text-muted-foreground">{tip.sport}</span>

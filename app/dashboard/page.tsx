@@ -402,7 +402,7 @@ export default function DashboardPage() {
                           )}
                           {pred.odds && (
                             <div className="px-2 py-1 bg-primary/10 text-primary rounded font-bold text-xs sm:text-sm">
-                              Odds: {pred.odds}
+                              Odds: {Number(pred.odds).toFixed(2)}
                             </div>
                           )}
                           {pred.isVIP && (
