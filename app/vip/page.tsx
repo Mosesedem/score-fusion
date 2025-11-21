@@ -397,7 +397,7 @@ export default function VIPAreaPage() {
                           BEST VALUE
                         </div>
                         <h4 className="font-bold text-sm md:text-base">
-                          Yearly
+                          Monthly
                         </h4>
                         <p className="text-xl md:text-2xl font-bold text-primary">
                           € 400.00/month
