@@ -70,15 +70,29 @@ export default function TipsPage() {
   const [filter, setFilter] = useState<"all" | "free" | "vip">("all");
   const [viewMode, setViewMode] = useState<"current" | "history">("current");
   const [hasVIPAccess, setHasVIPAccess] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 12;
   const api = useApiClient();
 
   useEffect(() => {
     const fetchTips = async () => {
       try {
         setLoading(true);
-        const response = await api.get<PredictionsData>("/predictions");
-        if (response.success && response.data) {
-          const allPredictions = response.data.predictions || [];
+        // Fetch current predictions (non-VIP by default)
+        const currentResponse = await api.get<PredictionsData>("/predictions");
+        // Fetch historical predictions (all predictions including VIP)
+        const historyResponse = await api.get<PredictionsData>(
+          "/predictions?history=true"
+        );
+
+        if (
+          currentResponse.success &&
+          currentResponse.data &&
+          historyResponse.success &&
+          historyResponse.data
+        ) {
+          const currentPredictions = currentResponse.data.predictions || [];
+          const allHistoryPredictions = historyResponse.data.predictions || [];
 
           const now = new Date();
           const twoHoursAgo = new Date(now.getTime() - 2 * 60 * 60 * 1000);
@@ -89,14 +103,16 @@ export default function TipsPage() {
               : false;
             return Boolean(hasResult || isPast);
           };
-          const currentPredictions = allPredictions.filter(
+
+          // Filter current predictions to exclude historical ones
+          const filteredCurrent = currentPredictions.filter(
             (p) => !isHistorical(p)
           );
-          const historyPredictions = allPredictions.filter((p) =>
-            isHistorical(p)
-          );
-          setTips(currentPredictions);
-          setHistoryTips(historyPredictions);
+          // Use all historical predictions from the history endpoint
+          const filteredHistory = allHistoryPredictions;
+
+          setTips(filteredCurrent);
+          setHistoryTips(filteredHistory);
         }
       } catch (error) {
         console.error("Failed to fetch predictions:", error);
@@ -134,6 +150,11 @@ export default function TipsPage() {
     });
   }, [tips, historyTips, filter, viewMode]);
 
+  // Reset to page 1 when filter or viewMode changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filter, viewMode]);
+
   const displayedTips = useMemo(() => {
     const arr = [...filteredTips];
     arr.sort((a, b) => {
@@ -147,8 +168,12 @@ export default function TipsPage() {
         return bDate - aDate;
       }
     });
-    return arr;
-  }, [filteredTips, viewMode]);
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return arr.slice(startIndex, endIndex);
+  }, [filteredTips, viewMode, currentPage, itemsPerPage]);
+
+  const totalPages = Math.ceil(filteredTips.length / itemsPerPage);
 
   return (
     <div className="min-h-screen bg-background">
@@ -442,6 +467,33 @@ export default function TipsPage() {
                   </Card>
                 </Link>
               ))}
+            </div>
+          )}
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-center gap-2 mt-6 md:mt-8">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                disabled={currentPage === 1}
+              >
+                Previous
+              </Button>
+              <span className="text-sm text-muted-foreground">
+                Page {currentPage} of {totalPages}
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() =>
+                  setCurrentPage((prev) => Math.min(totalPages, prev + 1))
+                }
+                disabled={currentPage === totalPages}
+              >
+                Next
+              </Button>
             </div>
           )}
 

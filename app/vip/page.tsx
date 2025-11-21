@@ -16,7 +16,7 @@ import {
   Calendar,
   Loader2,
 } from "lucide-react";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 export default function VIPAreaPage() {
@@ -106,6 +106,48 @@ export default function VIPAreaPage() {
   const [loadingPredictions, setLoadingPredictions] = useState(false);
   const [loadingUpdates, setLoadingUpdates] = useState(false);
   const router = useRouter();
+  const [currentPagePredictions, setCurrentPagePredictions] = useState(1);
+  const [currentPageUpdates, setCurrentPageUpdates] = useState(1);
+  const [currentPageHistoryPredictions, setCurrentPageHistoryPredictions] =
+    useState(1);
+  const [currentPageHistoryUpdates, setCurrentPageHistoryUpdates] = useState(1);
+  const itemsPerPage = 12;
+
+  const displayedVipPredictions = useMemo(
+    () =>
+      vipPredictions.slice(
+        (currentPagePredictions - 1) * itemsPerPage,
+        currentPagePredictions * itemsPerPage
+      ),
+    [vipPredictions, currentPagePredictions]
+  );
+
+  const displayedVipUpdates = useMemo(
+    () =>
+      vipUpdates.slice(
+        (currentPageUpdates - 1) * itemsPerPage,
+        currentPageUpdates * itemsPerPage
+      ),
+    [vipUpdates, currentPageUpdates]
+  );
+
+  const displayedHistoryPredictions = useMemo(
+    () =>
+      historyPredictions.slice(
+        (currentPageHistoryPredictions - 1) * itemsPerPage,
+        currentPageHistoryPredictions * itemsPerPage
+      ),
+    [historyPredictions, currentPageHistoryPredictions]
+  );
+
+  const displayedHistoryUpdates = useMemo(
+    () =>
+      historyUpdates.slice(
+        (currentPageHistoryUpdates - 1) * itemsPerPage,
+        currentPageHistoryUpdates * itemsPerPage
+      ),
+    [historyUpdates, currentPageHistoryUpdates]
+  );
   const checkVIPAccess = useCallback(async () => {
     console.log("🔍 [VIP Page] Starting VIP access check...");
     console.log("🔍 [VIP Page] Current user:", user);
@@ -545,146 +587,198 @@ export default function VIPAreaPage() {
                 </p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
-                {vipPredictions.map((prediction) => (
-                  <Card key={prediction.id} className="border-2 border-primary">
-                    <CardContent className="p-4">
-                      <h3 className="font-bold text-sm md:text-base mb-3 line-clamp-2">
-                        {prediction.title}
-                      </h3>
-                      {(prediction.homeTeam || prediction.awayTeam) && (
-                        <div className="flex items-center justify-between mb-3 p-2 bg-secondary rounded">
-                          <div className="text-center flex-1">
-                            {prediction.homeTeam?.logoUrl && (
-                              <img
-                                src={prediction.homeTeam.logoUrl}
-                                alt={prediction.homeTeam.name}
-                                className="w-8 h-8 md:w-10 md:h-10 mx-auto mb-1 object-contain"
-                              />
-                            )}
-                            <p className="text-[10px] md:text-xs font-medium line-clamp-1">
-                              {prediction.homeTeam?.name}
-                            </p>
-                          </div>
-                          <div className="px-3 font-bold text-muted-foreground text-xs md:text-sm">
-                            VS
-                          </div>
-                          <div className="text-center flex-1">
-                            {prediction.awayTeam?.logoUrl && (
-                              <img
-                                src={prediction.awayTeam.logoUrl}
-                                alt={prediction.awayTeam.name}
-                                className="w-8 h-8 md:w-10 md:h-10 mx-auto mb-1 object-contain"
-                              />
-                            )}
-                            <p className="text-[10px] md:text-xs font-medium line-clamp-1">
-                              {prediction.awayTeam?.name}
-                            </p>
-                          </div>
-                        </div>
-                      )}
-                      {prediction.matchResult && (
-                        <div className="text-center text-xs md:text-sm font-medium text-primary mb-3">
-                          {prediction.matchResult}
-                        </div>
-                      )}
-                      <div className="space-y-1 text-[10px] md:text-xs mb-3">
-                        {prediction.predictedOutcome && (
-                          <div>
-                            <span className="text-muted-foreground">
-                              Prediction:{" "}
-                            </span>
-                            <span className="font-medium">
-                              {prediction.predictedOutcome}
-                            </span>
-                          </div>
-                        )}
-                        {prediction.confidenceLevel && (
-                          <div>
-                            <span className="text-muted-foreground">
-                              Confidence Level:{" "}
-                            </span>
-                            <span className="font-medium">
-                              {prediction.confidenceLevel}%
-                            </span>
-                          </div>
-                        )}
-                        {prediction.result && (
-                          <div>
-                            <span className="text-muted-foreground">
-                              Result:{" "}
-                            </span>
-                            <span className="font-medium capitalize">
-                              {prediction.result}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                      <p className="text-xs md:text-sm text-muted-foreground mb-3 line-clamp-2">
-                        {prediction.summary || prediction.content}
-                      </p>
-                      <div className="flex items-center justify-between mb-3">
-                        {prediction.odds && (
-                          <div>
-                            <div className="text-lg md:text-xl font-bold text-primary">
-                              {/* {prediction.odds} */}
-                              {Number(prediction.odds).toFixed(2)}
+              <div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
+                  {displayedVipPredictions.map((prediction) => (
+                    <Card
+                      key={prediction.id}
+                      className="border-2 border-primary"
+                    >
+                      <CardContent className="p-4">
+                        <h3 className="font-bold text-sm md:text-base mb-3 line-clamp-2">
+                          {prediction.title}
+                        </h3>
+                        {(prediction.homeTeam || prediction.awayTeam) && (
+                          <div className="flex items-center justify-between mb-3 p-2 bg-secondary rounded">
+                            <div className="text-center flex-1">
+                              {prediction.homeTeam?.logoUrl && (
+                                <img
+                                  src={prediction.homeTeam.logoUrl}
+                                  alt={prediction.homeTeam.name}
+                                  className="w-8 h-8 md:w-10 md:h-10 mx-auto mb-1 object-contain"
+                                />
+                              )}
+                              <p className="text-[10px] md:text-xs font-medium line-clamp-1">
+                                {prediction.homeTeam?.name}
+                              </p>
                             </div>
-                            <div className="text-[10px] md:text-xs text-muted-foreground">
-                              Odds
+                            <div className="px-3 font-bold text-muted-foreground text-xs md:text-sm">
+                              VS
+                            </div>
+                            <div className="text-center flex-1">
+                              {prediction.awayTeam?.logoUrl && (
+                                <img
+                                  src={prediction.awayTeam.logoUrl}
+                                  alt={prediction.awayTeam.name}
+                                  className="w-8 h-8 md:w-10 md:h-10 mx-auto mb-1 object-contain"
+                                />
+                              )}
+                              <p className="text-[10px] md:text-xs font-medium line-clamp-1">
+                                {prediction.awayTeam?.name}
+                              </p>
                             </div>
                           </div>
                         )}
-                        {prediction.predictedOutcome && (
-                          <div className="text-right">
-                            <div className="text-xs md:text-sm font-bold line-clamp-1">
-                              {prediction.predictedOutcome}
-                            </div>
-                            <div className="text-[10px] md:text-xs text-muted-foreground">
-                              Prediction
-                            </div>
+                        {prediction.matchResult && (
+                          <div className="text-center text-xs md:text-sm font-medium text-primary mb-3">
+                            {prediction.matchResult}
                           </div>
                         )}
-                      </div>
-                      <div className="flex items-center justify-between text-[10px] md:text-xs text-muted-foreground mb-3 gap-2">
-                        <div className="flex items-center gap-1 min-w-0">
-                          <Calendar className="h-2.5 w-2.5 md:h-3 md:w-3 shrink-0" />
-                          <span className="truncate">
-                            {new Date(
-                              prediction.matchDate || prediction.createdAt
-                            ).toLocaleString("en-NG", {
-                              year: "numeric",
-                              month: "short",
-                              day: "numeric",
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })}
-                          </span>
+                        <div className="space-y-1 text-[10px] md:text-xs mb-3">
+                          {prediction.predictedOutcome && (
+                            <div>
+                              <span className="text-muted-foreground">
+                                Prediction:{" "}
+                              </span>
+                              <span className="font-medium">
+                                {prediction.predictedOutcome}
+                              </span>
+                            </div>
+                          )}
+                          {prediction.confidenceLevel && (
+                            <div>
+                              <span className="text-muted-foreground">
+                                Confidence Level:{" "}
+                              </span>
+                              <span className="font-medium">
+                                {prediction.confidenceLevel}%
+                              </span>
+                            </div>
+                          )}
+                          {prediction.result && (
+                            <div>
+                              <span className="text-muted-foreground">
+                                Result:{" "}
+                              </span>
+                              <span className="font-medium capitalize">
+                                {prediction.result}
+                              </span>
+                            </div>
+                          )}
                         </div>
-                        {prediction.confidenceLevel && (
-                          <span className="truncate">
-                            Confidence Level:{prediction.confidenceLevel}
-                          </span>
+                        <p className="text-xs md:text-sm text-muted-foreground mb-3 line-clamp-2">
+                          {prediction.summary || prediction.content}
+                        </p>
+                        <div className="flex items-center justify-between mb-3">
+                          {prediction.odds && (
+                            <div>
+                              <div className="text-lg md:text-xl font-bold text-primary">
+                                {/* {prediction.odds} */}
+                                {Number(prediction.odds).toFixed(2)}
+                              </div>
+                              <div className="text-[10px] md:text-xs text-muted-foreground">
+                                Odds
+                              </div>
+                            </div>
+                          )}
+                          {prediction.predictedOutcome && (
+                            <div className="text-right">
+                              <div className="text-xs md:text-sm font-bold line-clamp-1">
+                                {prediction.predictedOutcome}
+                              </div>
+                              <div className="text-[10px] md:text-xs text-muted-foreground">
+                                Prediction
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex items-center justify-between text-[10px] md:text-xs text-muted-foreground mb-3 gap-2">
+                          <div className="flex items-center gap-1 min-w-0">
+                            <Calendar className="h-2.5 w-2.5 md:h-3 md:w-3 shrink-0" />
+                            <span className="truncate">
+                              {new Date(
+                                prediction.matchDate || prediction.createdAt
+                              ).toLocaleString("en-NG", {
+                                year: "numeric",
+                                month: "short",
+                                day: "numeric",
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })}
+                            </span>
+                          </div>
+                          {prediction.confidenceLevel && (
+                            <span className="truncate">
+                              Confidence Level:{prediction.confidenceLevel}
+                            </span>
+                          )}
+                        </div>
+                        {prediction.ticketSnapshots.length > 0 && (
+                          <div className="mb-3 text-[10px] md:text-xs text-muted-foreground">
+                            Ticket snapshots:{" "}
+                            {prediction.ticketSnapshots.length}
+                          </div>
                         )}
-                      </div>
-                      {prediction.ticketSnapshots.length > 0 && (
-                        <div className="mb-3 text-[10px] md:text-xs text-muted-foreground">
-                          Ticket snapshots: {prediction.ticketSnapshots.length}
-                        </div>
-                      )}
-                      <Link href={`/tips/${prediction.id}`}>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="w-full text-[10px] md:text-xs"
-                        >
-                          <TrendingUp className="h-3 w-3 md:h-4 md:w-4 mr-1.5 md:mr-2" />
-                          View Details
-                        </Button>
-                      </Link>
-                    </CardContent>
-                  </Card>
-                ))}
+                        {prediction.result === "won" && (
+                          <div className="mb-3 flex justify-center">
+                            <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200 rounded-full">
+                              <CheckCircle className="w-3 h-3 mr-1" />
+                              Won
+                            </span>
+                          </div>
+                        )}
+                        <Link href={`/tips/${prediction.id}`}>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="w-full text-[10px] md:text-xs"
+                          >
+                            <TrendingUp className="h-3 w-3 md:h-4 md:w-4 mr-1.5 md:mr-2" />
+                            View Details
+                          </Button>
+                        </Link>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+                {vipPredictions.length > itemsPerPage && (
+                  <div className="flex items-center justify-center gap-2 mt-6">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        setCurrentPagePredictions(
+                          Math.max(1, currentPagePredictions - 1)
+                        )
+                      }
+                      disabled={currentPagePredictions === 1}
+                    >
+                      Previous
+                    </Button>
+                    <span className="text-sm text-muted-foreground">
+                      Page {currentPagePredictions} of{" "}
+                      {Math.ceil(vipPredictions.length / itemsPerPage)}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        setCurrentPagePredictions(
+                          Math.min(
+                            Math.ceil(vipPredictions.length / itemsPerPage),
+                            currentPagePredictions + 1
+                          )
+                        )
+                      }
+                      disabled={
+                        currentPagePredictions ===
+                        Math.ceil(vipPredictions.length / itemsPerPage)
+                      }
+                    >
+                      Next
+                    </Button>
+                  </div>
+                )}
               </div>
             )}
           </CardContent>
@@ -709,160 +803,211 @@ export default function VIPAreaPage() {
                 <p className="text-sm">Loading VIP updates...</p>
               </div>
             ) : vipUpdates.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
-                {vipUpdates.map((update) => (
-                  <Card key={update.id} className="border-2 border-purple-500">
-                    <CardContent className="p-4">
-                      <h3 className="font-bold text-sm md:text-base mb-3 line-clamp-2">
-                        {update.title}
-                      </h3>
-                      {(update.homeTeam || update.awayTeam) && (
-                        <div className="flex items-center justify-between mb-3 p-2 bg-secondary rounded">
-                          <div className="text-center flex-1">
-                            {update.homeTeam?.logoUrl && (
-                              <img
-                                src={update.homeTeam.logoUrl}
-                                alt={update.homeTeam.name}
-                                className="w-8 h-8 md:w-10 md:h-10 mx-auto mb-1 object-contain"
-                              />
-                            )}
-                            <p className="text-[10px] md:text-xs font-medium line-clamp-1">
-                              {update.homeTeam?.name}
-                            </p>
-                          </div>
-                          <div className="px-3 font-bold text-muted-foreground text-xs md:text-sm">
-                            VS
-                          </div>
-                          <div className="text-center flex-1">
-                            {update.awayTeam?.logoUrl && (
-                              <img
-                                src={update.awayTeam.logoUrl}
-                                alt={update.awayTeam.name}
-                                className="w-8 h-8 md:w-10 md:h-10 mx-auto mb-1 object-contain"
-                              />
-                            )}
-                            <p className="text-[10px] md:text-xs font-medium line-clamp-1">
-                              {update.awayTeam?.name}
-                            </p>
-                          </div>
-                        </div>
-                      )}
-                      {update.matchResult && (
-                        <div
-                          className={`text-xs md:text-sm font-medium mb-2 ${
-                            update.result === "won"
-                              ? "text-emerald-700 dark:text-emerald-400"
-                              : "text-primary"
-                          }`}
-                        >
-                          {update.matchResult}
-                        </div>
-                      )}
-                      <div className="space-y-1 text-[10px] md:text-xs mb-3">
-                        {update.predictedOutcome && (
-                          <div>
-                            <span className="text-muted-foreground">
-                              Prediction:{" "}
-                            </span>
-                            <span className="font-medium">
-                              {update.predictedOutcome}
-                            </span>
-                          </div>
-                        )}
-                        {update.confidenceLevel && (
-                          <div>
-                            <span className="text-muted-foreground">
-                              Confidence Level:{" "}
-                            </span>
-                            <span className="font-medium">
-                              {update.confidenceLevel}%
-                            </span>
-                          </div>
-                        )}
-                        {update.result && (
-                          <div>
-                            <span className="text-muted-foreground">
-                              Result:{" "}
-                            </span>
-                            <span
-                              className={`font-medium capitalize ${
-                                update.result === "won"
-                                  ? "text-emerald-600 dark:text-emerald-400"
-                                  : update.result === "lost"
-                                  ? "text-red-500"
-                                  : ""
-                              }`}
-                            >
-                              {update.result}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                      <p className="text-xs md:text-sm text-muted-foreground mb-3 line-clamp-2">
-                        {update.summary || update.content}
-                      </p>
-                      <div className="flex items-center justify-between mb-3">
-                        {update.odds && (
-                          <div>
-                            <div className="text-lg md:text-xl font-bold text-primary">
-                              {Number(update.odds).toFixed(2)}
+              <div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
+                  {displayedVipUpdates.map((update) => (
+                    <Card
+                      key={update.id}
+                      className="border-2 border-purple-500"
+                    >
+                      <CardContent className="p-4">
+                        <h3 className="font-bold text-sm md:text-base mb-3 line-clamp-2">
+                          {update.title}
+                        </h3>
+                        {(update.homeTeam || update.awayTeam) && (
+                          <div className="flex items-center justify-between mb-3 p-2 bg-secondary rounded">
+                            <div className="text-center flex-1">
+                              {update.homeTeam?.logoUrl && (
+                                <img
+                                  src={update.homeTeam.logoUrl}
+                                  alt={update.homeTeam.name}
+                                  className="w-8 h-8 md:w-10 md:h-10 mx-auto mb-1 object-contain"
+                                />
+                              )}
+                              <p className="text-[10px] md:text-xs font-medium line-clamp-1">
+                                {update.homeTeam?.name}
+                              </p>
                             </div>
-                            <div className="text-[10px] md:text-xs text-muted-foreground">
-                              Odds
+                            <div className="px-3 font-bold text-muted-foreground text-xs md:text-sm">
+                              VS
+                            </div>
+                            <div className="text-center flex-1">
+                              {update.awayTeam?.logoUrl && (
+                                <img
+                                  src={update.awayTeam.logoUrl}
+                                  alt={update.awayTeam.name}
+                                  className="w-8 h-8 md:w-10 md:h-10 mx-auto mb-1 object-contain"
+                                />
+                              )}
+                              <p className="text-[10px] md:text-xs font-medium line-clamp-1">
+                                {update.awayTeam?.name}
+                              </p>
                             </div>
                           </div>
                         )}
-                        {update.predictedOutcome && (
-                          <div className="text-right">
-                            <div className="text-xs md:text-sm font-bold line-clamp-1">
-                              {update.predictedOutcome}
-                            </div>
-                            <div className="text-[10px] md:text-xs text-muted-foreground">
-                              Prediction
-                            </div>
+                        {update.matchResult && (
+                          <div
+                            className={`text-xs md:text-sm font-medium mb-2 ${
+                              update.result === "won"
+                                ? "text-emerald-700 dark:text-emerald-400"
+                                : "text-primary"
+                            }`}
+                          >
+                            {update.matchResult}
                           </div>
                         )}
-                      </div>
-                      <div className="flex items-center justify-between text-[10px] md:text-xs text-muted-foreground mb-3 gap-2">
-                        <div className="flex items-center gap-1 min-w-0">
-                          <Calendar className="h-2.5 w-2.5 md:h-3 md:w-3 shrink-0" />
-                          <span className="truncate">
-                            {new Date(
-                              update.matchDate || update.createdAt
-                            ).toLocaleString("en-NG", {
-                              weekday: "short",
-                              month: "short",
-                              day: "numeric",
-                              hour: "2-digit",
-                              minute: "2-digit",
-                              hour12: false,
-                            })}
-                          </span>
+                        <div className="space-y-1 text-[10px] md:text-xs mb-3">
+                          {update.predictedOutcome && (
+                            <div>
+                              <span className="text-muted-foreground">
+                                Prediction:{" "}
+                              </span>
+                              <span className="font-medium">
+                                {update.predictedOutcome}
+                              </span>
+                            </div>
+                          )}
+                          {update.confidenceLevel && (
+                            <div>
+                              <span className="text-muted-foreground">
+                                Confidence Level:{" "}
+                              </span>
+                              <span className="font-medium">
+                                {update.confidenceLevel}%
+                              </span>
+                            </div>
+                          )}
+                          {update.result && (
+                            <div>
+                              <span className="text-muted-foreground">
+                                Result:{" "}
+                              </span>
+                              <span
+                                className={`font-medium capitalize ${
+                                  update.result === "won"
+                                    ? "text-emerald-600 dark:text-emerald-400"
+                                    : update.result === "lost"
+                                    ? "text-red-500"
+                                    : ""
+                                }`}
+                              >
+                                {update.result}
+                              </span>
+                            </div>
+                          )}
                         </div>
-                        {update.confidenceLevel && (
-                          <span className="truncate">
-                            Confidence Level:{update.confidenceLevel}
-                          </span>
+                        <p className="text-xs md:text-sm text-muted-foreground mb-3 line-clamp-2">
+                          {update.summary || update.content}
+                        </p>
+                        <div className="flex items-center justify-between mb-3">
+                          {update.odds && (
+                            <div>
+                              <div className="text-lg md:text-xl font-bold text-primary">
+                                {Number(update.odds).toFixed(2)}
+                              </div>
+                              <div className="text-[10px] md:text-xs text-muted-foreground">
+                                Odds
+                              </div>
+                            </div>
+                          )}
+                          {update.predictedOutcome && (
+                            <div className="text-right">
+                              <div className="text-xs md:text-sm font-bold line-clamp-1">
+                                {update.predictedOutcome}
+                              </div>
+                              <div className="text-[10px] md:text-xs text-muted-foreground">
+                                Prediction
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex items-center justify-between text-[10px] md:text-xs text-muted-foreground mb-3 gap-2">
+                          <div className="flex items-center gap-1 min-w-0">
+                            <Calendar className="h-2.5 w-2.5 md:h-3 md:w-3 shrink-0" />
+                            <span className="truncate">
+                              {new Date(
+                                update.matchDate || update.createdAt
+                              ).toLocaleString("en-NG", {
+                                weekday: "short",
+                                month: "short",
+                                day: "numeric",
+                                hour: "2-digit",
+                                minute: "2-digit",
+                                hour12: false,
+                              })}
+                            </span>
+                          </div>
+                          {update.confidenceLevel && (
+                            <span className="truncate">
+                              Confidence Level:{update.confidenceLevel}
+                            </span>
+                          )}
+                        </div>
+                        {update.ticketSnapshots.length > 0 && (
+                          <div className="mb-3 text-[10px] md:text-xs text-muted-foreground">
+                            Ticket snapshots: {update.ticketSnapshots.length}
+                          </div>
                         )}
-                      </div>
-                      {update.ticketSnapshots.length > 0 && (
-                        <div className="mb-3 text-[10px] md:text-xs text-muted-foreground">
-                          Ticket snapshots: {update.ticketSnapshots.length}
-                        </div>
-                      )}
-                      <Link href={`/tips/${update.id}`}>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="w-full text-[10px] md:text-xs"
-                        >
-                          <Target className="h-3 w-3 md:h-4 md:w-4 mr-1.5 md:mr-2" />
-                          View Update
-                        </Button>
-                      </Link>
-                    </CardContent>
-                  </Card>
-                ))}
+                        {update.result === "won" && (
+                          <div className="mb-3 flex justify-center">
+                            <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200 rounded-full">
+                              <CheckCircle className="w-3 h-3 mr-1" />
+                              Won
+                            </span>
+                          </div>
+                        )}
+                        <Link href={`/tips/${update.id}`}>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="w-full text-[10px] md:text-xs"
+                          >
+                            <Target className="h-3 w-3 md:h-4 md:w-4 mr-1.5 md:mr-2" />
+                            View Update
+                          </Button>
+                        </Link>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+                {vipUpdates.length > itemsPerPage && (
+                  <div className="flex items-center justify-center gap-2 mt-6">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        setCurrentPageUpdates(
+                          Math.max(1, currentPageUpdates - 1)
+                        )
+                      }
+                      disabled={currentPageUpdates === 1}
+                    >
+                      Previous
+                    </Button>
+                    <span className="text-sm text-muted-foreground">
+                      Page {currentPageUpdates} of{" "}
+                      {Math.ceil(vipUpdates.length / itemsPerPage)}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        setCurrentPageUpdates(
+                          Math.min(
+                            Math.ceil(vipUpdates.length / itemsPerPage),
+                            currentPageUpdates + 1
+                          )
+                        )
+                      }
+                      disabled={
+                        currentPageUpdates ===
+                        Math.ceil(vipUpdates.length / itemsPerPage)
+                      }
+                    >
+                      Next
+                    </Button>
+                  </div>
+                )}
               </div>
             ) : (
               <div className="text-center py-12 text-muted-foreground">
@@ -894,7 +1039,7 @@ export default function VIPAreaPage() {
                 <div className="mb-6">
                   <h3 className="font-bold text-base mb-4">Past VIP Tips</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
-                    {historyPredictions.map((prediction) => (
+                    {displayedHistoryPredictions.map((prediction) => (
                       <Card
                         key={prediction.id}
                         className={`border-2 ${
@@ -1054,6 +1199,14 @@ export default function VIPAreaPage() {
                               </div>
                             </details>
                           )}
+                          {prediction.result === "won" && (
+                            <div className="mb-3 flex justify-center">
+                              <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200 rounded-full">
+                                <CheckCircle className="w-3 h-3 mr-1" />
+                                Won
+                              </span>
+                            </div>
+                          )}
                           <Link href={`/tips/${prediction.id}`}>
                             <Button
                               variant="outline"
@@ -1067,13 +1220,53 @@ export default function VIPAreaPage() {
                       </Card>
                     ))}
                   </div>
+                  {historyPredictions.length > itemsPerPage && (
+                    <div className="flex items-center justify-center gap-2 mt-6">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() =>
+                          setCurrentPageHistoryPredictions(
+                            Math.max(1, currentPageHistoryPredictions - 1)
+                          )
+                        }
+                        disabled={currentPageHistoryPredictions === 1}
+                      >
+                        Previous
+                      </Button>
+                      <span className="text-sm text-muted-foreground">
+                        Page {currentPageHistoryPredictions} of{" "}
+                        {Math.ceil(historyPredictions.length / itemsPerPage)}
+                      </span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() =>
+                          setCurrentPageHistoryPredictions(
+                            Math.min(
+                              Math.ceil(
+                                historyPredictions.length / itemsPerPage
+                              ),
+                              currentPageHistoryPredictions + 1
+                            )
+                          )
+                        }
+                        disabled={
+                          currentPageHistoryPredictions ===
+                          Math.ceil(historyPredictions.length / itemsPerPage)
+                        }
+                      >
+                        Next
+                      </Button>
+                    </div>
+                  )}
                 </div>
               )}
               {historyUpdates.length > 0 && (
                 <div>
                   <h3 className="font-bold text-base mb-4">Past VIP Updates</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
-                    {historyUpdates.map((update) => (
+                    {displayedHistoryUpdates.map((update) => (
                       <Card
                         key={update.id}
                         className={`border-2 ${
@@ -1231,6 +1424,14 @@ export default function VIPAreaPage() {
                               </div>
                             </details>
                           )}
+                          {update.result === "won" && (
+                            <div className="mb-3 flex justify-center">
+                              <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200 rounded-full">
+                                <CheckCircle className="w-3 h-3 mr-1" />
+                                Won
+                              </span>
+                            </div>
+                          )}
                           <Link href={`/tips/${update.id}`}>
                             <Button
                               variant="outline"
@@ -1244,6 +1445,44 @@ export default function VIPAreaPage() {
                       </Card>
                     ))}
                   </div>
+                  {historyUpdates.length > itemsPerPage && (
+                    <div className="flex items-center justify-center gap-2 mt-6">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() =>
+                          setCurrentPageHistoryUpdates(
+                            Math.max(1, currentPageHistoryUpdates - 1)
+                          )
+                        }
+                        disabled={currentPageHistoryUpdates === 1}
+                      >
+                        Previous
+                      </Button>
+                      <span className="text-sm text-muted-foreground">
+                        Page {currentPageHistoryUpdates} of{" "}
+                        {Math.ceil(historyUpdates.length / itemsPerPage)}
+                      </span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() =>
+                          setCurrentPageHistoryUpdates(
+                            Math.min(
+                              Math.ceil(historyUpdates.length / itemsPerPage),
+                              currentPageHistoryUpdates + 1
+                            )
+                          )
+                        }
+                        disabled={
+                          currentPageHistoryUpdates ===
+                          Math.ceil(historyUpdates.length / itemsPerPage)
+                        }
+                      >
+                        Next
+                      </Button>
+                    </div>
+                  )}
                 </div>
               )}
             </CardContent>
