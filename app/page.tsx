@@ -133,17 +133,17 @@ export default function Home() {
 
   const [promoSlides, setPromoSlides] = useState([
     {
-      img: "/images/do.gif",
+      img: "/images/home.gif",
       alt: "Win with expert tips",
       caption: "",
     },
     {
-      img: "/images/do.gif",
+      img: "/images/home.gif",
       alt: "Live scores update",
       caption: "",
     },
     {
-      img: "/images/do.gif",
+      img: "/images/home.gif",
       alt: "High odds betting",
       caption: "",
     },
