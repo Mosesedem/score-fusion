@@ -93,16 +93,14 @@ interface Review {
   date: string;
 }
 
-interface BlogPost {
+interface Carousel {
   id: string;
-  title: string;
-  slug: string;
-  excerpt: string;
-  authorName: string;
-  publishedAt: string;
-  tags: string[];
-  viewCount: number;
-  headerImage?: string;
+  title?: string;
+  imageUrl: string;
+  altText?: string;
+  type: string;
+  isActive: boolean;
+  order: number;
 }
 
 type PredictionsData = PredictionsApiResponse["data"];
@@ -124,7 +122,7 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [currentSlide, setCurrentSlide] = useState(0);
 
-  const promoSlides = [
+  const [promoSlides, setPromoSlides] = useState([
     {
       img: "/images/do.gif",
       alt: "Win with expert tips",
@@ -140,7 +138,7 @@ export default function Home() {
       alt: "High odds betting",
       caption: "",
     },
-  ];
+  ]);
 
   // Redirect authenticated users to dashboard
   useEffect(() => {
@@ -222,6 +220,20 @@ export default function Home() {
           }
         }
 
+        // Fetch carousel images
+        const carouselResponse = await fetch("/api/carousels?type=LANDING");
+        if (carouselResponse.ok) {
+          const carouselData = await carouselResponse.json();
+          if (carouselData.carousels && carouselData.carousels.length > 0) {
+            const slides = carouselData.carousels.map((c: Carousel) => ({
+              img: c.imageUrl,
+              alt: c.altText || c.title || "Promotion",
+              caption: c.title || "",
+            }));
+            setPromoSlides(slides);
+          }
+        }
+
         // Fetch platform stats (you can create a dedicated endpoint for this)
         // For now, we'll use mock data but structured for real data
         setStats({
@@ -252,7 +264,7 @@ export default function Home() {
 
     // Auto-slide carousel
     const slideInterval = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % promoSlides.length);
+      setCurrentSlide((prev) => (prev + 1) % (promoSlides.length || 1));
     }, 5000);
 
     return () => {
@@ -786,47 +798,6 @@ export default function Home() {
           </div>
         </div>
       </section>
-
-      {/* Top Betting Sites */}
-      {/* <section className="py-8 md:py-12 border-t border-border bg-secondary">
-        <div className="container mx-auto px-4">
-          <h2 className="text-xl md:text-2xl font-bold text-center mb-6 md:mb-8">
-            Top Betting Sites
-          </h2>
-          <div className="grid md:grid-cols-3 gap-6">
-            {[1, 2, 3].map((i) => (
-              <Card key={i}>
-                <CardHeader className="pb-2">
-                  <div className="flex items-center gap-3">
-                    <Image
-                      src={`/images/bet-site${i}.png`}
-                      alt={`Betting Site ${i}`}
-                      width={40}
-                      height={40}
-                      className="rounded"
-                    />
-                    <CardTitle className="text-base">Bet365</CardTitle>
-                  </div>
-                </CardHeader>
-                <CardContent className="pt-0 space-y-2 text-sm">
-                  <div>
-                    <strong>Bonus:</strong> 100% up to $100
-                  </div>
-                  <div>
-                    <strong>Markets:</strong> Football, Tennis, Basketball
-                  </div>
-                  <div>
-                    <strong>Features:</strong> Live Streaming, Cash Out
-                  </div>
-                  <Button variant="outline" size="sm" className="w-full mt-3">
-                    Visit Site
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section> */}
 
       {/* Security & Trust */}
       <section className="py-8 md:py-12 border-t border-border">

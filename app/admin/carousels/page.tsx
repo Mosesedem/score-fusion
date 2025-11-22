@@ -257,9 +257,9 @@ export default function AdminCarouselsPage() {
                   <Label htmlFor="type">Type</Label>
                   <Select
                     value={formData.type}
-                    onValueChange={(value: any) =>
-                      setFormData({ ...formData, type: value })
-                    }
+                    onValueChange={(
+                      value: "LANDING" | "DASHBOARD_FREE" | "DASHBOARD_VIP"
+                    ) => setFormData({ ...formData, type: value })}
                   >
                     <SelectTrigger>
                       <SelectValue />
