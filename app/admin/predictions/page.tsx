@@ -92,7 +92,7 @@ export default function AdminPredictionsPage() {
     oddsSource: "manual" as "manual" | "api_auto",
     sport: "FOOTBALL",
     league: "",
-    matchDate: "",
+    matchDate: new Date().toISOString().slice(0, 16),
     homeTeamId: "",
     awayTeamId: "",
     predictionType: "",
@@ -526,7 +526,9 @@ export default function AdminPredictionsPage() {
       oddsSource: tip.oddsSource as "manual" | "api_auto",
       sport: tip.sport,
       league: tip.league || "",
-      matchDate: tip.matchDate || "",
+      matchDate: tip.matchDate
+        ? new Date(tip.matchDate).toISOString().slice(0, 16)
+        : new Date().toISOString().slice(0, 16),
       homeTeamId: tip.homeTeam?.id || "",
       awayTeamId: tip.awayTeam?.id || "",
       predictionType: tip.predictionType || "",
