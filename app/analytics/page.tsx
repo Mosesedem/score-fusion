@@ -709,7 +709,15 @@ export default function AnalyticsPage() {
                         className="border-b border-border hover:bg-secondary/50 transition-colors"
                       >
                         <td className="py-3 px-4 text-sm">
-                          {new Date(prediction.matchDate).toLocaleDateString()}
+                          {new Date(prediction.matchDate).toLocaleDateString(
+                            "en-US",
+                            {
+                              timeZone: "UTC",
+                              month: "short",
+                              day: "numeric",
+                              weekday: "short",
+                            }
+                          )}
                         </td>
                         <td className="py-3 px-4 text-sm text-muted-foreground">
                           {prediction.league}

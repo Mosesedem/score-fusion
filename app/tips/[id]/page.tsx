@@ -324,6 +324,7 @@ export default function TipDetailPage() {
                         {new Date(tip.matchDate).toLocaleString("en-US", {
                           weekday: "short",
                           month: "short",
+                          timeZone: "UTC",
                           day: "numeric",
                           hour: "2-digit",
                           minute: "2-digit",

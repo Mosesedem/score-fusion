@@ -700,6 +700,7 @@ export default function VIPAreaPage() {
                                 prediction.matchDate || prediction.createdAt
                               ).toLocaleString("en-NG", {
                                 year: "numeric",
+                                timeZone: "UTC",
                                 month: "short",
                                 day: "numeric",
                                 hour: "2-digit",
@@ -931,6 +932,7 @@ export default function VIPAreaPage() {
                                 weekday: "short",
                                 month: "short",
                                 day: "numeric",
+                                timeZone: "UTC",
                                 hour: "2-digit",
                                 minute: "2-digit",
                                 hour12: false,
@@ -1144,6 +1146,7 @@ export default function VIPAreaPage() {
                                   weekday: "short",
                                   month: "short",
                                   day: "numeric",
+                                  timeZone: "UTC",
                                   hour: "2-digit",
                                   minute: "2-digit",
                                   hour12: false,
@@ -1370,6 +1373,7 @@ export default function VIPAreaPage() {
                                 ).toLocaleString("en-NG", {
                                   year: "numeric",
                                   month: "short",
+                                  timeZone: "UTC",
                                   day: "numeric",
                                   hour: "2-digit",
                                   minute: "2-digit",

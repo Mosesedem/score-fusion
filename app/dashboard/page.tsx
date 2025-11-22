@@ -313,6 +313,7 @@ export default function DashboardPage() {
                               {new Date(pred.matchDate).toLocaleString(
                                 "en-US",
                                 {
+                                  timeZone: "UTC",
                                   weekday: "short",
                                   month: "short",
                                   day: "numeric",

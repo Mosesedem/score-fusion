@@ -228,6 +228,7 @@ export default function HistoryPage() {
                                 {new Date(tip.matchDate).toLocaleString(
                                   "en-US",
                                   {
+                                    timeZone: "UTC",
                                     weekday: "short",
                                     month: "short",
                                     day: "numeric",

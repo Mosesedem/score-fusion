@@ -368,6 +368,7 @@ export default function TipsPage() {
                           <span className="truncate">
                             {new Date(tip.matchDate).toLocaleString("en-US", {
                               weekday: "short",
+                              timeZone: "UTC",
                               month: "short",
                               day: "numeric",
                               hour: "2-digit",

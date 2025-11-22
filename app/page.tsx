@@ -531,6 +531,7 @@ export default function Home() {
                                 {new Date(pred.matchDate).toLocaleString(
                                   "en-US",
                                   {
+                                    timeZone: "UTC",
                                     weekday: "short",
                                     month: "short",
                                     day: "numeric",
