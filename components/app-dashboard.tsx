@@ -16,14 +16,6 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { UserEngagement } from "@/components/user-engagement";
 import Image from "next/image";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/components/ui/dialog";
 interface Prediction {
   id: string;
   title: string;
@@ -92,7 +84,6 @@ export default function DashboardPage() {
   const [showWelcomeTooltip, setShowWelcomeTooltip] = useState(false);
   const [derivedWinRate, setDerivedWinRate] = useState<number | null>(null);
   const [bannerImage, setBannerImage] = useState("/images/do.gif");
-  const [showAppDialog, setShowAppDialog] = useState(false);
 
   useEffect(() => {
     async function fetchDashboardData() {
@@ -202,13 +193,6 @@ export default function DashboardPage() {
 
     fetchDashboardData();
   }, [user, api]);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setShowAppDialog(true);
-    }, 3000); // Show dialog after 3 seconds
-    return () => clearTimeout(timer);
-  }, []);
 
   return (
     <div className="min-h-screen bg-background">
@@ -565,52 +549,6 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
-
-      {/* Auto-popup dialog for app download */}
-      <Dialog open={showAppDialog} onOpenChange={setShowAppDialog}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="text-center">Download Our App</DialogTitle>
-            <DialogDescription className="text-center">
-              Get the best experience with our mobile app. Access tips on the
-              go, receive push notifications, and never miss a winning
-              prediction!
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="flex-col gap-2">
-            <button
-              onClick={() => {
-                window.open(
-                  "https://apps.apple.com/app/scorefusion/id1234567890",
-                  "_blank"
-                );
-                setShowAppDialog(false);
-              }}
-              className="w-full bg-black text-white py-3 px-4 rounded-lg font-semibold hover:bg-gray-800 transition-colors"
-            >
-              📱 Download on App Store
-            </button>
-            <button
-              onClick={() => {
-                window.open(
-                  "https://play.google.com/store/apps/details?id=com.scorefusion.app",
-                  "_blank"
-                );
-                setShowAppDialog(false);
-              }}
-              className="w-full bg-green-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-green-700 transition-colors"
-            >
-              🤖 Get it on Google Play
-            </button>
-            <button
-              onClick={() => setShowAppDialog(false)}
-              className="w-full text-muted-foreground py-2 px-4 rounded-lg hover:bg-accent transition-colors"
-            >
-              Maybe Later
-            </button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
