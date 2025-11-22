@@ -802,12 +802,13 @@ export default function AdminPredictionsPage() {
                     </div>
 
                     <div>
+                      <Label htmlFor="matchDate">Match Date & Time</Label>
                       {/* <DateTimePicker
                         value={formData.matchDate}
                         onChange={(iso) =>
                           setFormData({ ...formData, matchDate: iso })
                         }
-                        label="Match Date & Time"
+                      
                         required
                       /> */}
                       <Input
