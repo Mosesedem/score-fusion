@@ -103,6 +103,15 @@ interface Carousel {
   order: number;
 }
 
+interface BlogPost {
+  id: string;
+  title: string;
+  slug: string;
+  excerpt: string;
+  publishedAt: string;
+  headerImage?: string;
+}
+
 type PredictionsData = PredictionsApiResponse["data"];
 
 export default function Home() {
