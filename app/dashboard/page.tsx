@@ -573,7 +573,15 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
-      <Dialog open={showAppDialog} onOpenChange={setShowAppDialog}>
+      <Dialog
+        open={showAppDialog}
+        onOpenChange={(open) => {
+          setShowAppDialog(open);
+          if (!open) {
+            localStorage.setItem("appDialogDismissedAt", Date.now().toString());
+          }
+        }}
+      >
         <DialogContent className=" rounded-2xl p-6 shadow-xl border ">
           <DialogHeader className="space-y-2 text-center">
             <DialogTitle className="text-xl font-bold">
@@ -737,16 +745,7 @@ export default function DashboardPage() {
             </div>
           </DialogFooter>
           <div className="justify-center items-center flex ">
-            <Button
-              variant="ghost"
-              onClick={() => {
-                setShowAppDialog(false);
-                localStorage.setItem(
-                  "appDialogDismissedAt",
-                  Date.now().toString()
-                );
-              }}
-            >
+            <Button variant="ghost" onClick={() => setShowAppDialog(false)}>
               Maybe Later
             </Button>
           </div>
