@@ -15,6 +15,7 @@ import {
   Target,
   Calendar,
   Loader2,
+  XCircle,
 } from "lucide-react";
 import { useEffect, useState, useCallback, useMemo } from "react";
 import Link from "next/link";
@@ -728,6 +729,14 @@ export default function VIPAreaPage() {
                             </span>
                           </div>
                         )}
+                        {prediction.result === "lost" && (
+                          <div className="mb-3 flex justify-center">
+                            <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200 rounded-full">
+                              <XCircle className="w-3 h-3 mr-1" />
+                              Lost
+                            </span>
+                          </div>
+                        )}
                         <Link href={`/tips/${prediction.id}`}>
                           <Button
                             variant="outline"
@@ -857,6 +866,17 @@ export default function VIPAreaPage() {
                             {update.matchResult}
                           </div>
                         )}
+                        {update.matchResult && (
+                          <div
+                            className={`text-xs md:text-sm font-medium mb-2 ${
+                              update.result === "lost"
+                                ? "text-red-700 dark:text-red-400"
+                                : "text-primary"
+                            }`}
+                          >
+                            {update.matchResult}
+                          </div>
+                        )}
                         <div className="space-y-1 text-[10px] md:text-xs mb-3">
                           {update.predictedOutcome && (
                             <div>
@@ -958,6 +978,15 @@ export default function VIPAreaPage() {
                             </span>
                           </div>
                         )}
+
+                        {update.result === "lost" && (
+                          <div className="mb-3 flex justify-center">
+                            <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200 rounded-full">
+                              <XCircle className="w-3 h-3 mr-1" />
+                              Lost
+                            </span>
+                          </div>
+                        )}
                         <Link href={`/tips/${update.id}`}>
                           <Button
                             variant="outline"
@@ -1047,6 +1076,8 @@ export default function VIPAreaPage() {
                         className={`border-2 ${
                           prediction.result === "won"
                             ? "border-emerald-500"
+                            : prediction.result === "lost"
+                            ? "border-red-500"
                             : "border-border"
                         }`}
                       >
@@ -1210,6 +1241,14 @@ export default function VIPAreaPage() {
                               </span>
                             </div>
                           )}
+                          {prediction.result === "lost" && (
+                            <div className="mb-3 flex justify-center">
+                              <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200 rounded-full">
+                                <XCircle className="w-3 h-3 mr-1" />
+                                Lost
+                              </span>
+                            </div>
+                          )}
                           <Link href={`/tips/${prediction.id}`}>
                             <Button
                               variant="outline"
@@ -1275,6 +1314,8 @@ export default function VIPAreaPage() {
                         className={`border-2 ${
                           update.result === "won"
                             ? "border-emerald-500"
+                            : update.result === "lost"
+                            ? "border-red-500"
                             : "border-border"
                         }`}
                       >
@@ -1318,6 +1359,8 @@ export default function VIPAreaPage() {
                               className={`text-xs md:text-sm font-medium mb-2 ${
                                 update.result === "won"
                                   ? "text-emerald-700 dark:text-emerald-400"
+                                  : update.result === "lost"
+                                  ? "text-red-500 dark:text-red-400"
                                   : "text-primary"
                               }`}
                             >
