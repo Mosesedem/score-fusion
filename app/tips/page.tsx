@@ -285,17 +285,33 @@ export default function TipsPage() {
               <p className="text-sm">Loading tips...</p>
             </div>
           ) : viewMode === "current" && tips.length === 0 ? (
-            <Card>
-              <CardContent className="p-6 md:p-8 lg:p-12 text-center">
-                <p className="text-muted-foreground mb-4 text-xs md:text-sm lg:text-base">
-                  No current predictions available at the moment. Check back
-                  soon or view our history!
-                </p>
-                <Button size="sm" onClick={() => setViewMode("history")}>
-                  View History
-                </Button>
-              </CardContent>
-            </Card>
+            filter === "vip" && !hasVIPAccess ? (
+              <Card>
+                <CardContent className="p-6 md:p-8 lg:p-12 text-center">
+                  <p className="text-muted-foreground mb-4 text-xs md:text-sm lg:text-base">
+                    Unlock premium tips by subscribing to VIP.
+                  </p>
+                  <Link href="/vip">
+                    <Button size="sm" className="text-xs md:text-sm">
+                      <Lock className="h-3 w-3 md:h-4 md:w-4 mr-2" />
+                      Get VIP Access
+                    </Button>
+                  </Link>
+                </CardContent>
+              </Card>
+            ) : (
+              <Card>
+                <CardContent className="p-6 md:p-8 lg:p-12 text-center">
+                  <p className="text-muted-foreground mb-4 text-xs md:text-sm lg:text-base">
+                    No current predictions available at the moment. Check back
+                    soon or view our history!
+                  </p>
+                  <Button size="sm" onClick={() => setViewMode("history")}>
+                    View History
+                  </Button>
+                </CardContent>
+              </Card>
+            )
           ) : viewMode === "history" && historyTips.length === 0 ? (
             <Card>
               <CardContent className="p-6 md:p-8 lg:p-12 text-center">
