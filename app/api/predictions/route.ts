@@ -19,7 +19,7 @@ function endOfDay(date: Date) {
 // Public predictions (tips) query schema
 const predictionsQuerySchema = z.object({
   page: z.string().transform(Number).default("1"),
-  limit: z.string().transform(Number).default("20"),
+  limit: z.string().transform(Number).default("10000000000"),
   sport: z.string().optional(),
   vip: z
     .string()

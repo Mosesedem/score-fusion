@@ -8,7 +8,7 @@ import { hasVIPAccess } from "@/lib/vip-access";
 // Query schema
 const tipsQuerySchema = z.object({
   page: z.string().transform(Number).default("1"),
-  limit: z.string().transform(Number).default("20"),
+  limit: z.string().transform(Number).default("10000000000"),
   sport: z.string().optional(),
   vip: z
     .string()
@@ -249,4 +249,3 @@ export async function GET(request: NextRequest) {
     );
   }
 }
-
