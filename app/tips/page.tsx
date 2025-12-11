@@ -521,22 +521,42 @@ export default function TipsPage() {
 
           {!loading &&
             filteredTips.length === 0 &&
-            (viewMode === "current"
-              ? tips.length > 0
-              : historyTips.length > 0) && (
+            (filter === "vip" && !hasVIPAccess ? (
               <Card>
                 <CardContent className="p-6 md:p-8 lg:p-12 text-center">
                   <p className="text-muted-foreground mb-4 text-xs md:text-sm lg:text-base">
-                    No{" "}
-                    {filter === "all" ? "" : filter === "free" ? "free" : "VIP"}{" "}
-                    predictions match your filter.
+                    Unlock premium tips by subscribing to VIP.
                   </p>
-                  <Button size="sm" onClick={() => setFilter("all")}>
-                    Clear Filter
-                  </Button>
+                  <Link href="/vip">
+                    <Button size="sm" className="text-xs md:text-sm">
+                      <Lock className="h-3 w-3 md:h-4 md:w-4 mr-2" />
+                      Get VIP Access
+                    </Button>
+                  </Link>
                 </CardContent>
               </Card>
-            )}
+            ) : (
+              (viewMode === "current"
+                ? tips.length > 0
+                : historyTips.length > 0) && (
+                <Card>
+                  <CardContent className="p-6 md:p-8 lg:p-12 text-center">
+                    <p className="text-muted-foreground mb-4 text-xs md:text-sm lg:text-base">
+                      No{" "}
+                      {filter === "all"
+                        ? ""
+                        : filter === "free"
+                        ? "free"
+                        : "VIP"}{" "}
+                      predictions match your filter.
+                    </p>
+                    <Button size="sm" onClick={() => setFilter("all")}>
+                      Clear Filter
+                    </Button>
+                  </CardContent>
+                </Card>
+              )
+            ))}
         </div>
       </section>
 
