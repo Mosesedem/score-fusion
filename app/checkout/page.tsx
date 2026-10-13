@@ -65,7 +65,7 @@ const plans: Plan[] = [
       "Priority support",
       "Advanced analytics",
       "Telegram VIP group",
-      "Personal betting consultant",
+      // "Personal betting consultant",
       "Exclusive talks",
     ],
   },

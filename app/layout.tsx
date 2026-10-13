@@ -23,9 +23,9 @@ export const metadata: Metadata = {
     icon: "/images/2.png",
   },
 
-  title: "ScoreFusion - Premium Betting Tips & Predictions",
+  title: "ScoreFusion",
   description:
-    "Get exclusive betting tips, VIP predictions, and earn rewards with ScoreFusion. Join thousands of winners today!",
+    "Learn more abouts your favorite football players, teams, and leagues. Get the latest news, stats, and analysis on the world of football.",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",

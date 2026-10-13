@@ -56,7 +56,9 @@ function SignupForm() {
   const searchParams = useSearchParams();
   const referralParam = searchParams.get("ref");
   const callbackUrl =
-    searchParams.get("callbackUrl") || searchParams.get("redirect") || "/dashboard";
+    searchParams.get("callbackUrl") ||
+    searchParams.get("redirect") ||
+    "/dashboard";
   const authErrorParam = searchParams.get("error");
 
   const getInitialError = () => {
@@ -64,7 +66,10 @@ function SignupForm() {
     if (authErrorParam === "Configuration") {
       return "Google sign-up is not configured yet. Please sign up with your email and password below.";
     }
-    if (authErrorParam === "OAuthCallback" || authErrorParam === "OAuthSignin") {
+    if (
+      authErrorParam === "OAuthCallback" ||
+      authErrorParam === "OAuthSignin"
+    ) {
       return "Could not complete sign-up with Google. Please try again or use the form below.";
     }
     if (authErrorParam === "AccessDenied") {
@@ -189,10 +194,18 @@ function SignupForm() {
           setFieldErrors((prev) => ({ ...prev, ...err.fieldErrors! }));
           // Only show a general banner if there's no field to attach to
           const unattachedFields = Object.keys(err.fieldErrors).filter(
-            (k) => !["displayName", "email", "password", "confirmPassword"].includes(k)
+            (k) =>
+              !["displayName", "email", "password", "confirmPassword"].includes(
+                k,
+              ),
           );
-          if (unattachedFields.length > 0 || Object.keys(err.fieldErrors).length === 0) {
-            setGeneralError(err.message || "Please correct the errors in the form.");
+          if (
+            unattachedFields.length > 0 ||
+            Object.keys(err.fieldErrors).length === 0
+          ) {
+            setGeneralError(
+              err.message || "Please correct the errors in the form.",
+            );
           }
         } else {
           setGeneralError(err.message || "Signup failed. Please try again.");
@@ -200,7 +213,9 @@ function SignupForm() {
       } else if (err instanceof Error) {
         setGeneralError(err.message);
       } else {
-        setGeneralError("An unexpected error occurred during signup. Please try again.");
+        setGeneralError(
+          "An unexpected error occurred during signup. Please try again.",
+        );
       }
     } finally {
       setIsLoading(false);
@@ -213,10 +228,14 @@ function SignupForm() {
     try {
       await signIn("google", {
         callbackUrl:
-          callbackUrl && callbackUrl.startsWith("/") ? callbackUrl : "/dashboard",
+          callbackUrl && callbackUrl.startsWith("/")
+            ? callbackUrl
+            : "/dashboard",
       });
     } catch (err) {
-      setGeneralError(err instanceof Error ? err.message : "Failed to sign up with Google");
+      setGeneralError(
+        err instanceof Error ? err.message : "Failed to sign up with Google",
+      );
       setIsGoogleLoading(false);
     }
   };
@@ -238,13 +257,17 @@ function SignupForm() {
             Create an account
           </CardTitle>
           <CardDescription className="text-sm md:text-base text-muted-foreground">
-            Get instant access to VIP betting tips, livescores, and insights
+            Get instant access to sports analysis, tips, livescores, and
+            insights
           </CardDescription>
 
           {referralParam && (
             <div className="mt-2 flex items-center justify-center gap-2 bg-primary/10 border border-primary/20 text-primary px-3 py-2 rounded-lg text-xs md:text-sm font-medium">
               <Gift className="h-4 w-4" />
-              <span>Referral code <strong>{referralParam}</strong> applied! Extra bonus tokens included.</span>
+              <span>
+                Referral code <strong>{referralParam}</strong> applied! Extra
+                bonus tokens included.
+              </span>
             </div>
           )}
         </CardHeader>
@@ -263,7 +286,11 @@ function SignupForm() {
             ) : (
               <GoogleIcon />
             )}
-            <span>{isGoogleLoading ? "Connecting to Google..." : "Continue with Google"}</span>
+            <span>
+              {isGoogleLoading
+                ? "Connecting to Google..."
+                : "Continue with Google"}
+            </span>
           </Button>
 
           <div className="relative my-4">
@@ -287,7 +314,8 @@ function SignupForm() {
                     Account already exists
                   </p>
                   <p className="text-xs text-amber-800 dark:text-amber-300">
-                    An account with <strong>{formData.email}</strong> is already registered.
+                    An account with <strong>{formData.email}</strong> is already
+                    registered.
                   </p>
                 </div>
               </div>
@@ -459,9 +487,7 @@ function SignupForm() {
                   <button
                     type="button"
                     className="absolute inset-y-0 right-0 pr-3 flex items-center text-muted-foreground hover:text-foreground"
-                    onClick={() =>
-                      setShowConfirmPassword(!showConfirmPassword)
-                    }
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                     disabled={isLoading || isGoogleLoading}
                     tabIndex={-1}
                   >
@@ -502,7 +528,10 @@ function SignupForm() {
                 </button>
               ) : (
                 <div className="space-y-1.5">
-                  <Label htmlFor="referralCode" className="text-xs font-medium text-muted-foreground">
+                  <Label
+                    htmlFor="referralCode"
+                    className="text-xs font-medium text-muted-foreground"
+                  >
                     Referral Code (Optional)
                   </Label>
                   <Input
@@ -510,7 +539,9 @@ function SignupForm() {
                     type="text"
                     placeholder="e.g. WINNER50"
                     value={formData.referralCode}
-                    onChange={(e) => updateField("referralCode", e.target.value)}
+                    onChange={(e) =>
+                      updateField("referralCode", e.target.value)
+                    }
                     disabled={isLoading || isGoogleLoading || !!referralParam}
                     className="h-9 text-sm"
                   />
@@ -533,7 +564,8 @@ function SignupForm() {
                   htmlFor="marketing"
                   className="text-xs text-muted-foreground font-normal cursor-pointer leading-relaxed"
                 >
-                  Send me daily match predictions, promotional tokens, and platform updates.
+                  Send me daily match predictions, promotional tokens, and
+                  platform updates.
                 </Label>
               </div>
 

@@ -101,8 +101,9 @@ export default function BlogPage() {
               Score Fusion News
             </h1>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Insights, analysis, and expert opinions on sports betting,
-              predictions, and strategies
+              Insights, analysis, and expert opinions on football, sports, and
+              more. Stay updated with the latest news, predictions, and
+              strategies
             </p>
           </div>
         </div>
@@ -215,7 +216,7 @@ export default function BlogPage() {
                               year: "numeric",
                               month: "short",
                               day: "numeric",
-                            }
+                            },
                           )}
                         </span>
                       </div>

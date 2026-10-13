@@ -16,7 +16,7 @@ function Footer() {
                 </span>
               </div>
               <p className="text-sm md:text-base text-muted-foreground">
-                Your trusted platform for expert sports predictions and betting
+                Your trusted platform for expert sports predictions and game
                 insights.
               </p>
             </div>

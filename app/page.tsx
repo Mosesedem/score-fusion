@@ -144,7 +144,7 @@ export default function Home() {
     },
     {
       img: "/images/home.gif",
-      alt: "High odds betting",
+      alt: "High odds",
       caption: "",
     },
   ]);
@@ -303,7 +303,7 @@ export default function Home() {
               <span className="text-primary">Expert Predictions</span>
             </h1>
             <p className="text-base sm:text-lg md:text-xl text-muted-foreground mb-6 md:mb-8 px-2">
-              Data-driven betting tips, live scores, and proven strategies
+              Data-driven sports tips, live scores, and proven strategies
             </p>
             <div className="flex flex-col sm:flex-row gap-3 md:gap-4 justify-center px-4 sm:px-0">
               <Link href="/signup" className="w-full sm:w-auto">
@@ -787,8 +787,7 @@ export default function Home() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="text-muted-foreground text-xs md:text-sm p-4 md:p-6 pt-0">
-                Real-time scores, match events, and betting odds all in one
-                place
+                Real-time scores, match events all in one place
               </CardContent>
             </Card>
 
@@ -862,7 +861,7 @@ export default function Home() {
                 Download ScoreFusion App
               </h2>
               <p className="text-base md:text-xl text-muted-foreground px-2 md:px-4">
-                Get instant access to live scores, expert tips, and betting
+                Get instant access to live scores, expert tips, and sports
                 insights on the go
               </p>
             </div>
@@ -1054,7 +1053,7 @@ export default function Home() {
                     </li>
                     <li className="flex items-start gap-2">
                       <CheckCircle className="h-3.5 w-3.5 md:h-4 md:w-4 text-primary mt-0.5 shrink-0" />
-                      <span>Track your betting history</span>
+                      <span>Track your sports data history</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <CheckCircle className="h-3.5 w-3.5 md:h-4 md:w-4 text-primary mt-0.5 shrink-0" />

@@ -55,12 +55,12 @@ export default function HelpPage() {
       answer:
         "Free members get access to basic tips, live scores, and community features. VIP members enjoy exclusive premium tips with higher success rates, advanced analytics, priority customer support, no ads, and access to our expert analysts' predictions. VIP tips typically have a 75%+ success rate.",
     },
-    {
-      category: "tips",
-      question: "How accurate are your betting tips?",
-      answer:
-        "Our free tips maintain approximately a 60-65% success rate, while our VIP tips achieve 75%+ accuracy. All tips are based on comprehensive data analysis, team form, head-to-head statistics, and expert insights. We track and display the performance of all our tips transparently.",
-    },
+    // {
+    //   category: "tips",
+    //   question: "How accurate are your betting tips?",
+    //   answer:
+    //     "Our free tips maintain approximately a 60-65% success rate, while our VIP tips achieve 75%+ accuracy. All tips are based on comprehensive data analysis, team form, head-to-head statistics, and expert insights. We track and display the performance of all our tips transparently.",
+    // },
     {
       category: "tips",
       question: "When are new tips published?",
@@ -210,7 +210,7 @@ export default function HelpPage() {
                 <CardTitle className="text-lg">Browse Tips</CardTitle>
               </CardHeader>
               <CardContent className="text-muted-foreground text-sm">
-                Explore our latest betting tips and predictions
+                Explore our latest free and VIP analysis for upcoming matches
               </CardContent>
             </Card>
           </Link>

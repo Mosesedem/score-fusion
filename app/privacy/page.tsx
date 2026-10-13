@@ -47,7 +47,7 @@ export default function PrivacyPage() {
                 <ul className="list-disc list-inside space-y-2 ml-4">
                   <li>Provide and maintain our services</li>
                   <li>Process your transactions and subscriptions</li>
-                  <li>Send you betting tips and notifications</li>
+                  {/* <li>Send you betting tips and notifications</li> */}
                   <li>Analyze usage patterns and improve our platform</li>
                   <li>Comply with legal obligations</li>
                   <li>Detect and prevent fraud or abuse</li>

@@ -11,8 +11,7 @@ export default function AboutPage() {
             About ScoreFusion
           </h1>
           <p className="text-lg text-muted-foreground mb-12">
-            Your trusted platform for premium betting predictions and live
-            sports analytics.
+            Your trusted platform for live sports analytics.
           </p>
 
           <div className="grid md:grid-cols-2 gap-6 mb-12">
@@ -23,7 +22,7 @@ export default function AboutPage() {
               </CardHeader>
               <CardContent>
                 <p className="text-muted-foreground">
-                  Our team of professional analysts provides data-driven betting
+                  Our team of professional analysts provides data-driven sports
                   tips with transparent success rates.
                 </p>
               </CardContent>
@@ -36,8 +35,8 @@ export default function AboutPage() {
               </CardHeader>
               <CardContent>
                 <p className="text-muted-foreground">
-                  Track live scores, match events, and betting odds in real-time
-                  with our advanced analytics dashboard.
+                  Track live scores, match events in real-time with our advanced
+                  analytics dashboard.
                 </p>
               </CardContent>
             </Card>
@@ -49,8 +48,8 @@ export default function AboutPage() {
               </CardHeader>
               <CardContent>
                 <p className="text-muted-foreground">
-                  Join thousands of users who trust ScoreFusion for their
-                  betting insights and strategies.
+                  Join thousands of users who trust ScoreFusion for their sports
+                  insights and strategies.
                 </p>
               </CardContent>
             </Card>
@@ -81,8 +80,8 @@ export default function AboutPage() {
               </p>
               <p>
                 We combine advanced statistical models, real-time data feeds,
-                and expert analysis to deliver premium betting tips that help
-                our users make informed decisions.
+                and expert analysis to deliver premium sports events analysis
+                that help our users make informed decisions.
               </p>
               <p>
                 Our platform is built on principles of responsible gaming,

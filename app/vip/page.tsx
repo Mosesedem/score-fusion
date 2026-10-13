@@ -303,8 +303,9 @@ export default function VIPAreaPage() {
                   VIP Access Required
                 </CardTitle>
                 <p className="text-sm md:text-base text-muted-foreground">
-                  Unlock premium betting tips, correct score updates, and VIP
-                  history with proven success rates.
+                  Unlock premium sports tips and games analysis, correct score
+                  updates, and VIP history with proven success rates of past and
+                  current seasons.
                 </p>
               </CardHeader>
               <CardContent className="space-y-4 md:space-y-6 p-4 md:p-6">
@@ -825,7 +826,7 @@ export default function VIPAreaPage() {
               <TrendingUp className="h-12 w-12 text-primary mx-auto mb-4" />
               <h3 className="font-bold mb-2">Ticket Snapshots</h3>
               <p className="text-sm text-muted-foreground">
-                View real betting tickets to track our success and build
+                View real-time ticket snapshots to track our success and build
                 confidence
               </p>
             </CardContent>
